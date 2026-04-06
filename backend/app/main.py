@@ -6,13 +6,15 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.responses import JSONResponse
 
-from app.agents.service import BusinessAssistantService
 from app.api.router import api_router
-from app.core.account_store import AccountStore
+from app.api.routes.auth import build_mercadolibre_callback_redirect
+from app.core.database import Database
 from app.core.exceptions import AppError
 from app.core.settings import get_settings
+from app.services.auth import AuthService
 
 
 logger = logging.getLogger("kaizen-flow")
@@ -22,17 +24,20 @@ logger = logging.getLogger("kaizen-flow")
 async def lifespan(app: FastAPI):
     settings = get_settings()
     app.state.settings = settings
-    app.state.account_store = AccountStore(settings.accounts, settings.default_account)
+    app.state.database = Database(settings.database_path)
+    app.state.database.initialize()
     app.state.http_client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
-    app.state.agents_service = BusinessAssistantService(
+    app.state.auth_service = AuthService(
+        database=app.state.database,
         settings=settings,
-        account_store=app.state.account_store,
         http_client=app.state.http_client,
     )
+    app.state.agents_services = {}
     try:
         yield
     finally:
-        await app.state.agents_service.aclose()
+        for service in app.state.agents_services.values():
+            await service.aclose()
         await app.state.http_client.aclose()
 
 
@@ -46,6 +51,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(api_router, prefix=get_settings().api_prefix)
+
+
+@app.get("/auth/callback", include_in_schema=False)
+async def legacy_mercadolibre_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    error_description: str | None = None,
+) -> RedirectResponse:
+    auth_service = getattr(request.app.state, "auth_service")
+    return await build_mercadolibre_callback_redirect(
+        service=auth_service,
+        code=code,
+        state=state,
+        error=error,
+        error_description=error_description,
+    )
 
 
 @app.exception_handler(AppError)

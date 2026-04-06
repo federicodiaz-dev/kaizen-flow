@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 
 import { ClaimDetail, ClaimSummary } from '../../core/models/claims.models';
 import { AccountContextService } from '../../core/services/account-context.service';
@@ -59,9 +59,9 @@ export class ClaimsPageComponent {
 
   constructor() {
     effect(() => {
-      const account = this.accountContext.selectedAccount();
-      if (account) {
-        this.loadClaims(account);
+      const account = this.accountContext.currentAccount();
+      if (account?.is_active) {
+        untracked(() => this.loadClaims(account.key));
       }
     }, { allowSignalWrites: true });
   }

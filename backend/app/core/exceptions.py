@@ -29,6 +29,25 @@ class BadRequestError(AppError):
         super().__init__(message=message, status_code=400, code="bad_request", details=details)
 
 
+class AuthenticationError(AppError):
+    def __init__(self, message: str = "Authentication required.", details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=401, code="authentication_error", details=details)
+
+
+class AuthorizationError(AppError):
+    def __init__(self, message: str = "You do not have permission to perform this action.", details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=403, code="authorization_error", details=details)
+
+
+class AccountInactiveError(AppError):
+    def __init__(
+        self,
+        message: str = "La cuenta está vinculada, pero su membresía está inactiva.",
+        details: Any | None = None,
+    ) -> None:
+        super().__init__(message=message, status_code=403, code="account_inactive", details=details)
+
+
 class MercadoLibreAPIError(AppError):
     @classmethod
     def from_response(cls, response: httpx.Response) -> "MercadoLibreAPIError":

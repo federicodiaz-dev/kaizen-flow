@@ -1,0 +1,12 @@
+<section class="oauth-callback-page">
+  <div class="callback-card glass-panel animate-fade-in">
+    <div class="status-dot" [class.is-error]="status() === 'error'"></div>
+    <p class="eyebrow">Mercado Libre OAuth</p>
+    <h1>{{ status() === 'success' ? 'Cuenta conectada' : 'No se pudo conectar' }}</h1>
+    <p class="message">{{ message() }}</p>
+
+    <button type="button" class="continue-btn" (click)="continue()">
+      Volver al panel
+    </button>
+  </div>
+</section>
