@@ -1,63 +1,55 @@
-<section class="panel">
-  <header class="panel-header">
-    <div class="panel-copy">
-      <p class="eyebrow">Inbox</p>
-      <div class="panel-title-row">
-        <h2>Preguntas</h2>
-        <span class="panel-count">{{ questions().length }}</span>
+<div class="list-container glass-panel animate-slide-up stagger-2">
+  <div class="list-header">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          class="input-text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchTextChange.emit($event)"
+          placeholder="Buscar pregunta o item..."
+        />
       </div>
-      <p class="panel-subtitle">Busqueda rapida por texto, item o id.</p>
+
+      <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
+        <option value="all">Todas</option>
+        <option value="unanswered">Pendientes</option>
+        <option value="answered">Respondidas</option>
+      </select>
     </div>
-    <button type="button" class="secondary" (click)="refresh.emit()">Actualizar</button>
-  </header>
-
-  <div class="toolbar">
-    <input
-      type="search"
-      [ngModel]="searchText()"
-      (ngModelChange)="searchTextChange.emit($event)"
-      placeholder="Buscar por texto o item"
-    />
-
-    <select [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
-      <option value="all">Todas</option>
-      <option value="unanswered">Sin responder</option>
-      <option value="answered">Respondidas</option>
-    </select>
   </div>
 
-  @if (loading()) {
-    <p class="state">Cargando preguntas...</p>
-  } @else if (error()) {
-    <p class="state error">{{ error() }}</p>
-  } @else if (questions().length === 0) {
-    <p class="state">No hay preguntas.</p>
-  } @else {
-    <div class="list">
-      @for (question of questions(); track question.id) {
-        <button
-          type="button"
-          class="list-row"
-          [class.selected]="question.id === selectedId()"
-          (click)="selectQuestion.emit(question.id)"
-        >
-          <div class="row-top">
-            <span class="badge" [class.answered]="question.has_answer">
-              {{ question.has_answer ? 'Respondida' : 'Pendiente' }}
-            </span>
-            <span class="row-id">#{{ question.id }}</span>
-          </div>
-          <strong class="row-title">{{ question.text }}</strong>
-          <p class="row-note">{{ question.item?.title || 'Sin publicacion asociada' }}</p>
-          <div class="row-bottom">
-            <span class="mini-pill">{{ question.item?.id || 'Sin item' }}</span>
-            <span class="meta">
-              {{ question.from_user_id ? 'Usuario ' + question.from_user_id : 'Sin usuario' }}
-            </span>
-            <span class="meta">{{ question.date_created | date: 'short' }}</span>
-          </div>
-        </button>
-      }
-    </div>
-  }
-</section>
+  <div class="list-content">
+    @if (loading()) {
+      <div class="state-msg">Cargando bandeja...</div>
+    } @else if (error()) {
+      <div class="state-msg error">{{ error() }}</div>
+    } @else if (questions().length === 0) {
+      <div class="state-msg">Bandeja vacía. Todo al día.</div>
+    } @else {
+      <div class="items-grid">
+        @for (question of questions(); track question.id) {
+          <button
+            type="button"
+            class="list-item"
+            [class.selected]="question.id === selectedId()"
+            (click)="selectQuestion.emit(question.id)"
+          >
+            <div class="item-top">
+              <span class="status-pill" [class.answered]="question.has_answer">
+                {{ question.has_answer ? 'Respondida' : 'Pendiente' }}
+              </span>
+              <span class="item-id">#{{ question.id }}</span>
+            </div>
+            <h4 class="item-title">{{ question.text }}</h4>
+            <p class="item-meta truncate">{{ question.item?.title || 'Sin publicacion' }}</p>
+            <div class="item-bottom">
+              <span class="item-date">{{ question.date_created | date: 'short' }}</span>
+              <span class="item-user">{{ question.from_user_id || 'Usuario Anónimo' }}</span>
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

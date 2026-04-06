@@ -49,3 +49,17 @@ class ItemsAdapter:
             headers={"Content-Type": "application/json"},
         )
         return data if isinstance(data, dict) else {}
+
+    async def get_item_description(self, account_key: str, item_id: str) -> dict[str, Any]:
+        data = await self._client.request(account_key, "GET", f"/items/{item_id}/description")
+        return data if isinstance(data, dict) else {}
+
+    async def update_item_description(self, account_key: str, item_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        data = await self._client.request(
+            account_key,
+            "PUT",
+            f"/items/{item_id}/description",
+            json_body=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        return data if isinstance(data, dict) else {}

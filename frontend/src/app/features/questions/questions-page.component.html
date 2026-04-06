@@ -1,51 +1,29 @@
-<section class="page">
-  <header class="page-hero questions-theme">
-    <div class="hero-layout">
-      <div>
-        <p class="hero-kicker">Questions workspace</p>
-        <h1 class="hero-title">Responde rapido sin salir del panel.</h1>
-        <p class="hero-body">
-          Filtra la bandeja, entra al detalle y responde desde la misma vista con foco en lo pendiente.
-        </p>
-        <div class="hero-tags">
-          <span class="hero-tag">Cuenta {{ activeAccountLabel() }}</span>
-          <span class="hero-tag">{{ filteredQuestions().length }} visibles</span>
-          <span class="hero-tag">Seller-first workflow</span>
-        </div>
+<section class="page-container animate-slide-up stagger-1">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Preguntas</h1>
+      <p class="page-subtitle">Gestiona y responde las consultas de tu cuenta {{ activeAccountLabel() }}.</p>
+    </div>
+    
+    <div class="quick-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total</span>
+        <strong class="stat-value">{{ totalQuestions() }}</strong>
       </div>
-
-      <div class="hero-panel">
-        <p class="hero-panel-label">Contexto actual</p>
-        <h3>{{ selectedQuestion()?.item?.title || 'Inbox de preguntas' }}</h3>
-        <p>
-          {{ selectedQuestion()?.text || 'Selecciona una pregunta para revisar el contexto y responderla desde aqui.' }}
-        </p>
+      <div class="stat-item">
+        <span class="stat-label">Pendientes</span>
+        <strong class="stat-value warning">{{ pendingQuestions() }}</strong>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Respondidas</span>
+        <strong class="stat-value success">{{ answeredQuestions() }}</strong>
       </div>
     </div>
   </header>
 
-  <div class="stat-row">
-    <article class="stat-card">
-      <span class="stat-label">Totales</span>
-      <strong class="stat-value">{{ totalQuestions() }}</strong>
-      <span class="stat-foot">Preguntas recuperadas en la cuenta activa.</span>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-label">Pendientes</span>
-      <strong class="stat-value">{{ pendingQuestions() }}</strong>
-      <span class="stat-foot">Prioridad ideal para trabajar primero.</span>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-label">Respondidas</span>
-      <strong class="stat-value">{{ answeredQuestions() }}</strong>
-      <span class="stat-foot">Historial visible desde el mismo workspace.</span>
-    </article>
-  </div>
-
-  <section class="feature-shell">
+  <section class="feature-layout">
     <app-question-list
+      class="list-section"
       [questions]="filteredQuestions()"
       [selectedId]="selectedQuestionId()"
       [loading]="loadingList()"
@@ -59,6 +37,7 @@
     />
 
     <app-question-detail
+      class="detail-section"
       [question]="selectedQuestion()"
       [loading]="loadingDetail()"
       [error]="detailError()"
