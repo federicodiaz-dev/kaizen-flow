@@ -35,6 +35,7 @@
         </div>
         
         <select
+          data-tour-id="account-selector"
           class="minimal-select"
           [disabled]="accountContext.loading() || accountContext.accounts().length === 0"
           [ngModel]="accountContext.selectedAccount()"
@@ -68,7 +69,7 @@
       </div>
 
       <nav class="nav-links">
-        <a routerLink="/agents" routerLinkActive="active">
+        <a routerLink="/agents" routerLinkActive="active" data-tour-id="nav-agents">
           <span class="nav-icon">AI</span>
           <span class="nav-copy">Agente IA</span>
         </a>
@@ -119,3 +120,5 @@
 } @else {
   <router-outlet />
 }
+
+<app-onboarding-tour />

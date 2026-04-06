@@ -7,7 +7,7 @@
     </div>
   }
 
-  <aside class="threads-rail" [class.collapsed]="!showSidebar()">
+  <aside class="threads-rail" [class.collapsed]="!showSidebar()" data-tour-id="agents-history">
     <div class="rail-header">
       <div>
         <p class="eyebrow">Historial</p>
@@ -15,7 +15,7 @@
       </div>
       <div class="rail-actions">
         <span class="thread-count">{{ threads().length }}</span>
-        <button type="button" class="icon-btn new-thread-btn" title="Nuevo hilo" (click)="startNewThread()">
+        <button type="button" class="icon-btn new-thread-btn" title="Nuevo hilo" (click)="startNewThread()" data-tour-id="agents-new-thread">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </button>
       </div>
@@ -49,7 +49,7 @@
     }
   </aside>
 
-  <section class="chat-stage">
+  <section class="chat-stage" data-tour-id="agents-stage">
     <header class="chat-header">
       <div class="chat-header-left">
         <button type="button" class="icon-btn sidebar-toggle" (click)="toggleSidebar()" title="Alternar panel">
@@ -124,7 +124,7 @@
       </div>
     </div>
 
-    <footer class="composer">
+    <footer class="composer" data-tour-id="agents-composer">
       <div class="composer-inner">
         <textarea
           class="composer-input"

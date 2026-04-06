@@ -113,6 +113,15 @@ def get_me(
     return SessionResponse(user=current_user.to_profile())
 
 
+@router.post("/onboarding/complete", response_model=SessionResponse)
+def complete_onboarding(
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    service: Annotated[AuthService, Depends(get_auth_service)],
+) -> SessionResponse:
+    user = service.complete_onboarding(current_user.id)
+    return SessionResponse(user=user.to_profile())
+
+
 @router.get("/mercadolibre/connect")
 def begin_mercadolibre_connect(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],

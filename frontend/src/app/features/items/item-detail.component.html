@@ -1,4 +1,4 @@
-<div class="detail-wrapper animate-fade-in">
+<div class="detail-wrapper animate-fade-in" data-tour-id="items-detail-panel">
   @if (loading()) {
     <div class="empty-state">
       <div class="pulse">Buscando configuración del producto...</div>
@@ -69,7 +69,7 @@
           </div>
         </section>
 
-        <section class="premium-card">
+        <section class="premium-card" data-tour-id="items-edit-panel">
           <h3>Edición Rápida</h3>
           <div class="edit-form">
             
@@ -87,7 +87,7 @@
               }
             </div>
 
-            <div class="form-group desc-field mt-action">
+            <div class="form-group desc-field mt-action" data-tour-id="items-description-field">
               <div class="desc-label-row">
                 <span>Descripción del Producto</span>
                 <button

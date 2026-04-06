@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
+    is_first_visit INTEGER NOT NULL DEFAULT 1,
     default_account_key TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -87,6 +88,16 @@ class Database:
             self._apply_migrations(connection)
 
     def _apply_migrations(self, connection: sqlite3.Connection) -> None:
+        user_columns = {
+            str(row["name"]).strip().lower()
+            for row in connection.execute("PRAGMA table_info(users)").fetchall()
+        }
+        if "is_first_visit" not in user_columns:
+            connection.execute(
+                "ALTER TABLE users ADD COLUMN is_first_visit INTEGER NOT NULL DEFAULT 1"
+            )
+            connection.execute("UPDATE users SET is_first_visit = 0")
+
         account_columns = {
             str(row["name"]).strip().lower()
             for row in connection.execute("PRAGMA table_info(ml_accounts)").fetchall()

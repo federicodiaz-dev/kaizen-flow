@@ -30,6 +30,7 @@ class AuthenticatedUser:
     id: int
     email: str
     created_at: str
+    is_first_visit: bool = False
     default_account: str | None = None
 
     def to_profile(self) -> UserProfile:
@@ -37,6 +38,7 @@ class AuthenticatedUser:
             id=self.id,
             email=self.email,
             created_at=self.created_at,
+            is_first_visit=self.is_first_visit,
             default_account=self.default_account,
         )
 
@@ -96,7 +98,7 @@ class AuthService:
         with self._database.connect() as connection:
             row = connection.execute(
                 """
-                SELECT id, email, password_hash, password_salt, created_at, default_account_key
+                SELECT id, email, password_hash, password_salt, created_at, is_first_visit, default_account_key
                 FROM users
                 WHERE email = ?
                 """,
@@ -123,7 +125,7 @@ class AuthService:
         with self._database.connect() as connection:
             row = connection.execute(
                 """
-                SELECT users.id, users.email, users.created_at, users.default_account_key
+                SELECT users.id, users.email, users.created_at, users.is_first_visit, users.default_account_key
                 FROM user_sessions
                 JOIN users ON users.id = user_sessions.user_id
                 WHERE user_sessions.token_hash = ? AND user_sessions.expires_at > ?
@@ -145,7 +147,7 @@ class AuthService:
     def get_user_by_id(self, user_id: int) -> AuthenticatedUser:
         with self._database.connect() as connection:
             row = connection.execute(
-                "SELECT id, email, created_at, default_account_key FROM users WHERE id = ?",
+                "SELECT id, email, created_at, is_first_visit, default_account_key FROM users WHERE id = ?",
                 (user_id,),
             ).fetchone()
         if row is None:
@@ -161,6 +163,14 @@ class AuthService:
     def set_default_account(self, user_id: int, account_key: str) -> None:
         account_store = AccountStore(self._database, user_id)
         account_store.set_default_account(account_key)
+
+    def complete_onboarding(self, user_id: int) -> AuthenticatedUser:
+        with self._database.connect() as connection:
+            connection.execute(
+                "UPDATE users SET is_first_visit = 0, updated_at = ? WHERE id = ?",
+                (utc_now_iso(), user_id),
+            )
+        return self.get_user_by_id(user_id)
 
     def build_mercadolibre_authorization_url(
         self,
@@ -356,5 +366,6 @@ class AuthService:
             id=int(row["id"]),
             email=str(row["email"]),
             created_at=str(row["created_at"]),
+            is_first_visit=bool(row["is_first_visit"]) if "is_first_visit" in row.keys() else False,
             default_account=str(row["default_account_key"]) if row["default_account_key"] else None,
         )

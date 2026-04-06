@@ -85,7 +85,7 @@
         <div class="chat-col">
           <div class="premium-chat-container">
             <div class="chat-header">
-              <div class="tab-switcher">
+                <div class="tab-switcher" data-tour-id="claims-tabs">
                 <button class="tab-item" [class.active]="activeChatTab() === 'buyer'" (click)="setTab('buyer')">
                   Comprador
                 </button>
@@ -128,7 +128,7 @@
               }
             </div>
 
-            <div class="chat-composer">
+            <div class="chat-composer" data-tour-id="claims-composer">
               @if (activeChatTab() === 'buyer') {
                 @if (isMLIntervened()) {
                    <div class="composer-alert">La mediación cerró temporalmente tu canal directo.</div>

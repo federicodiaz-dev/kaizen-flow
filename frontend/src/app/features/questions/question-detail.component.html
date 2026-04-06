@@ -1,4 +1,4 @@
-<div class="detail-container glass-panel animate-slide-up stagger-3">
+<div class="detail-container glass-panel animate-slide-up stagger-3" data-tour-id="questions-detail">
   @if (loading()) {
     <div class="empty-state">Detalles cargando...</div>
   } @else if (error()) {
@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="response-section">
+        <div class="response-section" data-tour-id="questions-response-panel">
           <h3 class="section-title">Respuesta</h3>
           
           @if (q.answer?.text) {

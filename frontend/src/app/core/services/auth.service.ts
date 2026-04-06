@@ -84,6 +84,13 @@ export class AuthService {
     this.initialized.set(true);
   }
 
+  completeOnboarding() {
+    return this.http.post<SessionResponse>('/api/auth/onboarding/complete', {}).pipe(
+      map((response) => response.user),
+      tap((user) => this.user.set(user)),
+    );
+  }
+
   handleUnauthorized(): void {
     this.clearSession();
     const currentUrl = this.router.url;
