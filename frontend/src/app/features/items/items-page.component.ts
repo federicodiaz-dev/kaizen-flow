@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 
 import { ItemDetail, ItemSummary, ItemUpdatePayload } from '../../core/models/items.models';
 import { AccountContextService } from '../../core/services/account-context.service';
@@ -50,9 +50,9 @@ export class ItemsPageComponent {
 
   constructor() {
     effect(() => {
-      const account = this.accountContext.selectedAccount();
-      if (account) {
-        this.loadItems(account);
+      const account = this.accountContext.currentAccount();
+      if (account?.is_active) {
+        untracked(() => this.loadItems(account.key));
       }
     }, { allowSignalWrites: true });
   }

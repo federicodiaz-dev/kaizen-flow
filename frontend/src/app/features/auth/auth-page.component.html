@@ -1,0 +1,96 @@
+<section class="auth-page">
+  <div class="auth-backdrop"></div>
+
+  <div class="auth-grid">
+    <div class="auth-copy animate-slide-up stagger-1">
+      <div class="brand-mark">KF</div>
+      <p class="eyebrow">Kaizen Flow</p>
+      <h1>{{ pageTitle() }}</h1>
+      <p class="intro-copy">{{ pageSubtitle() }}</p>
+
+      <div class="benefits-card">
+        <div class="benefit-item">
+          <strong>OAuth real con Mercado Libre</strong>
+          <span>El usuario vincula su cuenta y el backend guarda `access_token` y `refresh_token` por workspace.</span>
+        </div>
+        <div class="benefit-item">
+          <strong>Aislamiento por usuario</strong>
+          <span>Cuentas, hilos del agente y datos operativos quedan separados en el backend para cada login.</span>
+        </div>
+        <div class="benefit-item">
+          <strong>Sesión protegida</strong>
+          <span>Las llamadas al API usan cookie segura de sesión y no exponen credenciales al frontend.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-card glass-panel animate-slide-up stagger-2">
+      <div class="card-header">
+        <div>
+          <p class="eyebrow">{{ mode() === 'register' ? 'Nuevo workspace' : 'Acceso seguro' }}</p>
+          <h2>{{ mode() === 'register' ? 'Registrate' : 'Iniciá sesión' }}</h2>
+        </div>
+        <div class="mode-switch">
+          <a routerLink="/login" [class.active]="mode() === 'login'">Ingresar</a>
+          <a routerLink="/register" [class.active]="mode() === 'register'">Crear cuenta</a>
+        </div>
+      </div>
+
+      <div class="form-stack">
+        <label class="form-field">
+          <span>Email</span>
+          <input
+            type="email"
+            class="input-text"
+            placeholder="tu@email.com"
+            [ngModel]="email()"
+            (ngModelChange)="email.set($event)"
+          />
+        </label>
+
+        <label class="form-field">
+          <span>Contraseña</span>
+          <input
+            type="password"
+            class="input-text"
+            placeholder="Al menos 8 caracteres"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+          />
+        </label>
+
+        @if (mode() === 'register') {
+          <label class="form-field">
+            <span>Confirmar contraseña</span>
+            <input
+              type="password"
+              class="input-text"
+              placeholder="Repetí la contraseña"
+              [ngModel]="confirmPassword()"
+              (ngModelChange)="confirmPassword.set($event)"
+            />
+          </label>
+        }
+
+        @if (errorMessage()) {
+          <div class="error-banner">{{ errorMessage() }}</div>
+        }
+
+        <button
+          type="button"
+          class="submit-btn"
+          [disabled]="auth.submitting()"
+          (click)="submit()"
+        >
+          {{ auth.submitting() ? 'Procesando...' : mode() === 'register' ? 'Crear cuenta' : 'Entrar' }}
+        </button>
+
+        <p class="form-footnote">
+          {{ mode() === 'register'
+            ? 'Después del alta podrás conectar una o varias cuentas de Mercado Libre desde el panel.'
+            : 'Si todavía no tenés usuario, podés crear uno en segundos y después vincular Mercado Libre.' }}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

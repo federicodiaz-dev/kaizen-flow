@@ -1,67 +1,121 @@
-<div class="app-shell">
-  <button class="theme-toggle" (click)="toggleTheme()" [class.dark]="isDarkMode()" title="Cambiar a Modo Oscuro/Claro">
-    <span class="icon"></span>
-  </button>
-
-  <aside class="sidebar animate-slide-up stagger-1">
-    <div class="brand-shell">
-      <div class="icon-logo">KF</div>
-      <div class="brand">
-        <h1>Kaizen Flow</h1>
-        <div class="brand-subtitle">Mercado Libre workspace</div>
-      </div>
+@if (auth.initializing()) {
+  <div class="app-boot">
+    <div class="boot-card">
+      <div class="boot-spinner"></div>
+      <p>Restaurando tu sesión segura...</p>
     </div>
+  </div>
+} @else if (auth.isAuthenticated() && !isAuthScreen()) {
+  <div class="app-shell">
+    <button class="theme-toggle" (click)="toggleTheme()" [class.dark]="isDarkMode()" title="Cambiar a Modo Oscuro/Claro">
+      <span class="icon"></span>
+    </button>
 
-    <div class="account-selector">
-      <div class="selector-header">
-        <span class="label">Workspace activo</span>
-        <span class="status-dot"></span>
+    <aside class="sidebar animate-slide-up stagger-1">
+      <div class="brand-shell">
+        <div class="icon-logo">KF</div>
+        <div class="brand">
+          <h1>Kaizen Flow</h1>
+          <div class="brand-subtitle">Mercado Libre workspace</div>
+        </div>
       </div>
-      
-      <select
-        class="minimal-select"
-        [disabled]="accountContext.loading() || accountContext.accounts().length === 0"
-        [ngModel]="accountContext.selectedAccount()"
-        (ngModelChange)="onAccountChange($event)"
-      >
-        @for (account of accountContext.accounts(); track account.key) {
-          <option [value]="account.key">{{ account.label }} ({{ account.key }})</option>
+
+      <div class="session-card">
+        <div>
+          <span class="session-label">Sesión activa</span>
+          <strong>{{ currentUserEmail() }}</strong>
+        </div>
+        <button type="button" class="session-action" (click)="logout()">Salir</button>
+      </div>
+
+      <div class="account-selector">
+        <div class="selector-header">
+          <span class="label">Cuenta conectada</span>
+          <span class="status-dot" [class.inactive]="accountContext.currentAccount() && !currentAccountIsActive()"></span>
+        </div>
+        
+        <select
+          class="minimal-select"
+          [disabled]="accountContext.loading() || accountContext.accounts().length === 0"
+          [ngModel]="accountContext.selectedAccount()"
+          (ngModelChange)="onAccountChange($event)"
+        >
+          @for (account of accountContext.accounts(); track account.key) {
+            <option [value]="account.key">{{ account.label }} ({{ account.key }}){{ account.is_active ? '' : ' - Inactiva' }}</option>
+          }
+        </select>
+
+        <button type="button" class="connect-btn" (click)="connectMercadoLibre()">
+          {{ accountContext.accountCount() > 0 ? 'Conectar otra cuenta ML' : 'Conectar Mercado Libre' }}
+        </button>
+        
+        @if (accountContext.loading()) {
+          <p class="status-msg">Cargando cuentas...</p>
         }
-      </select>
-      
-      @if (accountContext.loading()) {
-        <p class="status-msg">Cargando...</p>
-      }
-      @if (accountContext.error()) {
-        <p class="status-msg error">{{ accountContext.error() }}</p>
-      }
-    </div>
+        @if (accountContext.error()) {
+          <p class="status-msg error">{{ accountContext.error() }}</p>
+        }
+        @if (accountContext.currentAccount() && !accountContext.hasActiveAccess()) {
+          <p class="status-msg warning">
+            La cuenta seleccionada está vinculada, pero su membresía está inactiva.
+          </p>
+        }
+        @if (!accountContext.loading() && accountContext.accountCount() === 0) {
+          <p class="status-msg">
+            Todavía no vinculaste ninguna cuenta. Conectá Mercado Libre para habilitar preguntas, reclamos, productos y agente.
+          </p>
+        }
+      </div>
 
-    <nav class="nav-links">
-      <a routerLink="/agents" routerLinkActive="active">
-        <span class="nav-icon">AI</span>
-        <span class="nav-copy">Agente IA</span>
-      </a>
-      <a routerLink="/copywriter" routerLinkActive="active">
-        <span class="nav-icon ai-sparkle">✦</span>
-        <span class="nav-copy">Copywriter IA</span>
-      </a>
-      <a routerLink="/questions" routerLinkActive="active">
-        <span class="nav-icon">Q</span>
-        <span class="nav-copy">Preguntas</span>
-      </a>
-      <a routerLink="/claims" routerLinkActive="active">
-        <span class="nav-icon">C</span>
-        <span class="nav-copy">Reclamos</span>
-      </a>
-      <a routerLink="/items" routerLinkActive="active">
-        <span class="nav-icon">P</span>
-        <span class="nav-copy">Productos</span>
-      </a>
-    </nav>
-  </aside>
+      <nav class="nav-links">
+        <a routerLink="/agents" routerLinkActive="active">
+          <span class="nav-icon">AI</span>
+          <span class="nav-copy">Agente IA</span>
+        </a>
+        <a routerLink="/copywriter" routerLinkActive="active">
+          <span class="nav-icon ai-sparkle">✦</span>
+          <span class="nav-copy">Copywriter IA</span>
+        </a>
+        <a routerLink="/questions" routerLinkActive="active">
+          <span class="nav-icon">Q</span>
+          <span class="nav-copy">Preguntas</span>
+        </a>
+        <a routerLink="/claims" routerLinkActive="active">
+          <span class="nav-icon">C</span>
+          <span class="nav-copy">Reclamos</span>
+        </a>
+        <a routerLink="/items" routerLinkActive="active">
+          <span class="nav-icon">P</span>
+          <span class="nav-copy">Productos</span>
+        </a>
+      </nav>
+    </aside>
 
-  <main class="page-content animate-slide-up stagger-2">
-    <router-outlet />
-  </main>
-</div>
+    <main class="page-content animate-slide-up stagger-2">
+      @if (showInactiveGate()) {
+        <section class="membership-gate">
+          <div class="membership-gate__card">
+            <span class="membership-gate__eyebrow">Acceso restringido</span>
+            <h2>{{ inactiveGateTitle() }}</h2>
+            <p>{{ inactiveGateMessage() }}</p>
+
+            <div class="membership-gate__meta">
+              <span>Cuenta</span>
+              <strong>{{ currentAccountLabel() }}</strong>
+            </div>
+
+            @if (accountContext.activeAccountCount() > 0) {
+              <button type="button" class="membership-gate__action" (click)="useFirstActiveAccount()">
+                Ir a una cuenta activa
+              </button>
+            }
+          </div>
+        </section>
+      } @else {
+        <router-outlet />
+      }
+    </main>
+  </div>
+} @else {
+  <router-outlet />
+}

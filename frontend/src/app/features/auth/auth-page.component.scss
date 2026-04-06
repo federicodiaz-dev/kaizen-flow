@@ -1,0 +1,233 @@
+.auth-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 28%),
+    linear-gradient(180deg, var(--bg-primary), color-mix(in srgb, var(--bg-primary) 82%, #06111f));
+  padding: 3rem;
+}
+
+.auth-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgba(148, 163, 184, 0.06) calc(100% - 1px)),
+    linear-gradient(transparent 0, transparent calc(100% - 1px), rgba(148, 163, 184, 0.06) calc(100% - 1px));
+  background-size: 48px 48px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent);
+  pointer-events: none;
+}
+
+.auth-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 0.95fr);
+  gap: 2rem;
+  align-items: center;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.auth-copy {
+  padding: 1rem;
+}
+
+.brand-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.22);
+}
+
+.eyebrow {
+  margin: 0 0 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.auth-copy h1,
+.card-header h2 {
+  margin: 0;
+  color: var(--text-main);
+}
+
+.auth-copy h1 {
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
+  line-height: 1.05;
+  max-width: 10ch;
+}
+
+.intro-copy {
+  margin: 1.2rem 0 0;
+  max-width: 58ch;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.benefits-card {
+  margin-top: 2rem;
+  display: grid;
+  gap: 0.95rem;
+}
+
+.benefit-item {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  box-shadow: var(--shadow-sm);
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: var(--text-main);
+    margin-bottom: 0.35rem;
+  }
+
+  span {
+    color: var(--text-muted);
+    line-height: 1.55;
+    font-size: 0.94rem;
+  }
+}
+
+.auth-card {
+  border: 1px solid var(--border-color);
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--bg-secondary) 94%, transparent);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+  padding: 1.5rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+
+  a {
+    padding: 0.55rem 0.95rem;
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+
+    &.active {
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+  }
+}
+
+.form-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.45rem;
+
+  span {
+    color: var(--text-main);
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+}
+
+.input-text {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-main);
+  padding: 0.95rem 1rem;
+  font-size: 0.96rem;
+  outline: none;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+}
+
+.error-banner {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+.submit-btn {
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: #fff;
+  padding: 0.95rem 1rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(59, 130, 246, 0.24);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: progress;
+  }
+}
+
+.form-footnote {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 980px) {
+  .auth-page {
+    padding: 1.5rem;
+  }
+
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    flex-direction: column;
+  }
+}

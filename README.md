@@ -1,123 +1,123 @@
 # Kaizen Flow
 
-MVP privado para operar con Mercado Libre desde un panel propio.
+Panel privado para operar cuentas de Mercado Libre con FastAPI + Angular.
 
-Incluye:
+## Que incluye
 
-- `backend/` con FastAPI y capa modular de integración con Mercado Libre
-- `frontend/` con Angular standalone
-- pantallas para `questions`, `claims` e `items`
-- selector de cuenta vía backend
-- soporte de refresh token en backend
+- backend modular para preguntas, reclamos, productos, copywriter y agente IA
+- frontend standalone con Angular
+- autenticacion propia con sesiones seguras
+- base SQLite para usuarios, sesiones, cuentas ML y estados OAuth
+- vinculacion OAuth de Mercado Libre por usuario
+- refresh automatico de `access_token` usando `refresh_token`
+- aislamiento por usuario para cuentas, endpoints y hilos del agente
 
 ## Arquitectura
 
 ```text
 kaizen-flow/
-├── backend/
-│   ├── app/
-│   │   ├── adapters/
-│   │   ├── api/
-│   │   ├── clients/
-│   │   ├── core/
-│   │   ├── schemas/
-│   │   └── services/
-│   ├── main.py
-│   └── requirements.txt
-├── frontend/
-│   ├── src/app/core/
-│   ├── src/app/features/questions/
-│   ├── src/app/features/claims/
-│   └── src/app/features/items/
-├── .env.example
-└── README.md
+|- backend/
+|  |- app/
+|  |  |- adapters/
+|  |  |- agents/
+|  |  |- api/
+|  |  |- clients/
+|  |  |- core/
+|  |  |- schemas/
+|  |  `- services/
+|  `- requirements.txt
+|- frontend/
+|  `- src/app/
+|- .env.example
+`- README.md
 ```
 
-## Features implementadas
+## Seguridad
 
-### Preguntas
+- el usuario crea su cuenta propia dentro de Kaizen Flow
+- el login genera una cookie `HttpOnly` de sesion
+- todas las rutas privadas `/api/*` requieren sesion valida
+- cada usuario ve solo sus propias cuentas de Mercado Libre
+- los tokens nunca se exponen al frontend
+- los hilos del agente IA quedan separados por usuario en disco
 
-- listado de preguntas
-- búsqueda local por texto / item / id
-- filtro respondidas / no respondidas
-- detalle de la pregunta
-- respuesta desde la UI
-- envío real desde backend a Mercado Libre con `POST /answers`
+## OAuth de Mercado Libre
 
-### Reclamos
+Flujo implementado:
 
-- listado de reclamos
-- detalle enriquecido
-- mensajes del reclamo
-- historial de estado
-- acciones disponibles informadas por API
-- envío de mensaje desde backend cuando el flujo lo permite
+1. el usuario inicia sesion en Kaizen Flow
+2. desde la UI hace clic en "Conectar Mercado Libre"
+3. el backend crea `state` + PKCE y redirige a Mercado Libre
+4. Mercado Libre devuelve `code`
+5. el backend intercambia `code` por `access_token` y `refresh_token`
+6. la cuenta queda persistida en SQLite para ese usuario
+
+Redirect recomendado:
+
+```env
+ML_REDIRECT_URI=https://api.tudominio.com/api/auth/mercadolibre/callback
+```
+
+Compatibilidad:
+
+- tambien existe el alias legacy `https://api.tudominio.com/auth/callback`
+
+Importante:
+
+- `ML_REDIRECT_URI` debe apuntar al backend publico que recibe el callback y hace el intercambio de `code` por tokens
+- `FRONTEND_ORIGIN` es la URL del frontend, por ejemplo Netlify
+- si pones la URL del frontend como `redirect_uri`, Mercado Libre va a rechazar o romper el flujo OAuth
+- Mercado Libre puede rechazar `http://localhost` en la configuracion de la app; para desarrollo local usa un callback HTTPS publico o un puente HTTPS que reenvie al backend local
+
+## Persistencia
+
+- SQLite por defecto: `backend/data/kaizen_flow.sqlite3`
+- hilos del agente por usuario: `backend/data/agents/user_<id>/threads/`
+
+## Variables importantes
+
+```env
+ML_APP_ID=
+ML_CLIENT_SECRET=
+ML_REDIRECT_URI=https://api.tudominio.com/api/auth/mercadolibre/callback
+ML_OAUTH_AUTHORIZE_URL=https://auth.mercadolibre.com.ar/authorization
+ML_AUTH_BASE=https://api.mercadolibre.com
+ML_API_BASE=https://api.mercadolibre.com
+
+FRONTEND_ORIGIN=https://tu-frontend.netlify.app
+APP_DB_PATH=backend/data/kaizen_flow.sqlite3
+SESSION_COOKIE_NAME=kaizen_session
+SESSION_COOKIE_SECURE=false
+SESSION_TTL_HOURS=336
+
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_ROUTER_MODEL=openai/gpt-oss-20b
+AI_DEFAULT_SITE_ID=MLA
+AI_HISTORY_WINDOW=8
+AI_MEMORY_DIR=backend/data/agents
+```
 
 Notas:
 
-- la mensajería de claims depende del estado, etapa y reglas reales de Mercado Libre
-- si el backend detecta que no corresponde, la UI lo muestra como limitación
-- no se inventaron acciones extra fuera de la documentación oficial
+- los formatos legacy con tokens directos en `.env` siguen parseandose, pero el modo recomendado ahora es OAuth por usuario
+- los tokens de Mercado Libre quedan guardados en SQLite para poder refrescarlos automaticamente
 
-### Productos
+## Endpoints principales
 
-- listado de publicaciones
-- búsqueda local por título o id
-- filtro por estado
-- detalle del producto
-- link a la publicación
-- edición básica de `title`, `price`, `available_quantity` y `status`
-
-Notas:
-
-- el título queda deshabilitado en UI si la publicación ya tiene ventas, alineado con la documentación oficial
-- la API de Mercado Libre sigue validando restricciones finales
-
-## Cuentas y `.env`
-
-El backend nunca expone tokens al frontend.
-
-Formatos soportados:
-
-1. Formato explícito recomendado:
-
-```env
-ML_SELLER_ACCESS_TOKEN=
-ML_SELLER_REFRESH_TOKEN=
-ML_SELLER_USER_ID=
-
-ML_PERSONAL_ACCESS_TOKEN=
-ML_PERSONAL_REFRESH_TOKEN=
-ML_PERSONAL_USER_ID=
-
-ML_BUYER_ACCESS_TOKEN=
-ML_BUYER_REFRESH_TOKEN=
-ML_BUYER_USER_ID=
-```
-
-2. Formato legacy:
-
-```env
-access_token=
-refresh_token=
-user_id=
-scope=
-```
-
-3. Bloques JSON legacy:
-
-- el backend los detecta si contienen `access_token`
-- si no tienen nombre, quedan como cuentas legacy
-
-Estado actual detectado en tu `.env`:
-
-- hoy el backend encuentra solo `seller` como cuenta usable bajo las convenciones actuales
-- la app ya está preparada para `personal` y `buyer`, pero hay que agregarlas explícitamente con prefijos para que aparezcan como alias estables
-
-## Endpoints backend
+Publicos:
 
 - `GET /api/health`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+Privados:
+
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/auth/mercadolibre/connect`
 - `GET /api/accounts`
+- `PATCH /api/accounts/default`
 - `GET /api/agents/health`
 - `GET /api/agents/threads`
 - `POST /api/agents/threads`
@@ -130,106 +130,49 @@ Estado actual detectado en tu `.env`:
 - `GET /api/claims/{id}`
 - `GET /api/claims/{id}/messages`
 - `POST /api/claims/{id}/message`
-- `GET /api/claims/{id}/available-actions`
 - `GET /api/items`
 - `GET /api/items/{id}`
 - `PATCH /api/items/{id}`
-- `GET /api/items/{id}/permalink`
+- `POST /api/copywriter/generate`
+- `POST /api/copywriter/enhance-description`
 
-Selección de cuenta:
+Seleccion de cuenta:
 
-- query param `?account=seller`
-- header `X-Kaizen-Account: seller`
+- query param `?account=<account_key>`
+- header `X-Kaizen-Account: <account_key>`
 
-Si no se envía nada, usa la cuenta por defecto.
+Si no se envia una cuenta, el backend usa la cuenta por defecto del usuario autenticado.
 
-## Pantallas frontend
+## Frontend
 
+Pantallas:
+
+- `/login`
+- `/register`
 - `/questions`
 - `/claims`
 - `/items`
+- `/copywriter`
+- `/agents`
 
-## Asistente AI multiagente
-
-El backend ahora incluye una capa nueva en `backend/app/agents/` pensada para un chatbot multiagente con LangChain + LangGraph.
-
-Arquitectura:
-
-- `intent analyst`: entiende la intencion principal y enruta con salida estructurada
-- `mercadolibre account agent`: responde preguntas sobre la cuenta activa usando herramientas read-only
-- `market intelligence agent`: analiza mercado, ideas de producto, competencia y tendencias
-- `main workflow`: recupera memoria del hilo, enruta, ejecuta el sub-workflow correcto y persiste la conversacion
-
-Persistencia:
-
-- los hilos del chatbot se guardan en `backend/data/agents/threads/`
-
-Tooling:
-
-- si configurás un MCP de Mercado Libre, el asistente carga sus herramientas read-only
-- si no hay MCP disponible, usa herramientas locales de compatibilidad sobre la API actual de Mercado Libre
-
-Variables nuevas sugeridas en `.env`:
-
-```env
-GROQ_API_KEY=
-GROQ_MODEL=llama-3.3-70b-versatile
-GROQ_ROUTER_MODEL=openai/gpt-oss-20b
-AI_DEFAULT_SITE_ID=MLA
-AI_HISTORY_WINDOW=8
-AI_MEMORY_DIR=backend/data/agents
-
-# MCP opcional
-AI_MCP_ENABLED=false
-AI_MCP_SERVER_NAME=mercadolibre
-AI_MCP_TRANSPORT=http
-AI_MCP_URL=
-AI_MCP_COMMAND=
-AI_MCP_ARGS_JSON=[]
-AI_MCP_HEADERS_JSON={}
-AI_MCP_ENV_JSON={}
-AI_MCP_CWD=
-```
-
-Notas MCP:
-
-- para transporte HTTP, Kaizen Flow usa automáticamente el `access_token` de la cuenta activa o de la cuenta por defecto
-- si el MCP responde `401`, el backend intenta refrescar ese token con el `refresh_token` configurado y reintenta la conexión
-- `AI_MCP_HEADERS_JSON` queda reservado para headers extra no relacionados con autenticación
-
-## Cómo correr
+## Como correr
 
 ### Backend
 
-Instalar dependencias:
-
 ```powershell
 .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-```
-
-Levantar API:
-
-```powershell
 .venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --reload
 ```
 
-API docs:
+Docs:
 
 - `http://localhost:8000/docs`
 
 ### Frontend
 
-Instalar dependencias:
-
 ```powershell
 cd frontend
 npm install
-```
-
-Levantar Angular:
-
-```powershell
-cd frontend
 npm start
 ```
 
@@ -237,21 +180,22 @@ El proxy del frontend apunta a `http://127.0.0.1:8000`.
 
 ## Verificaciones realizadas
 
-- `backend`: compilación sintáctica con `compileall`
-- `backend`: smoke import de `FastAPI` y de la app
-- `backend`: health check local `GET /api/health`
-- `frontend`: `npm run build`
+- backend: `python -m compileall backend`
+- backend: smoke import local de `FastAPI` y `GET /api/health`
+- frontend: `npm run build`
 
-## Limitaciones reales encontradas
+## Limites actuales
 
-- La API de claims sí permite lectura y mensajería, pero la disponibilidad real depende del estado y de las acciones expuestas por Mercado Libre en cada caso.
-- No implementé mediaciones complejas ni acciones no verificadas documentalmente.
-- El link humano al reclamo dentro de Mercado Libre no quedó generado porque no encontré una URL oficial/documentada estable para construirlo sin inventar.
-- El detalle de order asociado al claim quedó preparado para crecer, pero en este MVP se priorizó no asumir estructuras no verificadas.
-- Tu `.env` actual no está declarando todavía aliases estables para `buyer` y `personal`.
+- los tokens de Mercado Libre se guardan en SQLite en el servidor; para endurecer aun mas produccion, el siguiente paso recomendado es cifrado de tokens en reposo
+- la disponibilidad real de mensajeria en claims sigue dependiendo del estado y de las reglas reales de Mercado Libre
+- el login protege la app y el API, pero no reemplaza buenas practicas de despliegue como HTTPS, rotacion de secretos y backups cifrados de la base
 
 ## Referencias oficiales usadas
 
+- OAuth / autorizacion:
+  `https://developers.mercadolibre.com.ar/es_ar/autenticacion-y-autorizacion/aprende-a-utilizar-nuestra-api`
+- Auth / refresh token:
+  `https://developers.mercadolibre.cl/en_us/application-management/authentication-and-authorization`
 - Questions & Answers:
   `https://developers.mercadolibre.com.ni/en_us/usuarios-y-aplicaciones/questions`
 - Claims:
@@ -260,12 +204,3 @@ El proxy del frontend apunta a `http://127.0.0.1:8000`.
   `https://developers.mercadolibre.com.bo/en_us/items-and-searches`
 - Items update:
   `https://developers.mercadolibre.com.bo/en_us/products-sync-listings`
-- Auth / refresh token:
-  `https://developers.mercadolibre.cl/en_us/application-management/authentication-and-authorization`
-
-## Próximos pasos recomendados
-
-1. Normalizar `.env` con `ML_SELLER_*`, `ML_PERSONAL_*` y `ML_BUYER_*`.
-2. Probar con datos reales de claims para ajustar `receiver_role` por flujo.
-3. Agregar enriquecimiento opcional de órdenes si querés más contexto en reclamos.
-4. Sumar persistencia segura de tokens refrescados si querés conservar refresh en reinicios del backend.

@@ -45,6 +45,7 @@ class AccountCredentials:
     scope: str | None = None
     user_id: int | None = None
     source: str = "env"
+    is_active: bool = True
 
 
 @dataclass(slots=True)
@@ -53,10 +54,15 @@ class Settings:
     api_prefix: str
     api_base_url: str
     auth_base_url: str
+    oauth_authorize_url: str
     app_id: str
     client_secret: str
     redirect_uri: str | None
     frontend_origin: str
+    database_path: Path
+    session_cookie_name: str
+    session_cookie_secure: bool
+    session_ttl_hours: int
     default_account: str
     accounts: dict[str, AccountCredentials]
 
@@ -153,10 +159,19 @@ def get_settings() -> Settings:
         api_prefix="/api",
         api_base_url=str(_first(merged_values, "ML_API_BASE") or "https://api.mercadolibre.com"),
         auth_base_url=str(_first(merged_values, "ML_AUTH_BASE") or "https://api.mercadolibre.com"),
+        oauth_authorize_url=str(
+            _first(merged_values, "ML_OAUTH_AUTHORIZE_URL") or "https://auth.mercadolibre.com.ar/authorization"
+        ),
         app_id=str(_first(merged_values, "ML_APP_ID") or ""),
         client_secret=str(_first(merged_values, "ML_CLIENT_SECRET") or ""),
         redirect_uri=str(_first(merged_values, "ML_REDIRECT_URI")) if _first(merged_values, "ML_REDIRECT_URI") else None,
         frontend_origin=str(_first(merged_values, "FRONTEND_ORIGIN") or "http://localhost:4200"),
+        database_path=Path(str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")).resolve()
+        if Path(str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")).is_absolute()
+        else ROOT_DIR / str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3"),
+        session_cookie_name=str(_first(merged_values, "SESSION_COOKIE_NAME") or "kaizen_session"),
+        session_cookie_secure=str(_first(merged_values, "SESSION_COOKIE_SECURE") or "").strip().lower() in {"1", "true", "yes", "on"},
+        session_ttl_hours=_to_int(_first(merged_values, "SESSION_TTL_HOURS")) or (24 * 14),
         default_account=default_account,
         accounts=accounts,
     )
