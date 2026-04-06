@@ -1,0 +1,107 @@
+<section class="panel detail-panel">
+  <header class="panel-header">
+    <div class="panel-copy">
+      <p class="eyebrow">Detalle</p>
+      <h2>Pregunta seleccionada</h2>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="state">Cargando detalle...</p>
+  } @else if (error()) {
+    <p class="state error">{{ error() }}</p>
+  } @else if (!question()) {
+    <p class="state">Selecciona una pregunta para ver su detalle.</p>
+  } @else {
+    <div class="detail-grid">
+      @if (question(); as currentQuestion) {
+      <div class="card hero-card full-width">
+        <div class="card-top">
+          <span class="badge" [class.answered]="currentQuestion.has_answer">
+            {{ currentQuestion.has_answer ? 'Respondida' : 'Pendiente' }}
+          </span>
+          <span class="detail-anchor">Question #{{ currentQuestion.id }}</span>
+        </div>
+        <h3>{{ currentQuestion.text }}</h3>
+        <p class="card-note">
+          {{
+            currentQuestion.answer?.text
+              ? 'La pregunta ya tiene una respuesta registrada en Mercado Libre.'
+              : currentQuestion.can_answer
+                ? 'Todavia no tiene respuesta. Puedes contestarla desde este panel.'
+                : currentQuestion.answer_limitations || 'Mercado Libre no permite responder esta pregunta por el estado actual.'
+          }}
+        </p>
+      </div>
+
+      <div class="card info-card">
+        <h3>Contexto</h3>
+        <div class="field-grid">
+          <div class="field">
+            <span class="field-label">Creada</span>
+            <strong>{{ currentQuestion.date_created | date: 'medium' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Usuario</span>
+            <strong>{{ currentQuestion.from_user_id || 'N/D' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Seller</span>
+            <strong>{{ currentQuestion.seller_id || 'N/D' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Estado</span>
+            <strong>{{ currentQuestion.status || 'N/D' }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card info-card">
+        <h3>Publicacion</h3>
+        <div class="field-grid">
+          <div class="field">
+            <span class="field-label">Item ID</span>
+            <strong>{{ currentQuestion.item?.id || 'N/D' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Estado</span>
+            <strong>{{ currentQuestion.item?.status || 'N/D' }}</strong>
+          </div>
+        </div>
+        <p class="card-note">{{ currentQuestion.item?.title || 'No se informo una publicacion asociada.' }}</p>
+        @if (currentQuestion.item?.permalink) {
+          <a class="link-action" [href]="currentQuestion.item?.permalink" target="_blank" rel="noreferrer">
+            Abrir publicacion
+          </a>
+        }
+      </div>
+
+      <div class="card response-card full-width">
+        <h3>Respuesta</h3>
+        @if (currentQuestion.answer?.text) {
+          <blockquote>{{ currentQuestion.answer?.text }}</blockquote>
+          <p class="meta">Respondida: {{ currentQuestion.answer?.date_created | date: 'medium' }}</p>
+        } @else if (!currentQuestion.can_answer) {
+          <div class="limitation-box">
+            <strong>Accion no disponible</strong>
+            <p>{{ currentQuestion.answer_limitations || 'Mercado Libre no habilita la respuesta para esta pregunta.' }}</p>
+          </div>
+        } @else {
+          <p class="card-note">La respuesta se envia desde el backend y refresca la vista al completar.</p>
+          <textarea
+            rows="6"
+            [ngModel]="answerText()"
+            (ngModelChange)="answerText.set($event)"
+            placeholder="Escribe la respuesta para enviar a Mercado Libre"
+          ></textarea>
+          <div class="actions">
+            <button type="button" [disabled]="submitting() || !answerText().trim()" (click)="sendAnswer()">
+              {{ submitting() ? 'Enviando...' : 'Responder' }}
+            </button>
+          </div>
+        }
+      </div>
+      }
+    </div>
+  }
+</section>

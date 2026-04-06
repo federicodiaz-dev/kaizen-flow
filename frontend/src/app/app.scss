@@ -1,0 +1,234 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(215, 231, 233, 0.92), transparent 26%),
+    radial-gradient(circle at 100% 12%, rgba(224, 208, 188, 0.65), transparent 24%),
+    linear-gradient(180deg, #f5efe2 0%, #edf1ef 56%, #f4efe5 100%);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  padding: 1.5rem 1.4rem;
+  border-right: 1px solid rgba(34, 54, 68, 0.1);
+  background:
+    linear-gradient(180deg, rgba(18, 46, 57, 0.96), rgba(22, 56, 70, 0.94)),
+    rgba(255, 255, 255, 0.72);
+  color: white;
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+}
+
+.brand-shell {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.brand-mark {
+  width: 3.4rem;
+  height: 3.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1.1rem;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.94), rgba(214, 230, 233, 0.76));
+  color: #163c49;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.16);
+}
+
+.brand h1 {
+  margin: 0.2rem 0 0.25rem;
+  font-size: 2rem;
+  color: white;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  color: rgba(226, 236, 239, 0.72);
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(226, 236, 239, 0.86);
+  line-height: 1.45;
+}
+
+.account-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1.35rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.account-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.account-card-top strong {
+  font-size: 1.1rem;
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.32rem 0.6rem;
+  background: rgba(242, 193, 110, 0.2);
+  color: #ffd9a2;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.account-picker {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.account-picker span {
+  font-size: 0.85rem;
+  color: rgba(226, 236, 239, 0.82);
+}
+
+.account-picker select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.account-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.meta-block {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.meta-label {
+  color: rgba(226, 236, 239, 0.72);
+  font-size: 0.78rem;
+}
+
+.nav-links {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 1.15rem;
+  text-decoration: none;
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  transition: background-color 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.nav-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+}
+
+.nav-copy {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.nav-copy strong {
+  font-size: 0.98rem;
+}
+
+.nav-copy small {
+  color: rgba(226, 236, 239, 0.72);
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  background: linear-gradient(135deg, rgba(68, 129, 142, 0.38), rgba(206, 127, 91, 0.22));
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateX(3px);
+}
+
+.sidebar-state {
+  margin: 0;
+  padding: 0.8rem 0.95rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.sidebar-state.error {
+  background: rgba(194, 94, 64, 0.22);
+  color: #ffd2c7;
+}
+
+.sidebar-foot {
+  margin-top: auto;
+  padding: 1rem;
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.foot-copy {
+  margin: 0.4rem 0 0;
+  line-height: 1.5;
+  color: rgba(226, 236, 239, 0.8);
+}
+
+.page-content {
+  padding: 1.6rem;
+}
+
+.content-stage {
+  width: min(1460px, 100%);
+  margin: 0 auto;
+}
+
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(34, 54, 68, 0.12);
+    position: static;
+    min-height: unset;
+  }
+
+  .page-content {
+    padding: 1rem;
+  }
+}

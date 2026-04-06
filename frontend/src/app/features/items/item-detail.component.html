@@ -1,0 +1,137 @@
+<section class="panel detail-panel">
+  <header class="panel-header">
+    <div class="panel-copy">
+      <p class="eyebrow">Detalle</p>
+      <h2>Producto</h2>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="state">Cargando detalle...</p>
+  } @else if (error()) {
+    <p class="state error">{{ error() }}</p>
+  } @else if (!item()) {
+    <p class="state">Selecciona un producto para ver el detalle.</p>
+  } @else {
+    <div class="detail-grid">
+      @if (item(); as currentItem) {
+      <div class="card product-hero full-width">
+        <div class="product-layout">
+          <div class="product-visual">
+            @if (resolvePrimaryImage(currentItem); as heroImage) {
+              <img [src]="heroImage" [alt]="currentItem.title" />
+            } @else {
+              <span>{{ currentItem.title.slice(0, 1) }}</span>
+            }
+          </div>
+
+          <div class="product-copy">
+            <div class="card-top">
+              <span class="badge">{{ currentItem.status || 'sin estado' }}</span>
+              <span class="detail-anchor">{{ currentItem.id }}</span>
+            </div>
+            <h3>{{ currentItem.title }}</h3>
+            <p class="card-note">
+              Ultima actualizacion {{ currentItem.last_updated | date: 'medium' }} · Tipo
+              {{ currentItem.listing_type_id || 'N/D' }}
+            </p>
+            <div class="metric-strip">
+              <div class="metric-box">
+                <span>Precio</span>
+                <strong>{{ currentItem.price | currency: currentItem.currency_id || 'ARS' }}</strong>
+              </div>
+              <div class="metric-box">
+                <span>Stock</span>
+                <strong>{{ currentItem.available_quantity ?? 'N/D' }}</strong>
+              </div>
+              <div class="metric-box">
+                <span>Vendidos</span>
+                <strong>{{ currentItem.sold_quantity ?? 'N/D' }}</strong>
+              </div>
+            </div>
+            @if (currentItem.permalink) {
+              <a class="link-action" [href]="currentItem.permalink" target="_blank" rel="noreferrer">
+                Abrir publicacion en Mercado Libre
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="card info-card">
+        <h3>Ficha rapida</h3>
+        <div class="field-grid">
+          <div class="field">
+            <span class="field-label">Seller</span>
+            <strong>{{ currentItem.seller_id || 'N/D' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Categoria</span>
+            <strong>{{ currentItem.category_id || 'N/D' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Condicion</span>
+            <strong>{{ currentItem.condition || 'N/D' }}</strong>
+          </div>
+          <div class="field">
+            <span class="field-label">Variaciones</span>
+            <strong>{{ currentItem.variations.length }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card edit-card">
+        <h3>Edicion basica</h3>
+        <p class="card-note">Usa cambios chicos y verificables para este MVP.</p>
+        <label>
+          <span>Titulo</span>
+          <input
+            type="text"
+            [ngModel]="form().title"
+            (ngModelChange)="updateField('title', $event)"
+            [disabled]="(currentItem.sold_quantity || 0) > 0"
+          />
+        </label>
+        @if ((currentItem.sold_quantity || 0) > 0) {
+          <p class="hint">Mercado Libre documenta que el titulo solo puede editarse si la publicacion no tiene ventas.</p>
+        }
+
+        <label>
+          <span>Precio</span>
+          <input
+            type="number"
+            min="0"
+            [ngModel]="form().price"
+            (ngModelChange)="updateField('price', parseNullableNumber($event))"
+          />
+        </label>
+
+        <label>
+          <span>Stock</span>
+          <input
+            type="number"
+            min="0"
+            [ngModel]="form().available_quantity"
+            (ngModelChange)="updateField('available_quantity', parseNullableNumber($event))"
+          />
+        </label>
+
+        <label>
+          <span>Estado</span>
+          <select [ngModel]="form().status" (ngModelChange)="updateField('status', $event)">
+            <option value="active">active</option>
+            <option value="paused">paused</option>
+            <option value="closed">closed</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button type="button" [disabled]="saving() || !hasPendingChanges()" (click)="submit()">
+            {{ saving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+  }
+</section>

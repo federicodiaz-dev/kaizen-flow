@@ -1,0 +1,91 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand-shell">
+      <div class="brand-mark">KF</div>
+      <div class="brand">
+        <p class="eyebrow">Mercado Libre workspace</p>
+        <h1>Kaizen Flow</h1>
+        <p class="subtitle">Preguntas, reclamos y publicaciones en una sola vista de trabajo.</p>
+      </div>
+    </div>
+
+    <section class="account-card">
+      <div class="account-card-top">
+        <div>
+          <p class="eyebrow">Workspace activo</p>
+          <strong>{{ currentAccountLabel() }}</strong>
+        </div>
+        <span class="live-pill">Private</span>
+      </div>
+
+      <label class="account-picker">
+        <span>Cambiar cuenta</span>
+        <select
+          [disabled]="accountContext.loading() || accountContext.accounts().length === 0"
+          [ngModel]="accountContext.selectedAccount()"
+          (ngModelChange)="onAccountChange($event)"
+        >
+          @for (account of accountContext.accounts(); track account.key) {
+            <option [value]="account.key">
+              {{ account.label }} ({{ account.key }})
+            </option>
+          }
+        </select>
+      </label>
+
+      <div class="account-meta">
+        <div class="meta-block">
+          <span class="meta-label">Cuentas</span>
+          <strong>{{ accountContext.accountCount() }}</strong>
+        </div>
+        <div class="meta-block">
+          <span class="meta-label">Default</span>
+          <strong>{{ accountContext.defaultAccount() || '-' }}</strong>
+        </div>
+      </div>
+    </section>
+
+    @if (accountContext.loading()) {
+      <p class="sidebar-state">Cargando cuentas...</p>
+    }
+
+    @if (accountContext.error()) {
+      <p class="sidebar-state error">{{ accountContext.error() }}</p>
+    }
+
+    <nav class="nav-links">
+      <a routerLink="/questions" routerLinkActive="active">
+        <span class="nav-icon">Q</span>
+        <span class="nav-copy">
+          <strong>Preguntas</strong>
+          <small>Inbox y respuestas</small>
+        </span>
+      </a>
+      <a routerLink="/claims" routerLinkActive="active">
+        <span class="nav-icon">C</span>
+        <span class="nav-copy">
+          <strong>Reclamos</strong>
+          <small>Seguimiento postventa</small>
+        </span>
+      </a>
+      <a routerLink="/items" routerLinkActive="active">
+        <span class="nav-icon">I</span>
+        <span class="nav-copy">
+          <strong>Productos</strong>
+          <small>Catalogo y ajustes</small>
+        </span>
+      </a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <p class="eyebrow">Panel privado</p>
+      <p class="foot-copy">Pensado para operar rapido, con foco en decisiones y no en clicks de mas.</p>
+    </div>
+  </aside>
+
+  <main class="page-content">
+    <div class="content-stage">
+      <router-outlet />
+    </div>
+  </main>
+</div>

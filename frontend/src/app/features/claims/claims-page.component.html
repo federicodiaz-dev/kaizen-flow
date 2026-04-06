@@ -1,0 +1,73 @@
+<section class="page">
+  <header class="page-hero claims-theme">
+    <div class="hero-layout">
+      <div>
+        <p class="hero-kicker">Claims workspace</p>
+        <h1 class="hero-title">Lee el contexto antes de mover una ficha.</h1>
+        <p class="hero-body">
+          El panel concentra estado, participantes, historial y mensajeria disponible sin inventar acciones que la API no soporte.
+        </p>
+        <div class="hero-tags">
+          <span class="hero-tag">Cuenta {{ activeAccountLabel() }}</span>
+          <span class="hero-tag">{{ openClaims() }} abiertos</span>
+          <span class="hero-tag">{{ actionableClaims() }} con acciones</span>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <p class="hero-panel-label">Reclamo activo</p>
+        <h3>{{ selectedClaim() ? '#' + selectedClaim()?.id : 'Seguimiento postventa' }}</h3>
+        <p>
+          {{
+            selectedClaim()
+              ? (selectedClaim()?.reason_detail?.name || selectedClaim()?.reason_id || 'Sin motivo detallado')
+              : 'Selecciona un reclamo para ver mensajes, acciones disponibles e historial.'
+          }}
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div class="stat-row">
+    <article class="stat-card">
+      <span class="stat-label">Totales</span>
+      <strong class="stat-value">{{ totalClaims() }}</strong>
+      <span class="stat-foot">Casos visibles en la cuenta activa.</span>
+    </article>
+
+    <article class="stat-card">
+      <span class="stat-label">Abiertos</span>
+      <strong class="stat-value">{{ openClaims() }}</strong>
+      <span class="stat-foot">Seguimiento recomendado en el panel.</span>
+    </article>
+
+    <article class="stat-card">
+      <span class="stat-label">Con acciones</span>
+      <strong class="stat-value">{{ actionableClaims() }}</strong>
+      <span class="stat-foot">La API informo al menos una accion disponible.</span>
+    </article>
+  </div>
+
+  <section class="feature-shell">
+    <app-claim-list
+      [claims]="filteredClaims()"
+      [selectedId]="selectedClaimId()"
+      [loading]="loadingList()"
+      [error]="listError()"
+      [searchText]="searchText()"
+      [statusFilter]="statusFilter()"
+      (searchTextChange)="searchText.set($event)"
+      (statusFilterChange)="statusFilter.set($event)"
+      (refresh)="loadClaims(accountContext.selectedAccount()!)"
+      (selectClaim)="onSelectClaim($event)"
+    />
+
+    <app-claim-detail
+      [claim]="selectedClaim()"
+      [loading]="loadingDetail()"
+      [error]="detailError()"
+      [sending]="sending()"
+      (sendMessage)="onSendMessage($event)"
+    />
+  </section>
+</section>

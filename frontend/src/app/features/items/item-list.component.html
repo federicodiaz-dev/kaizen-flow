@@ -1,0 +1,68 @@
+<section class="panel">
+  <header class="panel-header">
+    <div class="panel-copy">
+      <p class="eyebrow">Catalogo</p>
+      <div class="panel-title-row">
+        <h2>Publicaciones</h2>
+        <span class="panel-count">{{ items().length }}</span>
+      </div>
+      <p class="panel-subtitle">Filtra por estado y entra al detalle con contexto visual.</p>
+    </div>
+    <button type="button" class="secondary" (click)="refresh.emit()">Actualizar</button>
+  </header>
+
+  <div class="toolbar">
+    <input
+      type="search"
+      [ngModel]="searchText()"
+      (ngModelChange)="searchTextChange.emit($event)"
+      placeholder="Buscar por titulo o ID"
+    />
+
+    <select [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
+      <option value="all">Todos</option>
+      <option value="active">Activos</option>
+      <option value="paused">Pausados</option>
+      <option value="closed">Cerrados</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <p class="state">Cargando productos...</p>
+  } @else if (error()) {
+    <p class="state error">{{ error() }}</p>
+  } @else if (items().length === 0) {
+    <p class="state">No hay productos.</p>
+  } @else {
+    <div class="list">
+      @for (item of items(); track item.id) {
+        <button
+          type="button"
+          class="list-row item-row"
+          [class.selected]="item.id === selectedId()"
+          (click)="selectItem.emit(item.id)"
+        >
+          <div class="thumb-shell">
+            @if (item.thumbnail) {
+              <img [src]="item.thumbnail" [alt]="item.title" />
+            } @else {
+              <span>{{ item.title.slice(0, 1) }}</span>
+            }
+          </div>
+          <div class="row-content">
+            <div class="row-top">
+              <span class="badge">{{ item.status || 'sin estado' }}</span>
+              <span class="row-id">{{ item.id }}</span>
+            </div>
+            <strong class="row-title">{{ item.title }}</strong>
+            <div class="row-bottom">
+              <span class="mini-pill">{{ item.price | currency: item.currency_id || 'ARS' }}</span>
+              <span class="meta">Stock {{ item.available_quantity ?? 'N/D' }}</span>
+              <span class="meta">{{ item.last_updated | date: 'short' }}</span>
+            </div>
+          </div>
+        </button>
+      }
+    </div>
+  }
+</section>
