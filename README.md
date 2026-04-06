@@ -191,6 +191,12 @@ AI_MCP_ENV_JSON={}
 AI_MCP_CWD=
 ```
 
+Notas MCP:
+
+- para transporte HTTP, Kaizen Flow usa automáticamente el `access_token` de la cuenta activa o de la cuenta por defecto
+- si el MCP responde `401`, el backend intenta refrescar ese token con el `refresh_token` configurado y reintenta la conexión
+- `AI_MCP_HEADERS_JSON` queda reservado para headers extra no relacionados con autenticación
+
 ## Cómo correr
 
 ### Backend

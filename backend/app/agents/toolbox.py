@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import Counter
+from collections.abc import AsyncGenerator, Callable
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -49,6 +50,54 @@ class RuntimeContext:
     site_id: str
 
 
+class _MercadoLibreMCPAuth(httpx.Auth):
+    requires_request_body = True
+
+    def __init__(
+        self,
+        *,
+        account_key_provider: Callable[[], str],
+        account_store: AccountStore,
+        ml_client: MercadoLibreClient,
+        refresh_lock: asyncio.Lock,
+    ) -> None:
+        self._account_key_provider = account_key_provider
+        self._account_store = account_store
+        self._ml_client = ml_client
+        self._refresh_lock = refresh_lock
+
+    async def async_auth_flow(
+        self,
+        request: httpx.Request,
+    ) -> AsyncGenerator[httpx.Request, httpx.Response]:
+        account_key = self._account_key_provider()
+        account = self._account_store.get_account(account_key)
+        request.headers["Authorization"] = f"Bearer {account.access_token}"
+
+        response = yield request
+
+        if response.status_code != 401:
+            return
+        if request.extensions.get("kaizen_mcp_token_refreshed"):
+            return
+        if not account.refresh_token:
+            return
+
+        await self._refresh_access_token(account_key, stale_access_token=account.access_token)
+        refreshed_account = self._account_store.get_account(account_key)
+
+        request.extensions["kaizen_mcp_token_refreshed"] = True
+        request.headers["Authorization"] = f"Bearer {refreshed_account.access_token}"
+        yield request
+
+    async def _refresh_access_token(self, account_key: str, *, stale_access_token: str) -> None:
+        async with self._refresh_lock:
+            current_account = self._account_store.get_account(account_key)
+            if current_account.access_token != stale_access_token:
+                return
+            await self._ml_client.refresh_access_token(account_key)
+
+
 class AgentToolbox:
     def __init__(
         self,
@@ -93,6 +142,7 @@ class AgentToolbox:
         self._mcp_tools: list[BaseTool] | None = None
         self._mcp_error: str | None = None
         self._mcp_lock = asyncio.Lock()
+        self._mcp_refresh_lock = asyncio.Lock()
 
     @property
     def mcp_configured(self) -> bool:
@@ -184,7 +234,7 @@ class AgentToolbox:
                 raise RuntimeError(self._mcp_error) from exc
 
             try:
-                connection = self._agent_settings.mcp.to_connection_config()
+                connection = self._build_mcp_connection()
                 if connection is None:
                     self._mcp_tools = []
                     return self._mcp_tools
@@ -229,6 +279,56 @@ class AgentToolbox:
             "error": "tool_error",
             "message": str(exc),
         }
+
+    def _resolve_mcp_account_key(self) -> str:
+        runtime = self._runtime_context.get()
+        if runtime is not None and self._account_store.has_account(runtime.account_key):
+            return runtime.account_key
+        return self._account_store.resolve_account_key(None)
+
+    def _build_mcp_connection(self) -> dict[str, Any] | None:
+        connection = self._agent_settings.mcp.to_connection_config()
+        if connection is None:
+            return None
+
+        transport = str(connection.get("transport") or "").lower()
+        if transport not in {"http", "streamable_http", "streamable-http", "sse"}:
+            return connection
+
+        updated_connection = dict(connection)
+        raw_headers = dict(updated_connection.get("headers") or {})
+        sanitized_headers = {
+            key: value for key, value in raw_headers.items() if key.lower() != "authorization"
+        }
+        if sanitized_headers:
+            updated_connection["headers"] = sanitized_headers
+        else:
+            updated_connection.pop("headers", None)
+
+        updated_connection["httpx_client_factory"] = self._create_mcp_http_client
+        return updated_connection
+
+    def _create_mcp_http_client(
+        self,
+        headers: dict[str, str] | None = None,
+        timeout: httpx.Timeout | None = None,
+        auth: httpx.Auth | None = None,
+    ) -> httpx.AsyncClient:
+        from mcp.shared._httpx_utils import create_mcp_http_client
+
+        merged_headers = dict(headers or {})
+        merged_headers.pop("Authorization", None)
+
+        return create_mcp_http_client(
+            headers=merged_headers or None,
+            timeout=timeout,
+            auth=_MercadoLibreMCPAuth(
+                account_key_provider=self._resolve_mcp_account_key,
+                account_store=self._account_store,
+                ml_client=self._ml_client,
+                refresh_lock=self._mcp_refresh_lock,
+            ),
+        )
 
     async def _account_summary_payload(self, account_key: str) -> dict[str, Any]:
         account = self._account_store.get_account(account_key)

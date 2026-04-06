@@ -1,17 +1,34 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
 from app.agents.memory import JsonAgentMemoryStore
-from app.agents.prompts import ACCOUNT_AGENT_PROMPT, INTENT_ANALYST_PROMPT, MARKET_AGENT_PROMPT
+from app.agents.prompts import ACCOUNT_AGENT_PROMPT, INTENT_ANALYST_PROMPT, MARKET_AGENT_PROMPT, SMART_CLARIFICATION_PROMPT
 from app.agents.state import BusinessAssistantState, SpecializedAgentState
 from app.schemas.agents import AgentIntentMetadata
 
 
-INTENT_CONFIDENCE_THRESHOLD = 0.65
+INTENT_CONFIDENCE_THRESHOLD = 0.40
+logger = logging.getLogger("kaizen-flow.agents")
+
+
+
+
+def _extract_previous_route(chat_history: str) -> str | None:
+    """Extract the route from the most recent assistant message metadata in chat history."""
+    # Look for route patterns in the serialized history
+    lines = chat_history.strip().split("\n")
+    for line in reversed(lines):
+        lowered = line.lower()
+        if "mercadolibre_account" in lowered:
+            return "mercadolibre_account"
+        if "market_intelligence" in lowered:
+            return "market_intelligence"
+    return None
 
 
 def _stringify_message_content(content: Any) -> str:
@@ -50,6 +67,74 @@ def _last_ai_message_text(messages: list[BaseMessage] | None) -> str:
     return ""
 
 
+def _is_tool_use_failed_error(exc: Exception) -> bool:
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        error = body.get("error")
+        if isinstance(error, dict) and error.get("code") == "tool_use_failed":
+            return True
+    lowered = str(exc).lower()
+    return "tool_use_failed" in lowered or "failed to call a function" in lowered
+
+
+def _extract_failed_generation(exc: Exception) -> str | None:
+    body = getattr(exc, "body", None)
+    if not isinstance(body, dict):
+        return None
+    error = body.get("error")
+    if not isinstance(error, dict):
+        return None
+    failed_generation = error.get("failed_generation")
+    if isinstance(failed_generation, str) and failed_generation.strip():
+        return failed_generation.strip()
+    return None
+
+
+def _append_recovery_instruction(
+    messages: list[BaseMessage],
+    *,
+    specialist: str,
+) -> list[BaseMessage]:
+    if specialist == "account":
+        instruction = (
+            "Tool calling failed in the previous attempt. Do not call any tools now. "
+            "Answer directly using only the conversation and any prior tool outputs already present. "
+            "Do not invent account-specific facts, counts, statuses, policies, URLs, or claim details. "
+            "If live verification is still needed, say so clearly and ask for the claim id, item id, or a retry. "
+            "Avoid markdown links."
+        )
+    else:
+        instruction = (
+            "Tool calling failed in the previous attempt. Do not call any tools now. "
+            "Answer directly using only the conversation and any prior tool outputs already present. "
+            "Be explicit about uncertainty and avoid invented URLs or citations. "
+            "Avoid markdown links."
+        )
+    return [*messages, SystemMessage(content=instruction)]
+
+
+def _safe_reasoner_fallback_message(*, specialist: str) -> str:
+    if specialist == "account":
+        return (
+            "## Respuesta\n"
+            "Tuve un problema al consultar las herramientas en este intento, así que no pude verificar datos en vivo de la cuenta.\n\n"
+            "## Evidencia Utilizada\n"
+            "No hubo salida confiable de herramientas en esta ejecución.\n\n"
+            "## Siguiente Paso\n"
+            "Probá de nuevo o pasame el ID del reclamo, pregunta o publicación que querés revisar para acotar la consulta."
+        )
+    return (
+        "## Recomendacion Principal\n"
+        "Tuve un problema al consultar herramientas en este intento, así que no puedo sostener una recomendación fuerte con datos verificados.\n\n"
+        "## Por Que Tiene Sentido\n"
+        "Prefiero no inventar señales de mercado cuando la consulta no quedó validada.\n\n"
+        "## Riesgos O Dudas\n"
+        "La respuesta podría ser incompleta sin datos en vivo.\n\n"
+        "## Siguiente Validacion\n"
+        "Probá de nuevo con una consulta más puntual para que pueda verificarla mejor."
+    )
+
+
 def build_memory_recall_node(memory_store: JsonAgentMemoryStore, *, history_window: int):
     def memory_recall(state: BusinessAssistantState) -> dict[str, Any]:
         snapshot = memory_store.load_snapshot(state["thread_id"], limit=history_window)
@@ -58,12 +143,49 @@ def build_memory_recall_node(memory_store: JsonAgentMemoryStore, *, history_wind
     return memory_recall
 
 
-def build_intent_analyst_node(router_llm):
+def build_intent_analyst_node(router_llm, worker_llm=None):
+    """Build the intent analyst using a dual-LLM strategy: primary router + worker fallback."""
     structured_llm = router_llm.with_structured_output(AgentIntentMetadata)
+    fallback_structured_llm = (
+        worker_llm.with_structured_output(AgentIntentMetadata) if worker_llm else None
+    )
+
+    async def _invoke_llm_routing(llm_to_use, raw_llm, messages: list) -> AgentIntentMetadata | None:
+        """Attempt structured output, then raw JSON parse, return None if all fail."""
+        # Attempt 1: structured output
+        try:
+            decision = await llm_to_use.ainvoke(messages)
+            return (
+                decision
+                if isinstance(decision, AgentIntentMetadata)
+                else AgentIntentMetadata.model_validate(decision)
+            )
+        except Exception:
+            pass
+
+        # Attempt 2: raw invocation + JSON extraction
+        try:
+            raw_response = await raw_llm.ainvoke(messages)
+            payload = _extract_json_payload(_stringify_message_content(raw_response.content))
+            if payload:
+                return AgentIntentMetadata.model_validate(payload)
+        except Exception:
+            pass
+
+        return None
 
     async def intent_analyst(state: BusinessAssistantState) -> dict[str, Any]:
         user_input = state["user_input"].strip()
         history = state.get("chat_history", "No prior conversation in this thread.")
+
+        # Detect previous routing context for conversation continuity
+        previous_route = _extract_previous_route(history)
+        context_hint = ""
+        if previous_route:
+            context_hint = (
+                f"\n\nIMPORTANT CONTEXT: The previous turn in this conversation was routed to '{previous_route}'. "
+                f"If the current message is a follow-up or continuation, strongly prefer the same route."
+            )
 
         messages = [
             SystemMessage(content=INTENT_ANALYST_PROMPT),
@@ -71,24 +193,53 @@ def build_intent_analyst_node(router_llm):
                 content=(
                     f"Recent conversation:\n{history}\n\n"
                     f"Latest user message:\n{user_input}\n\n"
+                    f"{context_hint}\n\n"
                     "Return the routing decision."
                 )
             ),
         ]
 
-        try:
-            decision = await structured_llm.ainvoke(messages)
-            parsed = decision if isinstance(decision, AgentIntentMetadata) else AgentIntentMetadata.model_validate(decision)
-        except Exception:
-            raw_response = await router_llm.ainvoke(messages)
-            payload = _extract_json_payload(_stringify_message_content(raw_response.content))
-            parsed = AgentIntentMetadata.model_validate(payload or {})
+        # ── Primary LLM (router model) ──
+        parsed = await _invoke_llm_routing(structured_llm, router_llm, messages)
+
+        # ── Fallback LLM (worker model, typically more capable) ──
+        if parsed is None and fallback_structured_llm is not None:
+            parsed = await _invoke_llm_routing(fallback_structured_llm, worker_llm, messages)
+
+        # ── If both LLMs fail entirely, use clarification with a friendly message ──
+        if parsed is None:
+            return {
+                "route": "clarification",
+                "user_goal": "",
+                "normalized_request": user_input,
+                "intent_confidence": 0.5,
+                "reasoning": "Both primary and fallback LLMs failed to produce a routing decision.",
+                "needs_account_context": False,
+                "needs_market_context": False,
+                "required_data_points": [],
+                "clarifying_question": (
+                    "Disculpá, tuve un problema procesando tu mensaje. "
+                    "¿Podrías reformularlo? Puedo ayudarte con tu cuenta de Mercado Libre o análisis de mercado."
+                ),
+            }
+
+        # Apply conversation continuity boost
+        route = parsed.route
+        confidence = parsed.confidence
+
+        if previous_route and route == previous_route and confidence < 0.85:
+            confidence = max(confidence, 0.85)
+
+        # If low confidence but previous route exists, inherit it
+        if confidence < INTENT_CONFIDENCE_THRESHOLD and previous_route:
+            route = previous_route
+            confidence = 0.70
 
         return {
-            "route": parsed.route,
+            "route": route,
             "user_goal": parsed.user_goal,
             "normalized_request": parsed.normalized_request or user_input,
-            "intent_confidence": parsed.confidence,
+            "intent_confidence": confidence,
             "reasoning": parsed.reasoning,
             "needs_account_context": parsed.needs_account_context,
             "needs_market_context": parsed.needs_market_context,
@@ -109,8 +260,6 @@ def build_route_guard_node():
             return {
                 "route": "clarification",
                 "selected_agent": "clarification",
-                "final_response": clarification
-                or "Necesito una precision corta para ayudarte bien: queres revisar tu cuenta actual de Mercado Libre o queres analizar mercado/productos?",
             }
 
         selected_agent = (
@@ -123,12 +272,46 @@ def build_route_guard_node():
     return route_guard
 
 
-def build_clarification_node():
-    def clarification(state: BusinessAssistantState) -> dict[str, Any]:
-        if state.get("final_response"):
+def build_clarification_node(clarification_llm=None):
+    async def clarification(state: BusinessAssistantState) -> dict[str, Any]:
+        # If there's already a clarifying question from the router, use it
+        existing = (state.get("clarifying_question") or "").strip()
+        if existing and state.get("final_response"):
             return {}
+
+        if existing:
+            return {"final_response": existing}
+
+        # Use LLM to generate intelligent clarification
+        if clarification_llm is not None:
+            try:
+                user_input = state.get("user_input", "").strip()
+                history = state.get("chat_history", "No prior conversation.")
+
+                messages = [
+                    SystemMessage(content=SMART_CLARIFICATION_PROMPT),
+                    HumanMessage(
+                        content=(
+                            f"Chat history:\n{history}\n\n"
+                            f"User's latest message:\n{user_input}\n\n"
+                            "Generate a friendly, contextual clarification."
+                        )
+                    ),
+                ]
+                response = await clarification_llm.ainvoke(messages)
+                text = _stringify_message_content(response.content).strip()
+                if text:
+                    return {"final_response": text}
+            except Exception:
+                pass
+
+        # Fallback: at least be friendly
         return {
-            "final_response": "Necesito una aclaracion mas puntual para poder ayudarte sin asumir mal tu objetivo.",
+            "final_response": (
+                "¡Hola! No estuve seguro de interpretar tu mensaje. "
+                "¿Querés que revise algo de tu cuenta de Mercado Libre "
+                "(publicaciones, reclamos, preguntas) o preferís analizar el mercado?"
+            ),
         }
 
     return clarification
@@ -159,10 +342,41 @@ def build_prepare_specialist_context_node(*, specialist: str, tooling_summary: s
     return prepare_context
 
 
-def build_tool_reasoner_node(bound_model):
+def build_tool_reasoner_node(bound_model, llm, *, specialist: str):
     async def tool_reasoner(state: SpecializedAgentState) -> dict[str, Any]:
-        response = await bound_model.ainvoke(state.get("messages", []))
-        return {"messages": [response]}
+        messages = state.get("messages", [])
+        try:
+            response = await bound_model.ainvoke(messages)
+            return {"messages": [response]}
+        except Exception as exc:
+            if not _is_tool_use_failed_error(exc):
+                raise
+
+            failed_generation = _extract_failed_generation(exc)
+            if failed_generation:
+                logger.warning(
+                    "Groq tool calling failed for %s specialist. Failed generation: %s",
+                    specialist,
+                    failed_generation,
+                )
+            else:
+                logger.warning(
+                    "Groq tool calling failed for %s specialist.",
+                    specialist,
+                    exc_info=True,
+                )
+
+            recovery_messages = _append_recovery_instruction(messages, specialist=specialist)
+            try:
+                recovery_response = await llm.ainvoke(recovery_messages)
+                return {"messages": [recovery_response]}
+            except Exception:
+                logger.warning(
+                    "Direct-answer fallback also failed for %s specialist.",
+                    specialist,
+                    exc_info=True,
+                )
+                return {"messages": [AIMessage(content=_safe_reasoner_fallback_message(specialist=specialist))]}
 
     return tool_reasoner
 

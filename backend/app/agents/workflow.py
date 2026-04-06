@@ -46,7 +46,10 @@ def build_specialist_graph(
             tooling_summary=tooling_summary,
         ),
     )
-    builder.add_node(reasoner_node_name, build_tool_reasoner_node(bound_model))
+    builder.add_node(
+        reasoner_node_name,
+        build_tool_reasoner_node(bound_model, llm, specialist=specialist),
+    )
     builder.add_node(tools_node_name, ToolNode(tools))
     builder.add_node(finalize_node_name, build_finalize_specialist_node())
 
@@ -92,11 +95,11 @@ async def build_business_assistant_graph(
 
     builder = StateGraph(BusinessAssistantState)
     builder.add_node("memory_recall", build_memory_recall_node(memory_store, history_window=history_window))
-    builder.add_node("intent_analyst", build_intent_analyst_node(router_llm))
+    builder.add_node("intent_analyst", build_intent_analyst_node(router_llm, worker_llm))
     builder.add_node("route_guard", build_route_guard_node())
     builder.add_node("mercadolibre_account", build_account_dispatch_node(account_graph))
     builder.add_node("market_intelligence", build_market_dispatch_node(market_graph))
-    builder.add_node("clarification", build_clarification_node())
+    builder.add_node("clarification", build_clarification_node(worker_llm))
     builder.add_node("memory_writer", build_memory_writer_node(memory_store))
 
     builder.add_edge(START, "memory_recall")

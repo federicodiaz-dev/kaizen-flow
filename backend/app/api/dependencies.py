@@ -101,3 +101,13 @@ def resolve_account(
     x_kaizen_account: str | None = Header(default=None, alias="X-Kaizen-Account"),
 ) -> str:
     return account_store.resolve_account_key(account or x_kaizen_account)
+
+
+def get_copywriter_service(request: Request) -> "CopywriterService":
+    from app.services.copywriter import CopywriterService as _CopywriterService
+
+    service = getattr(request.app.state, "copywriter_service", None)
+    if service is None:
+        service = _CopywriterService()
+        request.app.state.copywriter_service = service
+    return service
