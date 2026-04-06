@@ -1,55 +1,29 @@
-<section class="page">
-  <header class="page-hero claims-theme">
-    <div class="hero-layout">
-      <div>
-        <p class="hero-kicker">Claims workspace</p>
-        <h1 class="hero-title">Lee el contexto antes de mover una ficha.</h1>
-        <p class="hero-body">
-          El panel concentra estado, participantes, historial y mensajeria disponible sin inventar acciones que la API no soporte.
-        </p>
-        <div class="hero-tags">
-          <span class="hero-tag">Cuenta {{ activeAccountLabel() }}</span>
-          <span class="hero-tag">{{ openClaims() }} abiertos</span>
-          <span class="hero-tag">{{ actionableClaims() }} con acciones</span>
-        </div>
+<section class="page-container animate-slide-up stagger-1">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Reclamos</h1>
+      <p class="page-subtitle">Seguimiento postventa y resolución de conflictos de la cuenta {{ activeAccountLabel() }}.</p>
+    </div>
+    
+    <div class="quick-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total</span>
+        <strong class="stat-value">{{ totalClaims() }}</strong>
       </div>
-
-      <div class="hero-panel">
-        <p class="hero-panel-label">Reclamo activo</p>
-        <h3>{{ selectedClaim() ? '#' + selectedClaim()?.id : 'Seguimiento postventa' }}</h3>
-        <p>
-          {{
-            selectedClaim()
-              ? (selectedClaim()?.reason_detail?.name || selectedClaim()?.reason_id || 'Sin motivo detallado')
-              : 'Selecciona un reclamo para ver mensajes, acciones disponibles e historial.'
-          }}
-        </p>
+      <div class="stat-item">
+        <span class="stat-label">Abiertos</span>
+        <strong class="stat-value warning">{{ openClaims() }}</strong>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Con Acción</span>
+        <strong class="stat-value success">{{ actionableClaims() }}</strong>
       </div>
     </div>
   </header>
 
-  <div class="stat-row">
-    <article class="stat-card">
-      <span class="stat-label">Totales</span>
-      <strong class="stat-value">{{ totalClaims() }}</strong>
-      <span class="stat-foot">Casos visibles en la cuenta activa.</span>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-label">Abiertos</span>
-      <strong class="stat-value">{{ openClaims() }}</strong>
-      <span class="stat-foot">Seguimiento recomendado en el panel.</span>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-label">Con acciones</span>
-      <strong class="stat-value">{{ actionableClaims() }}</strong>
-      <span class="stat-foot">La API informo al menos una accion disponible.</span>
-    </article>
-  </div>
-
-  <section class="feature-shell">
+  <section class="feature-layout">
     <app-claim-list
+      class="list-section"
       [claims]="filteredClaims()"
       [selectedId]="selectedClaimId()"
       [loading]="loadingList()"
@@ -63,6 +37,7 @@
     />
 
     <app-claim-detail
+      class="detail-section"
       [claim]="selectedClaim()"
       [loading]="loadingDetail()"
       [error]="detailError()"

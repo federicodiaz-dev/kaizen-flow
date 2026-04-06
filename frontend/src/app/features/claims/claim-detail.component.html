@@ -1,184 +1,158 @@
-<section class="panel detail-panel">
-  <header class="panel-header">
-    <div class="panel-copy">
-      <p class="eyebrow">Detalle</p>
-      <h2>Reclamo</h2>
-    </div>
-  </header>
-
+<div class="detail-wrapper animate-fade-in">
   @if (loading()) {
-    <p class="state">Cargando detalle...</p>
+    <div class="empty-state">
+      <div class="pulse">Buscando información detallada...</div>
+    </div>
   } @else if (error()) {
-    <p class="state error">{{ error() }}</p>
+    <div class="empty-state text-error">{{ error() }}</div>
   } @else if (!claim()) {
-    <p class="state">Selecciona un reclamo para ver el detalle.</p>
+    <div class="empty-state">
+      <div class="empty-icon"></div>
+      <p>Selecciona un reclamo para ver detalles.</p>
+    </div>
   } @else {
-    <div class="detail-grid">
-      @if (claim(); as currentClaim) {
-      <div class="card hero-card full-width">
-        <div class="card-top">
-          <span class="badge">{{ currentClaim.status || 'sin estado' }}</span>
-          <span class="detail-anchor">Claim #{{ currentClaim.id }}</span>
+    @if (claim(); as c) {
+      <div class="detail-header">
+        <div class="header-tags">
+          <span class="badge" [class.closed]="c.status === 'closed'">{{ translateStatus(c.status) }}</span>
+          <span class="id-tag">#{{ c.id }}</span>
         </div>
-        <h3>{{ currentClaim.reason_detail?.name || currentClaim.reason_id || 'Reclamo sin motivo detallado' }}</h3>
-        <p class="card-note">
-          Etapa {{ currentClaim.stage || 'N/D' }} · Tipo {{ currentClaim.type || 'N/D' }} ·
-          {{ currentClaim.resource || 'resource' }} {{ currentClaim.resource_id || '' }}
-        </p>
+        <h1 class="claim-title">{{ c.reason_detail?.name || c.reason_id || 'Indeterminado' }}</h1>
+        <div class="meta-pills">
+          <span class="meta-pill" [class.feature-ml]="isMLClaim(c.type)" [class.feature-buyer]="!isMLClaim(c.type)">
+            <span class="dot"></span> {{ isMLClaim(c.type) ? 'Mercado Libre' : 'Solo Comprador' }}
+          </span>
+          <span class="meta-pill">Etapa: {{ translateStage(c.stage) }}</span>
+          <span class="meta-pill">Flujo: {{ translateType(c.type) }}</span>
+        </div>
       </div>
 
-      <div class="card info-card">
-        <h3>Resumen</h3>
-        <div class="field-grid">
-          <div class="field">
-            <span class="field-label">Estado</span>
-            <strong>{{ currentClaim.status || 'N/D' }}</strong>
-          </div>
-          <div class="field">
-            <span class="field-label">Etapa</span>
-            <strong>{{ currentClaim.stage || 'N/D' }}</strong>
-          </div>
-          <div class="field">
-            <span class="field-label">Tipo</span>
-            <strong>{{ currentClaim.type || 'N/D' }}</strong>
-          </div>
-          <div class="field">
-            <span class="field-label">Motivo</span>
-            <strong>{{ currentClaim.reason_id || 'N/D' }}</strong>
-          </div>
-        </div>
-        @if (currentClaim.reason_detail?.detail) {
-          <p class="card-note">{{ currentClaim.reason_detail?.detail }}</p>
-        }
-      </div>
+      <div class="premium-layout-grid">
+        
+        <div class="data-col">
+          <section class="premium-card">
+            <h3>Información General</h3>
+            <div class="kv-grid">
+              <div class="kv-item"><label>Estado Actual</label><span>{{ translateStatus(c.status) }}</span></div>
+              <div class="kv-item"><label>Motivo API</label><span><pre>{{ c.reason_id || '-' }}</pre></span></div>
+              <div class="kv-item"><label>Etiquetado</label><span>{{ translateStage(c.stage) }}</span></div>
+            </div>
+            @if (c.reason_detail?.detail) {
+              <div class="detail-text">{{ c.reason_detail?.detail }}</div>
+            }
+          </section>
 
-      <div class="card info-card">
-        <h3>Participantes</h3>
-        <div class="participant-list">
-          @for (player of currentClaim.players; track player.role + '-' + player.user_id) {
-            <div class="participant-row">
-              <div>
-                <strong>{{ player.role }}</strong>
-                <p class="participant-note">
-                  {{ player.type || 'sin tipo' }} {{ player.user_id ? '(' + player.user_id + ')' : '' }}
-                </p>
+          <section class="premium-card">
+            <h3>Participantes</h3>
+            <div class="avatar-list">
+              @for (player of c.players; track player.role) {
+                <div class="avatar-row">
+                  <div class="avatar-circle">
+                    {{ roleLabel(player.role).charAt(0) }}
+                  </div>
+                  <div class="avatar-data">
+                    <span class="name">{{ roleLabel(player.role) }}</span>
+                    <span class="sub">{{ player.type || 'N/a' }} {{ player.user_id ? '· ' + player.user_id : '' }}</span>
+                  </div>
+                  <span class="badge gray">{{ player.available_actions.length }} reqs.</span>
+                </div>
+              }
+            </div>
+          </section>
+
+          @if (c.reputation_impact) {
+            <div class="alert-banner" [class.danger]="c.reputation_impact.affects_reputation !== 'not_affected'">
+              <span class="alert-icon">!</span>
+              <div class="alert-content">
+                <strong>Impacto Reputacional</strong>
+                <span>{{ c.reputation_impact.affects_reputation }}</span>
               </div>
-              <span class="mini-pill">{{ player.available_actions.length }} acciones</span>
             </div>
           }
-        </div>
-        @if (currentClaim.reputation_impact) {
-          <p class="card-note">
-            Impacto reputacion: {{ currentClaim.reputation_impact.affects_reputation || 'N/D' }}
-          </p>
-        }
-      </div>
 
-      <div class="card full-width">
-        <div class="section-top">
-          <h3>Acciones disponibles</h3>
-          <span class="section-note">{{ currentClaim.available_actions.length }} reportadas</span>
-        </div>
-        @if (currentClaim.available_actions.length === 0) {
-          <p class="state">La API no informo acciones disponibles para este reclamo.</p>
-        } @else {
-          <div class="chips">
-            @for (action of currentClaim.available_actions; track action.action + '-' + action.player_role) {
-              <span class="chip">{{ action.player_role }} · {{ action.action }}</span>
-            }
-          </div>
-        }
-      </div>
-
-      <div class="card full-width">
-        <div class="section-top">
-          <h3>Mensajes</h3>
-          <span class="section-note">{{ currentClaim.messages.length }} visibles</span>
-        </div>
-        @if (currentClaim.messages.length === 0) {
-          <p class="state">No hay mensajes para mostrar o el flujo no expone mensajes.</p>
-        } @else {
-          <div class="timeline">
-            @for (message of currentClaim.messages; track message.date_created + '-' + message.sender_role) {
-              <article class="timeline-entry">
-                <div class="timeline-head">
-                  <strong>{{ message.sender_role || 'unknown' }} -> {{ message.receiver_role || 'unknown' }}</strong>
-                  <span class="meta">{{ message.date_created | date: 'medium' }}</span>
-                </div>
-                <p>{{ message.message }}</p>
-              </article>
-            }
-          </div>
-        }
-
-        @if (currentClaim.can_message) {
-          <div class="composer">
-            @if (currentClaim.message_limitations) {
-              <p class="hint">{{ currentClaim.message_limitations }}</p>
-            }
-            @if (currentClaim.allowed_receiver_roles.length > 0) {
-              <div class="chips">
-                @for (role of currentClaim.allowed_receiver_roles; track role) {
-                  <span class="chip chip-soft">Destino habilitado: {{ role }}</span>
+          @if (c.available_actions.length > 0) {
+            <section class="premium-card actions-card">
+              <h3>Debes Resolver</h3>
+              <div class="action-items">
+                @for (action of c.available_actions; track action.action) {
+                  <span class="action-dot">{{ roleLabel(action.player_role) }}: {{ action.action }}</span>
                 }
               </div>
-            }
-            <div class="composer-controls">
-              <select [ngModel]="receiverRole()" (ngModelChange)="receiverRole.set($event)">
-                @if (receiverRoleOptions().length > 1) {
-                  <option value="default">Destino automatico</option>
-                }
-                @for (role of receiverRoleCatalog; track role) {
-                  <option [value]="role" [disabled]="!receiverRoleOptions().includes(role)">
-                    {{ roleLabel(role) }}
-                  </option>
-                }
-              </select>
-            </div>
-            @if (!receiverRoleOptions().includes('complainant')) {
-              <p class="hint">
-                La opcion de escribirle al comprador sigue visible, pero Mercado Libre no la habilita en este estado del reclamo. Si la API vuelve a exponer `send_message_to_complainant`, se habilitara automaticamente.
-              </p>
-            }
-            <textarea
-              rows="5"
-              [ngModel]="messageText()"
-              (ngModelChange)="messageText.set($event)"
-              placeholder="Enviar mensaje a traves del backend"
-            ></textarea>
-            <div class="actions">
-              <button type="button" [disabled]="sending() || !messageText().trim()" (click)="submitMessage()">
-                {{ sending() ? 'Enviando...' : 'Enviar mensaje' }}
-              </button>
-            </div>
-          </div>
-        } @else {
-          <p class="hint">{{ currentClaim.message_limitations || 'Accion no disponible por limitacion actual de la API.' }}</p>
-        }
-      </div>
-
-      <div class="card full-width">
-        <div class="section-top">
-          <h3>Historial</h3>
-          <span class="section-note">{{ currentClaim.status_history.length }} eventos</span>
+            </section>
+          }
         </div>
-        @if (currentClaim.status_history.length === 0) {
-          <p class="state">Sin historial expuesto por la API.</p>
-        } @else {
-          <div class="timeline">
-            @for (entry of currentClaim.status_history; track entry.date + '-' + entry.stage) {
-              <article class="timeline-entry">
-                <div class="timeline-head">
-                  <strong>{{ entry.stage || 'stage' }} · {{ entry.status || 'status' }}</strong>
-                  <span class="meta">{{ entry.date | date: 'medium' }}</span>
-                </div>
-                <p>Cambio realizado por: {{ entry.change_by || 'N/D' }}</p>
-              </article>
-            }
+
+        <div class="chat-col">
+          <div class="premium-chat-container">
+            <div class="chat-header">
+              <div class="tab-switcher">
+                <button class="tab-item" [class.active]="activeChatTab() === 'buyer'" (click)="setTab('buyer')">
+                  Comprador
+                </button>
+                <div class="tab-divider"></div>
+                <button class="tab-item" [class.active]="activeChatTab() === 'ml'" (click)="setTab('ml')">
+                  Mercado Libre
+                  @if (!isMLIntervened()) { <span class="lock">🔒</span> }
+                </button>
+              </div>
+            </div>
+
+            <div class="chat-feed">
+              @if (activeChatTab() === 'buyer') {
+                @if (buyerMessages().length === 0) {
+                  <div class="chat-empty">Inicia la conversación con el comprador.</div>
+                } @else {
+                  @for (msg of buyerMessages(); track msg.date_created) {
+                    <div class="chat-bubble" [class.is-me]="msg.sender_role === 'respondent' || msg.sender_role === 'seller'">
+                      <span>{{ msg.message }}</span>
+                      <em>{{ msg.sender_role === 'respondent' || msg.sender_role === 'seller' ? 'Tú' : 'Otra parte' }} • {{ msg.date_created | date: 'shortTime' }}</em>
+                    </div>
+                  }
+                }
+              } @else if (activeChatTab() === 'ml') {
+                @if (!isMLIntervened()) {
+                  <div class="chat-empty blocked">
+                    <span class="big-icon">🔒</span>
+                    <p>No hay mediación oficial todavía.</p>
+                  </div>
+                } @else if (mlMessages().length === 0) {
+                  <div class="chat-empty">Aún no hay mensajes de Mercado Libre.</div>
+                } @else {
+                  @for (msg of mlMessages(); track msg.date_created) {
+                    <div class="chat-bubble" [class.is-me]="msg.sender_role === 'respondent' || msg.sender_role === 'seller'">
+                      <span>{{ msg.message }}</span>
+                      <em>{{ msg.sender_role === 'respondent' || msg.sender_role === 'seller' ? 'Tú' : 'Otra parte' }} • {{ msg.date_created | date: 'shortTime' }}</em>
+                    </div>
+                  }
+                }
+              }
+            </div>
+
+            <div class="chat-composer">
+              @if (activeChatTab() === 'buyer') {
+                @if (isMLIntervened()) {
+                   <div class="composer-alert">La mediación cerró temporalmente tu canal directo.</div>
+                } @else if (!c.can_message) {
+                   <div class="composer-alert">El sistema no permite interacciones adicionales.</div>
+                } @else {
+                   <textarea rows="1" placeholder="Escribe al comprador..." [ngModel]="messageText()" (ngModelChange)="messageText.set($event)"></textarea>
+                   <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
+                }
+              } @else if (activeChatTab() === 'ml') {
+                @if (!isMLIntervened()) {
+                   <!-- Blocked completely -->
+                } @else if (!c.can_message) {
+                   <div class="composer-alert">El ticket está cerrado o suspendido.</div>
+                } @else {
+                   <textarea rows="1" placeholder="Mensaje para el mediador..." [ngModel]="messageText()" (ngModelChange)="messageText.set($event)"></textarea>
+                   <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
+                }
+              }
+            </div>
           </div>
-        }
+        </div>
+
       </div>
-      }
-    </div>
+    }
   }
-</section>
+</div>

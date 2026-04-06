@@ -20,6 +20,7 @@ export interface ItemDetail extends ItemSummary {
   variations: Record<string, unknown>[];
   attributes: Record<string, unknown>[];
   pictures: Record<string, unknown>[];
+  description?: string;
 }
 
 export interface ItemListResponse {
@@ -34,4 +35,5 @@ export interface ItemUpdatePayload {
   price?: number;
   available_quantity?: number;
   status?: 'active' | 'paused' | 'closed';
+  description?: string;
 }

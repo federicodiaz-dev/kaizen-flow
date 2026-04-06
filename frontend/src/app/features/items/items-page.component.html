@@ -1,51 +1,29 @@
-<section class="page">
-  <header class="page-hero items-theme">
-    <div class="hero-layout">
-      <div>
-        <p class="hero-kicker">Items workspace</p>
-        <h1 class="hero-title">Catalogo claro, cambios chicos, impacto real.</h1>
-        <p class="hero-body">
-          Revisa estado, stock y precio desde una interfaz mas ordenada, con acceso directo al detalle y a la publicacion.
-        </p>
-        <div class="hero-tags">
-          <span class="hero-tag">Cuenta {{ activeAccountLabel() }}</span>
-          <span class="hero-tag">{{ activeItems() }} activos</span>
-          <span class="hero-tag">{{ visibleStock() }} unidades visibles</span>
-        </div>
+<section class="page-container animate-slide-up stagger-1">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Productos</h1>
+      <p class="page-subtitle">Gestiona el catálogo, stock y precios de tu cuenta {{ activeAccountLabel() }}.</p>
+    </div>
+    
+    <div class="quick-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total</span>
+        <strong class="stat-value">{{ totalItems() }}</strong>
       </div>
-
-      <div class="hero-panel">
-        <p class="hero-panel-label">Publicacion activa</p>
-        <h3>{{ selectedItem()?.title || 'Catalogo del seller' }}</h3>
-        <p>
-          {{ selectedItem()?.id || 'Selecciona un item para revisar precio, stock y acciones de edicion basica.' }}
-        </p>
+      <div class="stat-item">
+        <span class="stat-label">Activos</span>
+        <strong class="stat-value success">{{ activeItems() }}</strong>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Pausados</span>
+        <strong class="stat-value warning">{{ pausedItems() }}</strong>
       </div>
     </div>
   </header>
 
-  <div class="stat-row">
-    <article class="stat-card">
-      <span class="stat-label">Totales</span>
-      <strong class="stat-value">{{ totalItems() }}</strong>
-      <span class="stat-foot">Publicaciones cargadas para la cuenta actual.</span>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-label">Activos</span>
-      <strong class="stat-value">{{ activeItems() }}</strong>
-      <span class="stat-foot">Items listos para vender ahora mismo.</span>
-    </article>
-
-    <article class="stat-card">
-      <span class="stat-label">Pausados</span>
-      <strong class="stat-value">{{ pausedItems() }}</strong>
-      <span class="stat-foot">Publicaciones que pueden requerir revision.</span>
-    </article>
-  </div>
-
-  <section class="feature-shell">
+  <section class="feature-layout">
     <app-item-list
+      class="list-section"
       [items]="filteredItems()"
       [selectedId]="selectedItemId()"
       [loading]="loadingList()"
@@ -59,6 +37,7 @@
     />
 
     <app-item-detail
+      class="detail-section"
       [item]="selectedItem()"
       [loading]="loadingDetail()"
       [error]="detailError()"

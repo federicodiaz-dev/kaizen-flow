@@ -76,7 +76,15 @@ class ItemsService:
         return ItemListResponse(items=items, total=total, offset=offset, limit=limit)
 
     async def get_item(self, account_key: str, item_id: str) -> ItemDetail:
-        raw = await self._items_adapter.get_item(account_key, item_id)
+        import asyncio
+        results = await asyncio.gather(
+            self._items_adapter.get_item(account_key, item_id),
+            self._items_adapter.get_item_description(account_key, item_id),
+            return_exceptions=True
+        )
+        raw: dict = results[0] if isinstance(results[0], dict) else {}
+        desc_data: dict = results[1] if isinstance(results[1], dict) else {}
+        
         summary = _serialize_item(raw)
         return ItemDetail(
             **summary.model_dump(),
@@ -88,11 +96,27 @@ class ItemsService:
             variations=raw.get("variations") or [],
             attributes=raw.get("attributes") or [],
             pictures=raw.get("pictures") or [],
+            description=desc_data.get("plain_text") or "",
         )
 
     async def update_item(self, account_key: str, item_id: str, payload: ItemUpdatePayload) -> ItemDetail:
         update_data = payload.model_dump(exclude_none=True)
         if not update_data:
             raise BadRequestError("No item fields were provided for update.")
-        await self._items_adapter.update_item(account_key, item_id, update_data)
+            
+        desc = update_data.pop("description", None)
+        
+        import asyncio
+        tasks = []
+        if update_data:
+            tasks.append(self._items_adapter.update_item(account_key, item_id, update_data))
+        if desc is not None:
+            tasks.append(self._items_adapter.update_item_description(account_key, item_id, {"plain_text": desc}))
+            
+        if tasks:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for r in results:
+                if isinstance(r, Exception):
+                    raise r
+                    
         return await self.get_item(account_key, item_id)

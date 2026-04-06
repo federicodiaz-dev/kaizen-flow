@@ -25,6 +25,7 @@ class ItemDetail(ItemSummary):
     variations: list[dict] = []
     attributes: list[dict] = []
     pictures: list[dict] = []
+    description: str | None = None
 
 
 class ItemListResponse(BaseModel):
@@ -39,3 +40,4 @@ class ItemUpdatePayload(BaseModel):
     price: float | None = Field(default=None, gt=0)
     available_quantity: int | None = Field(default=None, ge=0)
     status: str | None = Field(default=None, pattern="^(active|paused|closed)$")
+    description: str | None = Field(default=None)

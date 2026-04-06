@@ -1,59 +1,57 @@
-<section class="panel">
-  <header class="panel-header">
-    <div class="panel-copy">
-      <p class="eyebrow">Bandeja</p>
-      <div class="panel-title-row">
-        <h2>Reclamos</h2>
-        <span class="panel-count">{{ claims().length }}</span>
+<div class="list-container glass-panel animate-slide-up stagger-2">
+  <div class="list-header">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          class="input-text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchTextChange.emit($event)"
+          placeholder="Buscar id, motivo o recurso..."
+        />
       </div>
-      <p class="panel-subtitle">Seguimiento por estado, motivo y recurso afectado.</p>
+
+      <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
+        <option value="all">Todos</option>
+        <option value="opened">Abiertos</option>
+        <option value="closed">Cerrados</option>
+      </select>
     </div>
-    <button type="button" class="secondary" (click)="refresh.emit()">Actualizar</button>
-  </header>
-
-  <div class="toolbar">
-    <input
-      type="search"
-      [ngModel]="searchText()"
-      (ngModelChange)="searchTextChange.emit($event)"
-      placeholder="Buscar por id, motivo o recurso"
-    />
-
-    <select [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
-      <option value="all">Todos</option>
-      <option value="opened">Abiertos</option>
-      <option value="closed">Cerrados</option>
-    </select>
   </div>
 
-  @if (loading()) {
-    <p class="state">Cargando reclamos...</p>
-  } @else if (error()) {
-    <p class="state error">{{ error() }}</p>
-  } @else if (claims().length === 0) {
-    <p class="state">No hay reclamos.</p>
-  } @else {
-    <div class="list">
-      @for (claim of claims(); track claim.id) {
-        <button
-          type="button"
-          class="list-row"
-          [class.selected]="claim.id === selectedId()"
-          (click)="selectClaim.emit(claim.id)"
-        >
-          <div class="row-top">
-            <span class="badge">{{ claim.status || 'sin estado' }}</span>
-            <span class="row-id">#{{ claim.id }}</span>
-          </div>
-          <strong class="row-title">{{ claim.type || 'claim' }} · {{ claim.stage || 'sin etapa' }}</strong>
-          <p class="row-note">{{ claim.reason_id || 'Sin motivo informado' }}</p>
-          <div class="row-bottom">
-            <span class="mini-pill">{{ claim.resource || 'resource' }} {{ claim.resource_id || '' }}</span>
-            <span class="meta">{{ claim.available_actions.length }} acciones</span>
-            <span class="meta">{{ claim.last_updated | date: 'short' }}</span>
-          </div>
-        </button>
-      }
-    </div>
-  }
-</section>
+  <div class="list-content">
+    @if (loading()) {
+      <div class="state-msg">Cargando bandeja de reclamos...</div>
+    } @else if (error()) {
+      <div class="state-msg error">{{ error() }}</div>
+    } @else if (claims().length === 0) {
+      <div class="state-msg">No se encontraron reclamos vigentes.</div>
+    } @else {
+      <div class="items-grid">
+        @for (claim of claims(); track claim.id) {
+          <button
+            type="button"
+            class="list-item"
+            [class.selected]="claim.id === selectedId()"
+            [class.ml-highlight]="isMLClaim(claim.type)"
+            [class.buyer-highlight]="!isMLClaim(claim.type)"
+            (click)="selectClaim.emit(claim.id)"
+          >
+            <div class="item-top">
+              <span class="status-pill" [class.closed]="claim.status === 'closed'">
+                {{ translateStatus(claim.status) }}
+              </span>
+              <span class="item-id">#{{ claim.id }}</span>
+            </div>
+            <h4 class="item-title">{{ translateType(claim.type) }} · {{ translateStage(claim.stage) }}</h4>
+            <p class="item-meta truncate">{{ claim.reason_id || 'Motivo desconocido' }}</p>
+            <div class="item-bottom">
+              <span class="item-alert">{{ claim.available_actions.length }} acciones req.</span>
+              <span class="item-date">{{ claim.last_updated | date: 'short' }}</span>
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

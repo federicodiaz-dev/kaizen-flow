@@ -9,6 +9,7 @@ type DraftItemForm = {
   price: number | null;
   available_quantity: number | null;
   status: 'active' | 'paused' | 'closed';
+  description: string;
 };
 
 @Component({
@@ -30,7 +31,8 @@ export class ItemDetailComponent {
     title: '',
     price: null,
     available_quantity: null,
-    status: 'active'
+    status: 'active',
+    description: ''
   });
 
   constructor() {
@@ -40,7 +42,8 @@ export class ItemDetailComponent {
         title: current?.title || '',
         price: current?.price ?? null,
         available_quantity: current?.available_quantity ?? null,
-        status: (current?.status as DraftItemForm['status']) || 'active'
+        status: (current?.status as DraftItemForm['status']) || 'active',
+        description: current?.description || ''
       });
     }, { allowSignalWrites: true });
   }
@@ -93,6 +96,11 @@ export class ItemDetailComponent {
     }
     if (next.status && next.status !== currentItem.status) {
       payload.status = next.status;
+    }
+    
+    // Description check
+    if (next.description !== (currentItem.description || '')) {
+      payload.description = next.description;
     }
 
     return payload;
