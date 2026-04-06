@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.agents.service import BusinessAssistantService
 from app.api.router import api_router
 from app.core.account_store import AccountStore
 from app.core.exceptions import AppError
@@ -23,9 +24,15 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.account_store = AccountStore(settings.accounts, settings.default_account)
     app.state.http_client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
+    app.state.agents_service = BusinessAssistantService(
+        settings=settings,
+        account_store=app.state.account_store,
+        http_client=app.state.http_client,
+    )
     try:
         yield
     finally:
+        await app.state.agents_service.aclose()
         await app.state.http_client.aclose()
 
 

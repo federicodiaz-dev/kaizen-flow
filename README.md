@@ -118,6 +118,11 @@ Estado actual detectado en tu `.env`:
 
 - `GET /api/health`
 - `GET /api/accounts`
+- `GET /api/agents/health`
+- `GET /api/agents/threads`
+- `POST /api/agents/threads`
+- `GET /api/agents/threads/{thread_id}`
+- `POST /api/agents/threads/{thread_id}/messages`
 - `GET /api/questions`
 - `GET /api/questions/{id}`
 - `POST /api/questions/{id}/answer`
@@ -143,6 +148,48 @@ Si no se envía nada, usa la cuenta por defecto.
 - `/questions`
 - `/claims`
 - `/items`
+
+## Asistente AI multiagente
+
+El backend ahora incluye una capa nueva en `backend/app/agents/` pensada para un chatbot multiagente con LangChain + LangGraph.
+
+Arquitectura:
+
+- `intent analyst`: entiende la intencion principal y enruta con salida estructurada
+- `mercadolibre account agent`: responde preguntas sobre la cuenta activa usando herramientas read-only
+- `market intelligence agent`: analiza mercado, ideas de producto, competencia y tendencias
+- `main workflow`: recupera memoria del hilo, enruta, ejecuta el sub-workflow correcto y persiste la conversacion
+
+Persistencia:
+
+- los hilos del chatbot se guardan en `backend/data/agents/threads/`
+
+Tooling:
+
+- si configurás un MCP de Mercado Libre, el asistente carga sus herramientas read-only
+- si no hay MCP disponible, usa herramientas locales de compatibilidad sobre la API actual de Mercado Libre
+
+Variables nuevas sugeridas en `.env`:
+
+```env
+GROQ_API_KEY=
+GROQ_MODEL=llama-3.3-70b-versatile
+GROQ_ROUTER_MODEL=openai/gpt-oss-20b
+AI_DEFAULT_SITE_ID=MLA
+AI_HISTORY_WINDOW=8
+AI_MEMORY_DIR=backend/data/agents
+
+# MCP opcional
+AI_MCP_ENABLED=false
+AI_MCP_SERVER_NAME=mercadolibre
+AI_MCP_TRANSPORT=http
+AI_MCP_URL=
+AI_MCP_COMMAND=
+AI_MCP_ARGS_JSON=[]
+AI_MCP_HEADERS_JSON={}
+AI_MCP_ENV_JSON={}
+AI_MCP_CWD=
+```
 
 ## Cómo correr
 
