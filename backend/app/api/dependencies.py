@@ -111,3 +111,35 @@ def get_copywriter_service(request: Request) -> "CopywriterService":
         service = _CopywriterService()
         request.app.state.copywriter_service = service
     return service
+
+
+def get_reply_assistant_service(request: Request) -> "ReplyAssistantService":
+    from app.services.reply_assistant import ReplyAssistantService as _ReplyAssistantService
+
+    service = getattr(request.app.state, "reply_assistant_service", None)
+    if service is None:
+        settings = get_settings(request)
+        account_store = get_account_store(request)
+        http_client = get_http_client(request)
+        ml_client = MercadoLibreClient(http_client=http_client, settings=settings, account_store=account_store)
+
+        service = _ReplyAssistantService(
+            questions_service=QuestionsService(
+                account_store=account_store,
+                client=ml_client,
+                questions_adapter=QuestionsAdapter(ml_client),
+                items_adapter=ItemsAdapter(ml_client),
+            ),
+            claims_service=ClaimsService(
+                account_store=account_store,
+                client=ml_client,
+                claims_adapter=ClaimsAdapter(ml_client),
+            ),
+            items_service=ItemsService(
+                account_store=account_store,
+                client=ml_client,
+                items_adapter=ItemsAdapter(ml_client),
+            ),
+        )
+        request.app.state.reply_assistant_service = service
+    return service

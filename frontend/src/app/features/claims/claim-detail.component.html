@@ -135,7 +135,60 @@
                 } @else if (!c.can_message) {
                    <div class="composer-alert">El sistema no permite interacciones adicionales.</div>
                 } @else {
-                   <textarea rows="1" placeholder="Escribe al comprador..." [ngModel]="messageText()" (ngModelChange)="messageText.set($event)"></textarea>
+                   <div class="composer-label-row">
+                     <span class="composer-label">Borrador para comprador</span>
+                     <div class="composer-actions">
+                       @if (messageText().trim() || composerOverflowing()) {
+                         <button
+                           type="button"
+                           class="composer-size-btn"
+                           (click)="toggleComposerExpanded()"
+                         >
+                           {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
+                         </button>
+                       }
+                       <button
+                         type="button"
+                         class="ai-enhance-btn"
+                         [class.is-enhancing]="draftingMessage()"
+                         [disabled]="draftingMessage() || sending()"
+                         (click)="generateDraft()"
+                         title="Sugerir mensaje con IA"
+                       >
+                         <span class="ai-btn-bg"></span>
+                         <span class="ai-btn-content">
+                           @if (draftingMessage()) {
+                             <span class="ai-spinner"></span>
+                             <span>Redactando...</span>
+                           } @else {
+                             <span class="ai-icon">AI</span>
+                             <span>Sugerir con IA</span>
+                           }
+                         </span>
+                       </button>
+                     </div>
+                   </div>
+                   <textarea
+                     #composerTextarea
+                     class="composer-textarea"
+                     [class.is-overflowing]="composerOverflowing()"
+                     rows="6"
+                     placeholder="Escribe al comprador..."
+                     [ngModel]="messageText()"
+                     (ngModelChange)="updateMessageText($event)"
+                   ></textarea>
+                   @if (composerOverflowing()) {
+                     <div class="composer-overflow-hint">
+                       <span>
+                         {{ composerExpanded()
+                           ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
+                           : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar "Expandir" para leerlo mejor.' }}
+                       </span>
+                     </div>
+                   }
+                   @if (draftError()) {
+                     <div class="draft-error">{{ draftError() }}</div>
+                   }
                    <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
                 }
               } @else if (activeChatTab() === 'ml') {
@@ -144,7 +197,60 @@
                 } @else if (!c.can_message) {
                    <div class="composer-alert">El ticket está cerrado o suspendido.</div>
                 } @else {
-                   <textarea rows="1" placeholder="Mensaje para el mediador..." [ngModel]="messageText()" (ngModelChange)="messageText.set($event)"></textarea>
+                   <div class="composer-label-row">
+                     <span class="composer-label">Borrador para Mercado Libre</span>
+                     <div class="composer-actions">
+                       @if (messageText().trim() || composerOverflowing()) {
+                         <button
+                           type="button"
+                           class="composer-size-btn"
+                           (click)="toggleComposerExpanded()"
+                         >
+                           {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
+                         </button>
+                       }
+                       <button
+                         type="button"
+                         class="ai-enhance-btn"
+                         [class.is-enhancing]="draftingMessage()"
+                         [disabled]="draftingMessage() || sending()"
+                         (click)="generateDraft()"
+                         title="Sugerir mensaje con IA"
+                       >
+                         <span class="ai-btn-bg"></span>
+                         <span class="ai-btn-content">
+                           @if (draftingMessage()) {
+                             <span class="ai-spinner"></span>
+                             <span>Redactando...</span>
+                           } @else {
+                             <span class="ai-icon">AI</span>
+                             <span>Sugerir con IA</span>
+                           }
+                         </span>
+                       </button>
+                     </div>
+                   </div>
+                   <textarea
+                     #composerTextarea
+                     class="composer-textarea"
+                     [class.is-overflowing]="composerOverflowing()"
+                     rows="6"
+                     placeholder="Mensaje para el mediador..."
+                     [ngModel]="messageText()"
+                     (ngModelChange)="updateMessageText($event)"
+                   ></textarea>
+                   @if (composerOverflowing()) {
+                     <div class="composer-overflow-hint">
+                       <span>
+                         {{ composerExpanded()
+                           ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
+                           : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar "Expandir" para leerlo mejor.' }}
+                       </span>
+                     </div>
+                   }
+                   @if (draftError()) {
+                     <div class="draft-error">{{ draftError() }}</div>
+                   }
                    <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
                 }
               }

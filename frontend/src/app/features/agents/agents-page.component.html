@@ -60,9 +60,9 @@
           <h2>{{ activeTitle() }}</h2>
         </div>
       </div>
-      <div class="chat-status" [class.is-loading]="loading()">
+      <div class="chat-status" [class.is-loading]="loading() || assistantTyping()">
         <span class="status-dot"></span>
-        {{ loading() ? thinkingLabel() : 'Listo' }}
+        {{ statusLabel() }}
       </div>
     </header>
 

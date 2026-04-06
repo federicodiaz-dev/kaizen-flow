@@ -154,7 +154,7 @@
                   title="Click para copiar"
                 >
                   <span class="title-number">{{ $index + 1 }}</span>
-                  <span class="title-text">{{ title }}</span>
+                  <span class="title-text">{{ displayedTitles()[$index] || '' }}</span>
                   <span class="copy-icon">
                     {{ copiedIndex() === $index ? '✓' : '⧉' }}
                   </span>
@@ -177,7 +177,7 @@
               </button>
             </div>
             <div class="desc-card">
-              <pre class="desc-content">{{ r.description }}</pre>
+              <pre class="desc-content">{{ displayedDescription() }}</pre>
             </div>
           </div>
 

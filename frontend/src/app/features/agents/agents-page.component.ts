@@ -2,6 +2,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
+  DestroyRef,
   ElementRef,
   OnInit,
   ViewChild,
@@ -11,6 +12,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { AiTypewriterService } from '../../core/services/ai-typewriter.service';
 import {
   AgentChatMessage,
   AgentMessageResponse,
@@ -27,7 +29,9 @@ import { AgentsApiService } from './agents-api.service';
   styleUrl: './agents-page.component.scss',
 })
 export class AgentsPageComponent implements OnInit, AfterViewChecked {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(AgentsApiService);
+  private readonly typewriter = inject(AiTypewriterService);
   readonly accountContext = inject(AccountContextService);
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
@@ -41,8 +45,10 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
   readonly draft = signal('');
   readonly errorMessage = signal<string | null>(null);
   readonly showSidebar = signal(true);
+  readonly assistantTyping = signal(false);
 
   private shouldScrollToBottom = false;
+  private readonly assistantAnimationPrefix = 'agents-assistant-message';
 
   /* ── Computed ── */
   readonly activeThread = computed(() =>
@@ -50,6 +56,13 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
   );
   readonly activeTitle = computed(() => this.activeThread()?.title ?? 'Nuevo hilo');
   readonly canSend = computed(() => this.draft().trim().length > 0 && !this.loading());
+  readonly statusLabel = computed(() =>
+    this.loading()
+      ? this.thinkingLabel()
+      : this.assistantTyping()
+        ? 'Escribiendo respuesta...'
+        : 'Listo'
+  );
   readonly activeAccountLabel = computed(
     () => this.accountContext.currentAccount()?.label ?? 'Sin cuenta'
   );
@@ -73,6 +86,7 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
   private thinkingInterval: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => this.typewriter.cancelPrefix(this.assistantAnimationPrefix));
     this.loadThreads();
   }
 
@@ -120,6 +134,8 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
 
   selectThread(threadId: string): void {
     if (this.activeThreadId() === threadId) return;
+    this.typewriter.cancelPrefix(this.assistantAnimationPrefix);
+    this.assistantTyping.set(false);
     this.activeThreadId.set(threadId);
     this.activeMessages.set([]);
     this.errorMessage.set(null);
@@ -139,6 +155,12 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
 
   /* ── Messaging ── */
   sendMessage(): void {
+    const activeThreadId = this.activeThreadId();
+    if (activeThreadId) {
+      this.typewriter.finish(this.getAssistantAnimationKey(activeThreadId));
+      this.assistantTyping.set(false);
+    }
+
     const content = this.draft().trim();
     const account = this.accountContext.selectedAccount();
     const threadId = this.activeThreadId();
@@ -187,10 +209,7 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
       next: (response: AgentMessageResponse) => {
         this.stopThinkingAnimation();
         this.loading.set(false);
-
-        // Replace with full thread messages from server
-        this.activeMessages.set(response.thread.messages);
-        this.shouldScrollToBottom = true;
+        this.renderAssistantResponse(threadId, response);
 
         // Update sidebar
         this.threads.update((prev) =>
@@ -210,6 +229,7 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
       error: (err) => {
         this.stopThinkingAnimation();
         this.loading.set(false);
+        this.assistantTyping.set(false);
         const detail = err?.error?.detail;
         this.errorMessage.set(
           typeof detail === 'string' ? detail : 'El agente no pudo procesar tu mensaje.'
@@ -322,5 +342,89 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
 
   toggleSidebar(): void {
     this.showSidebar.update((v) => !v);
+  }
+
+  private renderAssistantResponse(threadId: string, response: AgentMessageResponse): void {
+    this.typewriter.cancelPrefix(this.assistantAnimationPrefix);
+
+    const messages = response.thread.messages.map((message) => ({ ...message }));
+    const assistantIndex = this.findAssistantMessageIndex(messages, response.assistant_message);
+
+    if (assistantIndex < 0) {
+      this.assistantTyping.set(false);
+      this.activeMessages.set(messages);
+      this.shouldScrollToBottom = true;
+      return;
+    }
+
+    messages[assistantIndex] = {
+      ...messages[assistantIndex],
+      content: '',
+    };
+
+    this.activeMessages.set(messages);
+    this.assistantTyping.set(true);
+    this.shouldScrollToBottom = true;
+
+    this.typewriter.revealText({
+      key: this.getAssistantAnimationKey(threadId),
+      text: response.assistant_message.content,
+      onUpdate: (value) => {
+        this.activeMessages.update((current) => {
+          if (!current[assistantIndex]) {
+            return current;
+          }
+
+          const next = [...current];
+          next[assistantIndex] = {
+            ...next[assistantIndex],
+            content: value,
+          };
+          return next;
+        });
+        this.shouldScrollToBottom = true;
+      },
+      onDone: () => {
+        this.assistantTyping.set(false);
+        this.shouldScrollToBottom = true;
+      },
+    });
+  }
+
+  private findAssistantMessageIndex(
+    messages: AgentChatMessage[],
+    assistantMessage: AgentChatMessage
+  ): number {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const current = messages[index];
+      if (
+        current.role !== 'user' &&
+        current.created_at === assistantMessage.created_at
+      ) {
+        return index;
+      }
+    }
+
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const current = messages[index];
+      if (
+        current.role !== 'user' &&
+        current.content === assistantMessage.content
+      ) {
+        return index;
+      }
+    }
+
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].role !== 'user') {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
+  private getAssistantAnimationKey(threadId: string): string {
+    return `${this.assistantAnimationPrefix}:${threadId}`;
   }
 }
