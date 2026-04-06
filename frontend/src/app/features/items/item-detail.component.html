@@ -88,13 +88,34 @@
             </div>
 
             <div class="form-group desc-field mt-action">
-              <span>Descripción del Producto</span>
+              <div class="desc-label-row">
+                <span>Descripción del Producto</span>
+                <button
+                  type="button"
+                  class="ai-enhance-btn"
+                  [class.is-enhancing]="enhancingDescription()"
+                  [disabled]="enhancingDescription()"
+                  (click)="enhanceDescription()"
+                  title="Mejorar descripción con Inteligencia Artificial"
+                >
+                  <span class="ai-btn-bg"></span>
+                  <span class="ai-btn-content">
+                    @if (enhancingDescription()) {
+                      <span class="ai-spinner"></span>
+                      <span>Mejorando...</span>
+                    } @else {
+                      <span class="ai-icon">✦</span>
+                      <span>Mejorar con IA</span>
+                    }
+                  </span>
+                </button>
+              </div>
               <textarea
                 class="input-text desc-textarea"
                 rows="8"
                 placeholder="Escribe la descripción pública del producto aquí..."
                 [ngModel]="form().description"
-                (ngModelChange)="updateField('description', $event)"
+                (ngModelChange)="updateDescription($event)"
               ></textarea>
             </div>
 

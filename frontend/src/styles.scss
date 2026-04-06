@@ -187,3 +187,100 @@ button, input, select, textarea { font-family: var(--font-body); }
 
   &:hover { box-shadow: var(--shadow-md); transform: scale(1.05); }
 }
+
+.ai-enhance-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background: transparent;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.04);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4), 0 0 40px rgba(168, 85, 247, 0.2);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+}
+
+.ai-btn-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--ai-angle, 0deg),
+    #667eea,
+    #764ba2,
+    #f093fb,
+    #f5576c,
+    #fda085,
+    #fbc2eb,
+    #667eea
+  );
+  animation: ai-rainbow-rotate 3s linear infinite;
+  z-index: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 1.5px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
+  }
+}
+
+@property --ai-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ai-rainbow-rotate {
+  to {
+    --ai-angle: 360deg;
+  }
+}
+
+.ai-btn-content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ai-icon {
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+}
+
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ai-spin 0.7s linear infinite;
+}
+
+@keyframes ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

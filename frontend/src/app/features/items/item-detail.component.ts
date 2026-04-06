@@ -1,8 +1,10 @@
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, effect, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+import { AiTypewriterService } from '../../core/services/ai-typewriter.service';
 import { ItemDetail, ItemUpdatePayload } from '../../core/models/items.models';
+import { CopywriterApiService } from '../copywriter/copywriter-api.service';
 
 type DraftItemForm = {
   title: string;
@@ -20,10 +22,16 @@ type DraftItemForm = {
   styleUrl: './item-detail.component.scss'
 })
 export class ItemDetailComponent {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly copywriterApi = inject(CopywriterApiService);
+  private readonly typewriter = inject(AiTypewriterService);
+  private readonly descriptionAnimationKey = 'item-detail-description';
+
   readonly item = input<ItemDetail | null>(null);
   readonly loading = input(false);
   readonly error = input<string | null>(null);
   readonly saving = input(false);
+  readonly enhancingDescription = signal(false);
 
   readonly save = output<ItemUpdatePayload>();
 
@@ -36,8 +44,11 @@ export class ItemDetailComponent {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.typewriter.cancel(this.descriptionAnimationKey));
+
     effect(() => {
       const current = this.item();
+      this.typewriter.cancel(this.descriptionAnimationKey);
       this.form.set({
         title: current?.title || '',
         price: current?.price ?? null,
@@ -49,7 +60,15 @@ export class ItemDetailComponent {
   }
 
   updateField<K extends keyof DraftItemForm>(key: K, value: DraftItemForm[K]): void {
+    if (key === 'description') {
+      this.typewriter.cancel(this.descriptionAnimationKey);
+    }
     this.form.update((current) => ({ ...current, [key]: value }));
+  }
+
+  updateDescription(value: string): void {
+    this.typewriter.cancel(this.descriptionAnimationKey);
+    this.setDescriptionValue(value);
   }
 
   parseNullableNumber(value: string | number | null): number | null {
@@ -111,6 +130,51 @@ export class ItemDetailComponent {
   }
 
   submit(): void {
+    this.typewriter.finish(this.descriptionAnimationKey);
     this.save.emit(this.buildPayload());
+  }
+
+  enhanceDescription(): void {
+    const currentItem = this.item();
+    if (!currentItem || this.enhancingDescription()) return;
+
+    this.enhancingDescription.set(true);
+
+    this.copywriterApi
+      .enhanceDescription({
+        product_title: currentItem.title,
+        current_description: this.form().description || currentItem.description || '',
+        brand: this.extractAttribute(currentItem, 'BRAND') || null,
+        category: currentItem.category_id || null,
+        price: currentItem.price,
+        currency: currentItem.currency_id,
+        condition: currentItem.condition,
+        attributes: currentItem.attributes || [],
+      })
+      .subscribe({
+        next: (res) => {
+          this.enhancingDescription.set(false);
+          this.typewriter.revealText({
+            key: this.descriptionAnimationKey,
+            text: res.enhanced_description,
+            from: this.form().description,
+            onUpdate: (value) => this.setDescriptionValue(value),
+          });
+        },
+        error: () => {
+          this.enhancingDescription.set(false);
+        },
+      });
+  }
+
+  private extractAttribute(item: ItemDetail, id: string): string | null {
+    const attr = item.attributes?.find(
+      (a) => (a['id'] as string)?.toUpperCase() === id
+    );
+    return (attr?.['value_name'] as string) || null;
+  }
+
+  private setDescriptionValue(value: string): void {
+    this.form.update((current) => ({ ...current, description: value }));
   }
 }

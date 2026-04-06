@@ -362,7 +362,9 @@
 
 textarea {
   width: 100%;
-  resize: none;
+  min-height: 10rem;
+  max-height: 22.5rem;
+  resize: vertical;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
@@ -370,10 +372,12 @@ textarea {
   color: var(--text-main);
   font-family: var(--font-body);
   font-size: 1rem;
+  line-height: 1.6;
   outline: none;
   transition: all 0.2s ease;
   margin-bottom: 1rem;
   box-shadow: var(--shadow-sm) inset;
+  overflow-y: hidden;
 
   &:focus {
     border-color: var(--accent);
@@ -403,4 +407,63 @@ textarea {
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+.composer-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.composer-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.composer-size-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.composer-textarea {
+  &.is-overflowing {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--border-color));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow-sm) inset;
+  }
+}
+
+.composer-overflow-hint {
+  margin: -0.3rem 0 0.9rem;
+  padding: 0.75rem 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-light) 60%, var(--bg-secondary));
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.draft-error {
+  font-size: 0.85rem;
+  color: var(--error);
+  margin-bottom: 0.75rem;
 }

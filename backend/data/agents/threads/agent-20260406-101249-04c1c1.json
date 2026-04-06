@@ -1,0 +1,77 @@
+{
+  "thread_id": "agent-20260406-101249-04c1c1",
+  "title": "Hola",
+  "created_at": "2026-04-06T13:12:49Z",
+  "updated_at": "2026-04-06T13:13:54Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hola",
+      "created_at": "2026-04-06T13:13:06Z",
+      "metadata": {
+        "account_key": "seller",
+        "site_id": "MLA"
+      }
+    },
+    {
+      "role": "assistant",
+      "content": "¡Hola! Soy tu asistente de Mercado Libre. ¿En qué puedo ayudarte hoy? Puedo revisar tus publicaciones, reclamos, preguntas, o analizar el mercado.",
+      "created_at": "2026-04-06T13:13:06Z",
+      "metadata": {
+        "route": "clarification",
+        "selected_agent": "clarification",
+        "intent_confidence": 0.8,
+        "normalized_request": "hola",
+        "user_goal": "",
+        "account_key": "seller",
+        "site_id": "MLA"
+      }
+    },
+    {
+      "role": "user",
+      "content": "podes ver los terminos y condiciones de ML?",
+      "created_at": "2026-04-06T13:13:37Z",
+      "metadata": {
+        "account_key": "seller",
+        "site_id": "MLA"
+      }
+    },
+    {
+      "role": "assistant",
+      "content": "## Recomendacion Principal\nPuedes encontrar los términos y condiciones de Mercado Libre en su sitio web oficial.\n\n## Por Que Tiene Sentido\nLos términos y condiciones son un aspecto crucial al utilizar cualquier plataforma, incluyendo Mercado Libre. Estos documentos suelen estar disponibles en el sitio web de la plataforma y contienen información importante sobre cómo utilizar el servicio, las políticas de la plataforma, y los derechos y responsabilidades de los usuarios y vendedores.\n\n## Riesgos O Dudas\nSi no puedo acceder directamente a los términos y condiciones a través de una función específica, recomiendo visitar el centro de ayuda o la sección de soporte de Mercado Libre para obtener la información más actualizada.\n\n## Siguiente Validacion\nVisita https://www.mercadolibre.com.ar/terms-and-conditions para obtener los términos y condiciones específicos de Mercado Libre en Argentina (MLA).",
+      "created_at": "2026-04-06T13:13:37Z",
+      "metadata": {
+        "route": "market_intelligence",
+        "selected_agent": "market_intelligence_agent",
+        "intent_confidence": 0.9,
+        "normalized_request": "Obtener términos y condiciones de Mercado Libre",
+        "user_goal": "consultar términos y condiciones de Mercado Libre",
+        "account_key": "seller",
+        "site_id": "MLA"
+      }
+    },
+    {
+      "role": "user",
+      "content": "me los podrias resumir? algun apartado importante",
+      "created_at": "2026-04-06T13:13:54Z",
+      "metadata": {
+        "account_key": "seller",
+        "site_id": "MLA"
+      }
+    },
+    {
+      "role": "assistant",
+      "content": "## Recomendacion Principal\nLos términos y condiciones de Mercado Libre incluyen políticas de uso, derechos de autor, propiedad intelectual, responsabilidades del vendedor y del comprador, políticas de pagos, envíos, y devoluciones, entre otros.\n\n## Por Que Tiene Sentido\nEs importante revisar estos términos para entender las reglas y expectativas de la plataforma, asegurando un uso adecuado y evitando posibles penalizaciones o problemas.\n\n## Riesgos O Dudas\nDado que no tengo acceso directo a los términos y condiciones actuales a través de mis herramientas, mi resumen se basará en conocimiento general. Los detalles específicos pueden variar, por lo que siempre es recomendable verificar la fuente oficial.\n\n## Siguiente Validacion\nAlgunos apartados importantes suelen incluir:\n- **Políticas de Pago**: Información sobre cómo se procesan los pagos y qué métodos están disponibles.\n- **Responsabilidades del Vendedor**: Detalles sobre las obligaciones del vendedor, incluyendo la descripción del producto, el envío y el manejo de quejas.\n- **Derechos de Autor y Propiedad Intelectual**: Políticas relacionadas con el uso de contenido protegido por derechos de autor y propiedad intelectual.\n- **Políticas de Devolución y Reembolso**: Información sobre cómo manejar devoluciones y reembolsos.\n\nPara obtener la información más actualizada y específica, te recomiendo visitar directamente el sitio web de Mercado Libre en https://www.mercadolibre.com.ar/terms-and-conditions.",
+      "created_at": "2026-04-06T13:13:54Z",
+      "metadata": {
+        "route": "market_intelligence",
+        "selected_agent": "market_intelligence_agent",
+        "intent_confidence": 0.92,
+        "normalized_request": "Resumen de términos y condiciones de Mercado Libre",
+        "user_goal": "resumir términos y condiciones",
+        "account_key": "seller",
+        "site_id": "MLA"
+      }
+    }
+  ]
+}

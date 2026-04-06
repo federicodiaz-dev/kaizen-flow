@@ -1,0 +1,189 @@
+<section class="copywriter-page">
+
+  @if (errorMessage()) {
+    <div class="toast-error animate-fade-in">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" (click)="errorMessage.set(null)">✕</button>
+    </div>
+  }
+
+  <div class="copywriter-layout">
+
+    <!-- ─── INPUT PANEL ─── -->
+    <aside class="input-panel">
+      <div class="panel-header">
+        <div class="panel-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <p class="eyebrow">Copywriter IA</p>
+          <h2>Generador de Publicaciones</h2>
+        </div>
+      </div>
+
+      <p class="panel-desc">
+        Ingresá los datos de tu producto y la IA generará <strong>10 títulos SEO</strong> y una
+        <strong>descripción profesional</strong> optimizada para Mercado Libre.
+      </p>
+
+      <div class="form-stack">
+        <div class="form-group">
+          <label for="cw-product">Producto *</label>
+          <textarea
+            id="cw-product"
+            class="input-text"
+            rows="3"
+            placeholder="Ej: Sérum facial con vitamina C, 30 ml, textura ligera, para todo tipo de piel..."
+            [ngModel]="product()"
+            (ngModelChange)="product.set($event)"
+            (keydown)="handleKeydown($event)"
+          ></textarea>
+          <span class="hint">Cuanto más detalle, mejores resultados</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cw-brand">Marca</label>
+            <input
+              id="cw-brand"
+              type="text"
+              class="input-text"
+              placeholder="Ej: City Girl"
+              [ngModel]="brand()"
+              (ngModelChange)="brand.set($event)"
+            />
+          </div>
+          <div class="form-group">
+            <label for="cw-country">País</label>
+            <input
+              id="cw-country"
+              type="text"
+              class="input-text"
+              [ngModel]="country()"
+              (ngModelChange)="country.set($event)"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cw-data">Datos confirmados</label>
+          <textarea
+            id="cw-data"
+            class="input-text"
+            rows="3"
+            placeholder="Ej: Contenido 30ml, tipo de piel: todo tipo, momento de aplicación: día, ingrediente principal: vitamina C..."
+            [ngModel]="confirmedData()"
+            (ngModelChange)="confirmedData.set($event)"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="cw-objective">Objetivo comercial</label>
+          <input
+            id="cw-objective"
+            type="text"
+            class="input-text"
+            placeholder="Mercado Libre, Instagram, tienda propia..."
+            [ngModel]="commercialObjective()"
+            (ngModelChange)="commercialObjective.set($event)"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="generate-btn"
+          [class.is-loading]="loading()"
+          [disabled]="!canGenerate"
+          (click)="generate()"
+        >
+          @if (loading()) {
+            <span class="btn-spinner"></span>
+            <span>{{ thinkingLabel() }}</span>
+          } @else {
+            <span class="btn-sparkle">✦</span>
+            <span>Generar con IA</span>
+          }
+        </button>
+      </div>
+    </aside>
+
+    <!-- ─── RESULTS PANEL ─── -->
+    <section class="results-panel">
+      @if (!result() && !loading()) {
+        <div class="empty-results">
+          <div class="empty-illustration">
+            <div class="empty-glow"></div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <h3>Generá tu publicación perfecta</h3>
+          <p>Completá los datos de tu producto a la izquierda y hacé clic en "Generar con IA" para recibir 10 títulos SEO y una descripción profesional.</p>
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="orbit-ring"><span></span><span></span><span></span></div>
+          <div class="loading-copy">
+            <p class="eyebrow">Procesando</p>
+            <h3>{{ thinkingLabel() }}</h3>
+            <div class="wave-bars"><span></span><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      }
+
+      @if (result(); as r) {
+        <div class="results-content animate-fade-in">
+
+          <!-- Titles -->
+          <div class="result-section">
+            <div class="section-header">
+              <h3>Títulos Sugeridos</h3>
+              <span class="count-badge">{{ r.titles.length }}</span>
+            </div>
+            <div class="titles-grid">
+              @for (title of r.titles; track $index) {
+                <button
+                  type="button"
+                  class="title-card"
+                  [class.copied]="copiedIndex() === $index"
+                  (click)="copyTitle(title, $index)"
+                  title="Click para copiar"
+                >
+                  <span class="title-number">{{ $index + 1 }}</span>
+                  <span class="title-text">{{ displayedTitles()[$index] || '' }}</span>
+                  <span class="copy-icon">
+                    {{ copiedIndex() === $index ? '✓' : '⧉' }}
+                  </span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="result-section">
+            <div class="section-header">
+              <h3>Descripción para Mercado Libre</h3>
+              <button
+                type="button"
+                class="copy-desc-btn"
+                [class.copied]="copiedDesc()"
+                (click)="copyDescription()"
+              >
+                {{ copiedDesc() ? '✓ Copiada' : '⧉ Copiar' }}
+              </button>
+            </div>
+            <div class="desc-card">
+              <pre class="desc-content">{{ displayedDescription() }}</pre>
+            </div>
+          </div>
+
+        </div>
+      }
+    </section>
+
+  </div>
+</section>

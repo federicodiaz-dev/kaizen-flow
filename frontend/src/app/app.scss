@@ -189,6 +189,30 @@
   box-shadow: var(--shadow-sm);
 }
 
+.nav-icon.ai-sparkle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 1rem;
+  animation: sidebar-sparkle 3s ease-in-out infinite;
+}
+
+.nav-links a.active .nav-icon.ai-sparkle {
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 50%, #764ba2 100%);
+  background-size: 200% 200%;
+  animation: sidebar-sparkle-active 2s ease infinite;
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.4);
+}
+
+@keyframes sidebar-sparkle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes sidebar-sparkle-active {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 .page-content {
   flex: 1;
   padding: 2.5rem 3rem;
