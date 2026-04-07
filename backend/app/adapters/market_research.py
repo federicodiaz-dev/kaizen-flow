@@ -607,15 +607,41 @@ class MarketResearchAdapter:
         *,
         site_id: str,
         query: str,
+        limit: int = 8,
     ) -> list[dict[str, Any]]:
-        data = await self._request_with_fallback(
-            account_key,
-            "GET",
-            "/marketplace/domain_discovery/search",
-            params={"site_id": site_id, "q": query},
-            prefer_public=True,
+        normalized_site = str(site_id or "").strip().upper()
+        params = {
+            "q": query,
+            "limit": min(max(limit, 1), 20),
+        }
+        attempts = [
+            (f"/sites/{normalized_site}/domain_discovery/search", params),
+            ("/marketplace/domain_discovery/search", {**params, "site_id": normalized_site}),
+        ]
+        attempt_errors: list[str] = []
+        for path, current_params in attempts:
+            try:
+                data = await self._request_with_fallback(
+                    account_key,
+                    "GET",
+                    path,
+                    params=current_params,
+                    prefer_public=True,
+                )
+                return data if isinstance(data, list) else []
+            except MercadoLibreAPIError as exc:
+                attempt_errors.append(f"{path}: {exc.status_code} | {exc.message} | {exc.code}")
+
+        raise MercadoLibreAPIError(
+            message="No se pudo resolver la categoria sugerida. " + " ; ".join(attempt_errors),
+            status_code=404,
+            code="category_prediction_failed",
+            details={
+                "query": query,
+                "site_id": normalized_site,
+                "attempt_errors": attempt_errors,
+            },
         )
-        return data if isinstance(data, list) else []
 
     async def get_trends(
         self,

@@ -51,6 +51,9 @@ User: "la de antes" (after discussing a product)
 User: "cuanto cuesta en el mercado una cartuchera lisa"
 → route=market_intelligence, confidence=0.88, user_goal="analisis de precios competitivos", normalized_request="Precio de mercado de cartucheras lisas"
 
+User: "quiero un reporte de tendencias para maquillaje"
+→ route=market_intelligence, confidence=0.93, user_goal="detectar productos en tendencia", normalized_request="Reporte de tendencias validadas para maquillaje"
+
 User: "que podrias hacer por mi" / "como me podes ayudar"
 → route=clarification, confidence=0.85, clarifying_question="¡Puedo ayudarte con muchas cosas! Por ejemplo: revisar tus publicaciones y stock, ver reclamos o preguntas pendientes, analizar tendencias del mercado, o sugerir mejoras para tus listings. ¿Qué te gustaría hacer?"
 """.strip()
@@ -114,13 +117,16 @@ Mission:
 
 Rules:
 - use trends, search snapshots, category discovery, and seller catalog tools before making strong recommendations
+- if the user asks for trend reports, broad natural-language categories, or product opportunities, call `local_market_trend_report` first
+- recommend only products that are validated by marketplace evidence; do not invent products
+- never present broad verticals like "belleza", "cuidado personal", or "productos para hombres" as if they were the final product opportunity
 - explain why an opportunity makes sense
 - cover competition pressure, price band, demand signal, differentiation angle, and risk
 - if the user asks for future trends, frame the answer as a directional hypothesis, not certainty
 - answer in the same language as the user
 
 Preferred output structure:
-## Recomendacion Principal
+## Productos En Tendencia Validados
 ## Por Que Tiene Sentido
 ## Riesgos O Dudas
 ## Siguiente Validacion

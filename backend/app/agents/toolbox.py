@@ -15,6 +15,7 @@ from langchain_core.tools import BaseTool, tool
 
 from app.adapters.claims import ClaimsAdapter
 from app.adapters.items import ItemsAdapter
+from app.adapters.market_research import MarketResearchAdapter
 from app.adapters.questions import QuestionsAdapter
 from app.agents.config import AgentSettings
 from app.clients.mercadolibre import MercadoLibreClient
@@ -25,6 +26,7 @@ from app.schemas.accounts import AccountsResponse
 from app.services.accounts import AccountsService
 from app.services.claims import ClaimsService
 from app.services.items import ItemsService
+from app.services.market_insights import MarketInsightsService
 from app.services.questions import QuestionsService
 
 
@@ -119,6 +121,13 @@ class AgentToolbox:
         )
         self._account_store = account_store
         self._accounts_service = AccountsService(account_store=account_store)
+        self._market_research = MarketResearchAdapter(self._ml_client)
+        self._market_insights_service = MarketInsightsService(
+            user_id=account_store.user_id,
+            market_research=self._market_research,
+            default_site_id=agent_settings.default_site_id,
+            agent_settings=agent_settings,
+        )
         self._items_service = ItemsService(
             account_store=account_store,
             client=self._ml_client,
@@ -432,13 +441,12 @@ class AgentToolbox:
 
     async def _market_category_payload(self, query: str) -> dict[str, Any]:
         runtime = self._current_runtime()
-        data = await self._ml_client.request(
+        suggestions = await self._market_research.predict_category(
             runtime.account_key,
-            "GET",
-            "/marketplace/domain_discovery/search",
-            params={"q": query},
+            site_id=runtime.site_id,
+            query=query,
+            limit=8,
         )
-        suggestions = data if isinstance(data, list) else []
         return {
             "ok": True,
             "query": query,
@@ -448,11 +456,11 @@ class AgentToolbox:
 
     async def _market_trends_payload(self, *, category_id: str | None, limit: int) -> dict[str, Any]:
         runtime = self._current_runtime()
-        path = f"/trends/{runtime.site_id}"
-        if category_id:
-            path = f"{path}/{category_id}"
-        data = await self._ml_client.request(runtime.account_key, "GET", path)
-        raw_items = data if isinstance(data, list) else []
+        raw_items = await self._market_research.get_trends(
+            runtime.account_key,
+            site_id=runtime.site_id,
+            category_id=category_id,
+        )
         items = []
         for entry in raw_items[:limit]:
             if not isinstance(entry, dict):
@@ -478,18 +486,12 @@ class AgentToolbox:
         limit: int,
     ) -> dict[str, Any]:
         runtime = self._current_runtime()
-        params: dict[str, Any] = {
-            "q": query,
-            "limit": min(limit, 20),
-        }
-        if category_id:
-            params["category"] = category_id
-
-        data = await self._ml_client.request(
+        data = await self._market_research.search_items(
             runtime.account_key,
-            "GET",
-            f"/sites/{runtime.site_id}/search",
-            params=params,
+            site_id=runtime.site_id,
+            query=query,
+            category_id=category_id,
+            limit=min(limit, 20),
         )
         results = data.get("results") if isinstance(data, dict) and isinstance(data.get("results"), list) else []
         prices = [float(item["price"]) for item in results if isinstance(item, dict) and item.get("price") is not None]
@@ -544,6 +546,15 @@ class AgentToolbox:
                 if isinstance(item, dict)
             ],
         }
+
+    async def _market_trend_report_payload(self, *, query: str, limit: int) -> dict[str, Any]:
+        runtime = self._current_runtime()
+        return await self._market_insights_service.build_trend_report(
+            account_key=runtime.account_key,
+            site_id=runtime.site_id,
+            natural_query=query,
+            limit=min(limit, 8),
+        )
 
     async def _catalog_fit_payload(self, *, limit: int) -> dict[str, Any]:
         runtime = self._current_runtime()
@@ -729,6 +740,16 @@ class AgentToolbox:
             except Exception as exc:  # pragma: no cover
                 return self._unexpected_error_payload(exc)
 
+        @tool("local_market_trend_report")
+        async def local_market_trend_report(query: str, limit: int = 5) -> dict[str, Any]:
+            """Resolve a natural-language category and return validated Mercado Libre trend opportunities with evidence."""
+            try:
+                return await self._market_trend_report_payload(query=query, limit=min(limit, 8))
+            except AppError as exc:
+                return self._app_error_payload(exc)
+            except Exception as exc:  # pragma: no cover
+                return self._unexpected_error_payload(exc)
+
         @tool("local_catalog_fit_snapshot")
         async def local_catalog_fit_snapshot(limit: int = 10) -> dict[str, Any]:
             """Inspect the seller's active catalog sample to understand current categories and product mix."""
@@ -743,5 +764,6 @@ class AgentToolbox:
             local_market_category_discovery,
             local_market_trends,
             local_market_search_snapshot,
+            local_market_trend_report,
             local_catalog_fit_snapshot,
         ]
