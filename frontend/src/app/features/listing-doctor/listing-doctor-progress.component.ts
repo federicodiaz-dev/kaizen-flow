@@ -20,6 +20,24 @@ export class ListingDoctorProgressComponent {
   readonly runningStep = computed(
     () => this.steps().find((step) => step.status === 'running') ?? null
   );
+  readonly completedCount = computed(
+    () => this.steps().filter((step) => step.status === 'completed').length
+  );
+  readonly totalSteps = computed(() => this.steps().length);
+  readonly leadingStep = computed(() => {
+    return (
+      this.steps().find((step) => step.status === 'running') ??
+      this.steps().find((step) => step.status === 'failed') ??
+      this.steps().find((step) => step.status === 'pending') ??
+      null
+    );
+  });
+  readonly progressLabel = computed(() => {
+    if (this.jobStatus() === 'completed' || this.jobStatus() === 'partial') {
+      return 'Analisis finalizado';
+    }
+    return this.leadingStep()?.label ?? 'Preparando analisis';
+  });
 
   statusLabel(status: ListingDoctorProgressStep['status']): string {
     const labels: Record<ListingDoctorProgressStep['status'], string> = {

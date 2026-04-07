@@ -8,6 +8,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 import { ItemSummary } from '../../core/models/items.models';
 import {
@@ -26,20 +27,19 @@ import { ListingDoctorEvidenceComponent } from './listing-doctor-evidence.compon
 import { ListingDoctorFormComponent } from './listing-doctor-form.component';
 import { ListingDoctorProgressComponent } from './listing-doctor-progress.component';
 import { ListingDoctorScoreboardComponent } from './listing-doctor-scoreboard.component';
-import { ListingDoctorTraceComponent } from './listing-doctor-trace.component';
 
 @Component({
   selector: 'app-listing-doctor-page',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ListingDoctorFormComponent,
     ListingDoctorProgressComponent,
     ListingDoctorScoreboardComponent,
     ListingDoctorCompetitorsComponent,
     ListingDoctorActionsComponent,
     ListingDoctorEvidenceComponent,
-    ListingDoctorTraceComponent,
   ],
   templateUrl: './listing-doctor-page.component.html',
   styleUrl: './listing-doctor-page.component.scss',
@@ -71,6 +71,9 @@ export class ListingDoctorPageComponent {
   readonly displayedDescription = signal('');
   readonly displayedTitleSuggestions = signal<string[]>([]);
   readonly lastRevealKey = signal<string | null>(null);
+  readonly activeResultTab = signal<'summary' | 'market' | 'actions' | 'copy' | 'evidence'>(
+    'summary'
+  );
 
   readonly result = computed(() => this.job()?.result ?? null);
   readonly loading = computed(() => {
@@ -84,6 +87,16 @@ export class ListingDoctorPageComponent {
   readonly selectedItem = computed(() => {
     const currentItemId = this.itemId().trim().toUpperCase();
     return this.recentItems().find((item) => item.id.toUpperCase() === currentItemId) ?? null;
+  });
+  readonly filteredRecentItems = computed(() => {
+    const query = this.recentItemsQuery().trim().toLowerCase();
+    if (!query) {
+      return this.recentItems();
+    }
+    return this.recentItems().filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) || item.id.toLowerCase().includes(query)
+    );
   });
   readonly activeStepMessage = computed(
     () =>
@@ -103,6 +116,9 @@ export class ListingDoctorPageComponent {
     this.destroyRef.onDestroy(() => {
       this.clearPolling();
       this.typewriter.cancelPrefix(this.animationPrefix);
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+      }
     });
 
     effect(
@@ -112,6 +128,13 @@ export class ListingDoctorPageComponent {
       },
       { allowSignalWrites: true }
     );
+
+    effect(() => {
+      if (typeof document === 'undefined') {
+        return;
+      }
+      document.body.style.overflow = this.pickerOpen() ? 'hidden' : '';
+    });
   }
 
   openPicker(): void {
@@ -138,6 +161,7 @@ export class ListingDoctorPageComponent {
     this.clearPolling();
     this.typewriter.cancelPrefix(this.animationPrefix);
     this.resetRevealedContent();
+    this.activeResultTab.set('summary');
 
     const payload: ListingDoctorJobRequest = {
       item_id: this.itemId().trim().toUpperCase(),
@@ -254,6 +278,7 @@ export class ListingDoctorPageComponent {
     this.recentItemsError.set(null);
     this.recentItemsQuery.set('');
     this.resetRevealedContent();
+    this.activeResultTab.set('summary');
 
     if (!account) {
       this.itemId.set('');
@@ -311,6 +336,7 @@ export class ListingDoctorPageComponent {
       return;
     }
     this.lastRevealKey.set(revealKey);
+    this.activeResultTab.set('summary');
     this.resetRevealedContent();
     this.typewriter.cancelPrefix(this.animationPrefix);
 

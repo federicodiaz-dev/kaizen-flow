@@ -93,14 +93,8 @@
 
     <article class="diagnosis-card glass-panel">
       <div class="diagnosis-header">
-        <span class="section-label">Positioning Strategy</span>
+        <span class="section-label">Siguiente foco</span>
         <strong>{{ positioningStrategy() || data.ai_suggestions.positioning_strategy || 'Sin estrategia adicional' }}</strong>
-      </div>
-
-      <div class="diagnosis-list">
-        @for (bullet of data.detailed_diagnosis; track bullet) {
-          <div class="diagnosis-bullet">{{ bullet }}</div>
-        }
       </div>
     </article>
   </section>

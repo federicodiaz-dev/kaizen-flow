@@ -6,31 +6,10 @@
     </div>
   }
 
-  <header class="page-hero glass-panel">
-    <div class="hero-copy">
-      <div class="hero-badges">
-        <span class="feature-badge">AI / Market Intelligence</span>
-        <span class="feature-badge subtle">{{ currentAccountLabel() }}</span>
-      </div>
+  <header class="page-header glass-panel">
+    <div>
       <h1>Listing Doctor</h1>
-      <p>
-        Diagnostica una publicacion real de Mercado Libre, investiga competencia comparable,
-        calcula benchmark accionable y convierte hallazgos en recomendaciones priorizadas.
-      </p>
-    </div>
-
-    <div class="hero-metrics">
-      <article class="metric-card">
-        <span>Workflow</span>
-        <strong>8 agentes</strong>
-        <small>intake, research, benchmark, strategy y copy</small>
-      </article>
-
-      <article class="metric-card">
-        <span>Modo</span>
-        <strong>Read only</strong>
-        <small>sin mutar publicaciones reales</small>
-      </article>
+      <p>Analiza una publicacion y te muestra que mejorar primero, sin abrumar con ruido tecnico.</p>
     </div>
   </header>
 
@@ -41,13 +20,13 @@
         <h2>Conecta una cuenta activa para analizar listings</h2>
       </div>
       <p>
-        Listing Doctor reutiliza la cuenta actual del seller para cargar la publicacion,
-        investigar competencia y construir el benchmark.
+        Listing Doctor usa la cuenta actual para cargar la publicacion y comparar tu listing contra
+        el mercado.
       </p>
     </section>
   } @else {
     <div class="page-grid">
-      <div class="left-column">
+      <aside class="left-column">
         <app-listing-doctor-form
           [itemId]="itemId()"
           [includeCopywriter]="includeCopywriter()"
@@ -69,426 +48,505 @@
           (recentItemsQueryChange)="recentItemsQuery.set($event)"
         />
 
-        @if (job(); as currentJob) {
+        @if (loading() && job(); as currentJob) {
           <app-listing-doctor-progress
             [steps]="currentJob.steps"
             [jobStatus]="currentJob.status"
           />
-
-          <app-listing-doctor-trace
-            [trace]="currentJob.trace"
-            [logFilePath]="currentJob.log_file_path"
-          />
         }
-      </div>
+      </aside>
 
       <div class="right-column">
         @if (!job() && !result()) {
           <section class="empty-state glass-panel animate-fade-in">
-            <div class="empty-visual">
-              <span class="orbit orbit-a"></span>
-              <span class="orbit orbit-b"></span>
-              <span class="core">LD</span>
-            </div>
-
-            <div class="empty-copy">
-              <p class="eyebrow">Market Diagnostic</p>
-              <h2>Un consultor senior de listings, convertido en workflow</h2>
-              <p>
-                Ingresa un `item_id`, activa el benchmark y deja que Listing Doctor compare
-                tu publicacion contra el mercado para detectar gaps, fortalezas y quick wins.
-              </p>
+            <p class="eyebrow">Empezar</p>
+            <h2>Elegi una publicacion y deja que el analisis ordene las prioridades.</h2>
+            <div class="empty-points">
+              <div class="empty-point">Te resume el estado general del listing.</div>
+              <div class="empty-point">Detecta competidores comparables y benchmark.</div>
+              <div class="empty-point">Ordena acciones por impacto para no hacer todo de golpe.</div>
             </div>
           </section>
         }
 
         @if (loading()) {
           <section class="analysis-theater glass-panel animate-fade-in">
-            <div class="theater-top">
-              <div>
-                <p class="eyebrow">Analysis in progress</p>
-                <h2>{{ activeStepMessage() }}</h2>
-              </div>
-              <div class="pulse-cluster">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-
-            <div class="loading-panels">
-              <article class="loading-card focus">
-                <span class="loading-label">Pipeline activo</span>
-                <strong>{{ job()?.status === 'queued' ? 'En cola inteligente' : 'Procesando mercado' }}</strong>
-                <p>
-                  El workflow esta cargando contexto real, expandiendo queries, buscando
-                  competidores y sintetizando oportunidades.
-                </p>
-                <div class="wave-bars"><span></span><span></span><span></span><span></span></div>
-              </article>
-
-              <article class="loading-card skeleton-card">
-                <span class="skeleton-line wide"></span>
-                <span class="skeleton-line"></span>
-                <span class="skeleton-line"></span>
-                <span class="skeleton-line short"></span>
-              </article>
-
-              <article class="loading-card skeleton-card">
-                <span class="skeleton-line"></span>
-                <span class="skeleton-pill"></span>
-                <span class="skeleton-line wide"></span>
-                <span class="skeleton-line short"></span>
-              </article>
+            <p class="eyebrow">Analizando</p>
+            <h2>{{ activeStepMessage() }}</h2>
+            <p>
+              Estamos cargando el listing, buscando comparables y armando un plan accionable para el
+              seller.
+            </p>
+            <div class="pulse-cluster">
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           </section>
         }
 
         @if (result(); as data) {
           <div class="results-stack animate-fade-in">
-            <section class="report-section">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Executive View</p>
-                  <h3>Resumen ejecutivo del listing</h3>
-                </div>
-                <span class="feature-badge subtle">Score {{ data.scores.overall | number: '1.0-0' }}/100</span>
+            <section class="result-nav-shell glass-panel">
+              <div class="result-nav-copy">
+                <p class="eyebrow">Navegacion del diagnostico</p>
+                <h3>Explora el informe por secciones</h3>
+                <p>Empieza por el resumen y entra al detalle solo cuando lo necesites.</p>
               </div>
 
-              <app-listing-doctor-scoreboard
-                [result]="data"
-                [executiveSummary]="displayedExecutiveSummary()"
-                [positioningStrategy]="displayedPositioning()"
-              />
+              <nav class="result-tabs">
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="activeResultTab() === 'summary'"
+                  (click)="activeResultTab.set('summary')"
+                >
+                  <span class="tab-title">Resumen</span>
+                  <span class="tab-desc">Vision general y foco principal</span>
+                </button>
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="activeResultTab() === 'market'"
+                  (click)="activeResultTab.set('market')"
+                >
+                  <span class="tab-title">Mercado</span>
+                  <span class="tab-desc">Benchmark y comparables</span>
+                </button>
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="activeResultTab() === 'actions'"
+                  (click)="activeResultTab.set('actions')"
+                >
+                  <span class="tab-title">Acciones</span>
+                  <span class="tab-desc">Prioridades para ejecutar</span>
+                </button>
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="activeResultTab() === 'copy'"
+                  (click)="activeResultTab.set('copy')"
+                >
+                  <span class="tab-title">Copy</span>
+                  <span class="tab-desc">Titulos y descripcion sugerida</span>
+                </button>
+                <button
+                  type="button"
+                  class="tab-btn"
+                  [class.active]="activeResultTab() === 'evidence'"
+                  (click)="activeResultTab.set('evidence')"
+                >
+                  <span class="tab-title">Transparencia</span>
+                  <span class="tab-desc">Datos, proxies e incertidumbres</span>
+                </button>
+              </nav>
             </section>
 
-            <section class="coverage-shell glass-panel">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Coverage</p>
-                  <h3>Cobertura del analisis y nivel de confianza</h3>
-                </div>
-              </div>
+            @if (activeResultTab() === 'summary') {
+              <section class="report-section">
+                <app-listing-doctor-scoreboard
+                  [result]="data"
+                  [executiveSummary]="displayedExecutiveSummary()"
+                  [positioningStrategy]="displayedPositioning()"
+                />
+              </section>
 
-              <div class="coverage-grid">
-                <article class="coverage-card">
-                  <span class="section-label">Queries</span>
-                  <strong>{{ data.market_summary.query_count }}</strong>
-                  <p>Busqueda multiconsulta usada para detectar mercado comparable real.</p>
-                </article>
-
-                <article class="coverage-card">
-                  <span class="section-label">Candidatos</span>
-                  <strong>{{ data.market_summary.total_candidates }}</strong>
-                  <p>Resultados deduplicados antes del filtro de comparabilidad.</p>
-                </article>
-
-                <article class="coverage-card">
-                  <span class="section-label">Benchmark</span>
-                  <strong>{{ data.market_summary.shortlisted_competitors }}</strong>
-                  <p>Competidores shortlistados que alimentan scores y recomendaciones.</p>
-                </article>
-
-                <article class="coverage-card">
-                  <span class="section-label">Detalle usable</span>
-                  <strong>{{ data.market_summary.detailed_competitors }}/{{ data.market_summary.shortlisted_competitors }}</strong>
-                  <p>Competidores con detalle suficiente para comparar calidad, atributos y contenido.</p>
-                </article>
-
-                <article class="coverage-card">
-                  <span class="section-label">Precios usables</span>
-                  <strong>{{ data.market_summary.priced_competitors }}/{{ data.market_summary.shortlisted_competitors }}</strong>
-                  <p>Muestra con precio suficientemente recuperado para evaluar posicionamiento.</p>
-                </article>
-
-                <article class="coverage-card">
-                  <span class="section-label">Confianza</span>
-                  <strong>{{ data.market_summary.benchmark_confidence | titlecase }}</strong>
-                  <p>Nivel de confianza del benchmark segun cobertura de detalle y precio.</p>
-                </article>
-              </div>
-
-              @if (data.warnings.length > 0) {
-                <div class="warning-stack">
-                  @for (warning of data.warnings; track warning) {
-                    <article class="warning-card">
-                      <span class="warning-dot"></span>
-                      <p>{{ warning }}</p>
-                    </article>
-                  }
-                </div>
-              } @else {
-                <div class="coverage-ok">
-                  @if (data.market_summary.benchmark_confidence === 'high') {
-                    La ejecucion consulto los recursos principales y el benchmark quedo con buena cobertura.
-                  } @else if (data.market_summary.benchmark_confidence === 'medium') {
-                    La ejecucion consulto los recursos principales, aunque parte del benchmark quedo con cobertura intermedia.
-                  } @else {
-                    La ejecucion no tuvo alertas operativas, pero el benchmark aun quedo con cobertura parcial y debe leerse con cautela.
-                  }
-                </div>
-              }
-            </section>
-
-            <section class="diagnosis-shell">
-              <article class="narrative-card glass-panel">
-                <div class="section-heading">
-                  <div>
-                    <p class="eyebrow">Diagnosis</p>
-                    <h3>Lectura clara del caso</h3>
-                  </div>
-                </div>
-
-                @if (data.detailed_diagnosis.length === 0) {
-                  <div class="empty-copy-small">No hubo bullets adicionales para este diagnostico.</div>
-                } @else {
-                  <div class="narrative-list">
-                    @for (bullet of data.detailed_diagnosis; track bullet) {
-                      <div class="narrative-item">{{ bullet }}</div>
-                    }
-                  </div>
-                }
-              </article>
-
-              <div class="signal-column">
-                <article class="insight-card glass-panel positive">
-                  <div class="insight-header">
-                    <p class="eyebrow">Strengths</p>
-                    <h3>Lo que ya esta bien</h3>
-                  </div>
-                  @if (data.findings.strengths.length === 0) {
-                    <div class="empty-copy-small">No se detectaron fortalezas diferenciales claras.</div>
-                  } @else {
-                    <div class="insight-list">
-                      @for (point of data.findings.strengths; track point) {
-                        <div class="insight-pill">{{ point }}</div>
-                      }
-                    </div>
-                  }
-                </article>
-
-                <article class="insight-card glass-panel danger">
-                  <div class="insight-header">
-                    <p class="eyebrow">Weaknesses</p>
-                    <h3>Brechas del listing</h3>
-                  </div>
-                  @if (data.findings.weaknesses.length === 0) {
-                    <div class="empty-copy-small">No hay debilidades dominantes en la muestra actual.</div>
-                  } @else {
-                    <div class="insight-list">
-                      @for (point of data.findings.weaknesses; track point) {
-                        <div class="insight-pill">{{ point }}</div>
-                      }
-                    </div>
-                  }
-                </article>
-              </div>
-            </section>
-
-            <section class="report-section">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Opportunity Map</p>
-                  <h3>Brechas y oportunidades detectadas</h3>
-                </div>
-              </div>
-
-              <div class="opportunity-grid">
-                <article class="gap-card glass-panel">
-                  <span class="section-label">Precio</span>
-                  <h4>Posicion de precio</h4>
-                  @if (data.findings.pricing_position.length === 0) {
-                    <div class="empty-copy-small">Sin lectura clara de precio.</div>
-                  } @else {
-                    <div class="gap-list">
-                      @for (point of data.findings.pricing_position; track point) {
-                        <div class="gap-item">{{ point }}</div>
-                      }
-                    </div>
-                  }
-                </article>
-
-                <article class="gap-card glass-panel">
-                  <span class="section-label">Titulo</span>
-                  <h4>Huecos de naming</h4>
-                  @if (data.findings.title_gaps.length === 0) {
-                    <div class="empty-copy-small">El titulo no presenta gaps dominantes.</div>
-                  } @else {
-                    <div class="gap-list">
-                      @for (point of data.findings.title_gaps; track point) {
-                        <div class="gap-item">{{ point }}</div>
-                      }
-                    </div>
-                  }
-                </article>
-
-                <article class="gap-card glass-panel">
-                  <span class="section-label">Descripcion</span>
-                  <h4>Brechas comerciales</h4>
-                  @if (data.findings.description_gaps.length === 0) {
-                    <div class="empty-copy-small">La descripcion no muestra gaps principales.</div>
-                  } @else {
-                    <div class="gap-list">
-                      @for (point of data.findings.description_gaps; track point) {
-                        <div class="gap-item">{{ point }}</div>
-                      }
-                    </div>
-                  }
-                </article>
-
-                <article class="gap-card glass-panel wide">
+              <section class="summary-grid-compact">
+                <article class="summary-panel glass-panel">
                   <div class="section-heading compact">
                     <div>
-                      <span class="section-label">Atributos</span>
-                      <h4>Atributos faltantes o debiles</h4>
+                      <p class="eyebrow">Diagnostico</p>
+                      <h3>Lectura rapida</h3>
                     </div>
-                    <span class="count-chip">{{ data.findings.missing_attributes.length }}</span>
                   </div>
-                  @if (data.findings.missing_attributes.length === 0) {
-                    <div class="empty-copy-small">No se detectaron atributos faltantes relevantes.</div>
+
+                  @if (data.detailed_diagnosis.length === 0) {
+                    <div class="empty-copy-small">No hubo bullets adicionales para este caso.</div>
                   } @else {
-                    <div class="attribute-list">
-                      @for (attribute of data.findings.missing_attributes; track attribute) {
-                        <span>{{ attribute }}</span>
+                    <div class="narrative-list compact">
+                      @for (bullet of data.detailed_diagnosis.slice(0, 4); track bullet) {
+                        <div class="narrative-item">{{ bullet }}</div>
                       }
                     </div>
                   }
                 </article>
-              </div>
-            </section>
 
-            <section class="report-section">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Action Plan</p>
-                  <h3>Que mover primero</h3>
-                </div>
-              </div>
-              <app-listing-doctor-actions
-                [actions]="data.actions"
-              />
-            </section>
-
-            <section class="report-section">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Competition</p>
-                  <h3>Benchmark competitivo</h3>
-                </div>
-              </div>
-              <app-listing-doctor-competitors
-                [competitors]="data.competitor_snapshot"
-              />
-            </section>
-
-            <section class="ai-suggestions glass-panel">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Copywriter Enhancement</p>
-                  <h3>Sugerencias de IA listas para usar</h3>
-                </div>
-                <span class="feature-badge subtle">
-                  {{ includeCopywriter() ? 'Copywriter habilitado' : 'Copywriter opcional' }}
-                </span>
-              </div>
-
-              @if (
-                data.ai_suggestions.suggested_titles.length === 0 &&
-                !data.ai_suggestions.suggested_description &&
-                !data.ai_suggestions.positioning_strategy
-              ) {
-                <div class="empty-copy-small">
-                  Este analisis se completo sin contenido adicional del Copywriter.
-                </div>
-              } @else {
-                <div class="ai-stack">
-                  <article class="ai-card">
-                    <div class="ai-card-header">
-                      <div>
-                        <span class="section-label">Titulos sugeridos</span>
-                        <h4>Patrones dominantes, reescritos para tu listing</h4>
-                      </div>
+                <article class="summary-panel glass-panel">
+                  <div class="section-heading compact">
+                    <div>
+                      <p class="eyebrow">Prioridad</p>
+                      <h3>Que mover primero</h3>
                     </div>
+                  </div>
 
-                    <div class="title-list">
-                      @for (
-                        title of (displayedTitleSuggestions().length
-                          ? displayedTitleSuggestions()
-                          : data.ai_suggestions.suggested_titles);
-                        track $index
-                      ) {
-                        <button
-                          type="button"
-                          class="title-option"
-                          (click)="copyText(data.ai_suggestions.suggested_titles[$index], 'title-' + $index)"
-                        >
-                          <span class="title-index">{{ $index + 1 }}</span>
-                          <span class="title-copy">{{ title }}</span>
-                          <span class="copy-state">
-                            {{ copiedKey() === 'title-' + $index ? 'Copiado' : 'Copiar' }}
-                          </span>
-                        </button>
+                  @if (data.actions.length === 0) {
+                    <div class="empty-copy-small">No hay acciones priorizadas para mostrar.</div>
+                  } @else {
+                    <div class="priority-list">
+                      @for (action of data.actions.slice(0, 3); track action.title) {
+                        <article class="priority-item">
+                          <strong>{{ action.title }}</strong>
+                          <p>{{ action.summary }}</p>
+                        </article>
                       }
                     </div>
-                  </article>
+                  }
+                </article>
 
-                  <article class="ai-card">
-                    <div class="ai-card-header">
-                      <div>
-                        <span class="section-label">Posicionamiento</span>
-                        <h4>Estrategia comercial sugerida</h4>
-                      </div>
-                      <button
-                        type="button"
-                        class="copy-btn"
-                        [class.copied]="copiedKey() === 'positioning'"
-                        [disabled]="!data.ai_suggestions.positioning_strategy"
-                        (click)="copyText(data.ai_suggestions.positioning_strategy, 'positioning')"
-                      >
-                        {{ copiedKey() === 'positioning' ? 'Copiado' : 'Copiar' }}
-                      </button>
+                <article class="summary-panel glass-panel">
+                  <div class="section-heading compact">
+                    <div>
+                      <p class="eyebrow">Atencion</p>
+                      <h3>Lo mas importante ahora</h3>
                     </div>
-                    <p class="strategy-copy">
-                      {{ displayedPositioning() || data.ai_suggestions.positioning_strategy || 'Sin estrategia adicional.' }}
+                  </div>
+
+                  <div class="insight-list compact">
+                    @for (point of data.findings.weaknesses.slice(0, 3); track point) {
+                      <div class="insight-pill danger">{{ point }}</div>
+                    }
+                    @if (data.findings.weaknesses.length === 0) {
+                      <div class="empty-copy-small">No hay alertas dominantes en la muestra actual.</div>
+                    }
+                  </div>
+                </article>
+
+                <article class="summary-panel glass-panel">
+                  <div class="section-heading compact">
+                    <div>
+                      <p class="eyebrow">Confianza</p>
+                      <h3>Que tan firme es el benchmark</h3>
+                    </div>
+                  </div>
+
+                  <div class="confidence-card" [class.low]="data.market_summary.benchmark_confidence === 'low'">
+                    <strong>{{ data.market_summary.benchmark_confidence | titlecase }}</strong>
+                    <p>
+                      {{ data.market_summary.detailed_competitors }}/{{ data.market_summary.shortlisted_competitors }}
+                      competidores con detalle usable y
+                      {{ data.market_summary.priced_competitors }}/{{ data.market_summary.shortlisted_competitors }}
+                      con precio usable.
                     </p>
-                  </article>
+                  </div>
 
-                  <article class="ai-card">
-                    <div class="ai-card-header">
-                      <div>
-                        <span class="section-label">Descripcion mejorada</span>
-                        <h4>Copy optimizado con el benchmark detectado</h4>
-                      </div>
-                      <button
-                        type="button"
-                        class="copy-btn"
-                        [class.copied]="copiedKey() === 'description'"
-                        [disabled]="!data.ai_suggestions.suggested_description"
-                        (click)="copyText(data.ai_suggestions.suggested_description, 'description')"
-                      >
-                        {{ copiedKey() === 'description' ? 'Copiado' : 'Copiar' }}
-                      </button>
+                  @if (data.warnings.length > 0) {
+                    <div class="warning-list">
+                      @for (warning of data.warnings.slice(0, 2); track warning) {
+                        <div class="warning-inline">{{ warning }}</div>
+                      }
                     </div>
-                    <pre>{{ displayedDescription() || data.ai_suggestions.suggested_description || 'Sin descripcion adicional.' }}</pre>
+                  } @else {
+                    <div class="coverage-ok compact">
+                      El analisis termino sin alertas operativas visibles.
+                    </div>
+                  }
+                </article>
+              </section>
+            }
+
+            @if (activeResultTab() === 'market') {
+              <section class="coverage-shell glass-panel">
+                <div class="section-heading">
+                  <div>
+                    <p class="eyebrow">Mercado</p>
+                    <h3>Benchmark y cobertura</h3>
+                  </div>
+                </div>
+
+                <div class="coverage-grid">
+                  <article class="coverage-card">
+                    <span class="section-label">Queries</span>
+                    <strong>{{ data.market_summary.query_count }}</strong>
+                    <p>Consultas usadas para detectar mercado comparable.</p>
+                  </article>
+
+                  <article class="coverage-card">
+                    <span class="section-label">Candidatos</span>
+                    <strong>{{ data.market_summary.total_candidates }}</strong>
+                    <p>Resultados deduplicados antes del shortlist.</p>
+                  </article>
+
+                  <article class="coverage-card">
+                    <span class="section-label">Benchmark</span>
+                    <strong>{{ data.market_summary.shortlisted_competitors }}</strong>
+                    <p>Comparables usados para el diagnostico.</p>
+                  </article>
+
+                  <article class="coverage-card">
+                    <span class="section-label">Detalle usable</span>
+                    <strong>{{ data.market_summary.detailed_competitors }}/{{ data.market_summary.shortlisted_competitors }}</strong>
+                    <p>Comparables con suficiente detalle para comparar.</p>
+                  </article>
+
+                  <article class="coverage-card">
+                    <span class="section-label">Precios usables</span>
+                    <strong>{{ data.market_summary.priced_competitors }}/{{ data.market_summary.shortlisted_competitors }}</strong>
+                    <p>Muestra con precio usable para evaluar posicionamiento.</p>
+                  </article>
+
+                  <article class="coverage-card">
+                    <span class="section-label">Confianza</span>
+                    <strong>{{ data.market_summary.benchmark_confidence | titlecase }}</strong>
+                    <p>Nivel de confianza del benchmark actual.</p>
                   </article>
                 </div>
-              }
-            </section>
+              </section>
 
-            <section class="report-section">
-              <div class="section-heading">
-                <div>
-                  <p class="eyebrow">Transparency</p>
-                  <h3>Datos, proxies e incertidumbres</h3>
+              <section class="report-section">
+                <app-listing-doctor-competitors
+                  [competitors]="data.competitor_snapshot"
+                />
+              </section>
+            }
+
+            @if (activeResultTab() === 'actions') {
+              <section class="report-section">
+                <div class="section-heading">
+                  <div>
+                    <p class="eyebrow">Mejoras</p>
+                    <h3>Brechas del listing</h3>
+                  </div>
                 </div>
-              </div>
-              <app-listing-doctor-evidence
-                [evidence]="data.evidence"
-              />
-            </section>
+
+                <div class="opportunity-grid">
+                  <article class="gap-card glass-panel">
+                    <span class="section-label">Precio</span>
+                    <h4>Posicion de precio</h4>
+                    @if (data.findings.pricing_position.length === 0) {
+                      <div class="empty-copy-small">Sin lectura clara de precio.</div>
+                    } @else {
+                      <div class="gap-list">
+                        @for (point of data.findings.pricing_position; track point) {
+                          <div class="gap-item">{{ point }}</div>
+                        }
+                      </div>
+                    }
+                  </article>
+
+                  <article class="gap-card glass-panel">
+                    <span class="section-label">Titulo</span>
+                    <h4>Naming</h4>
+                    @if (data.findings.title_gaps.length === 0) {
+                      <div class="empty-copy-small">El titulo no presenta gaps dominantes.</div>
+                    } @else {
+                      <div class="gap-list">
+                        @for (point of data.findings.title_gaps; track point) {
+                          <div class="gap-item">{{ point }}</div>
+                        }
+                      </div>
+                    }
+                  </article>
+
+                  <article class="gap-card glass-panel">
+                    <span class="section-label">Descripcion</span>
+                    <h4>Brechas comerciales</h4>
+                    @if (data.findings.description_gaps.length === 0) {
+                      <div class="empty-copy-small">La descripcion no muestra gaps principales.</div>
+                    } @else {
+                      <div class="gap-list">
+                        @for (point of data.findings.description_gaps; track point) {
+                          <div class="gap-item">{{ point }}</div>
+                        }
+                      </div>
+                    }
+                  </article>
+
+                  <article class="gap-card glass-panel wide">
+                    <div class="section-heading compact">
+                      <div>
+                        <span class="section-label">Atributos</span>
+                        <h4>Atributos faltantes o debiles</h4>
+                      </div>
+                      <span class="count-chip">{{ data.findings.missing_attributes.length }}</span>
+                    </div>
+                    @if (data.findings.missing_attributes.length === 0) {
+                      <div class="empty-copy-small">No se detectaron atributos faltantes relevantes.</div>
+                    } @else {
+                      <div class="attribute-list">
+                        @for (attribute of data.findings.missing_attributes; track attribute) {
+                          <span>{{ attribute }}</span>
+                        }
+                      </div>
+                    }
+                  </article>
+                </div>
+              </section>
+
+              <section class="report-section">
+                <app-listing-doctor-actions
+                  [actions]="data.actions"
+                />
+              </section>
+            }
+
+            @if (activeResultTab() === 'copy') {
+              <section class="ai-suggestions glass-panel">
+                <div class="section-heading">
+                  <div>
+                    <p class="eyebrow">Copy</p>
+                    <h3>Sugerencias listas para usar</h3>
+                  </div>
+                </div>
+
+                @if (
+                  data.ai_suggestions.suggested_titles.length === 0 &&
+                  !data.ai_suggestions.suggested_description &&
+                  !data.ai_suggestions.positioning_strategy
+                ) {
+                  <div class="empty-copy-small">
+                    Este analisis se completo sin contenido adicional del Copywriter.
+                  </div>
+                } @else {
+                  <div class="ai-stack">
+                    <article class="ai-card">
+                      <div class="ai-card-header">
+                        <div>
+                          <span class="section-label">Titulos sugeridos</span>
+                          <h4>Opciones mejoradas para el listing</h4>
+                        </div>
+                      </div>
+
+                      <div class="title-list">
+                        @for (
+                          title of (displayedTitleSuggestions().length
+                            ? displayedTitleSuggestions()
+                            : data.ai_suggestions.suggested_titles);
+                          track $index
+                        ) {
+                          <button
+                            type="button"
+                            class="title-option"
+                            (click)="copyText(data.ai_suggestions.suggested_titles[$index], 'title-' + $index)"
+                          >
+                            <span class="title-index">{{ $index + 1 }}</span>
+                            <span class="title-copy">{{ title }}</span>
+                            <span class="copy-state">
+                              {{ copiedKey() === 'title-' + $index ? 'Copiado' : 'Copiar' }}
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    </article>
+
+                    <article class="ai-card">
+                      <div class="ai-card-header">
+                        <div>
+                          <span class="section-label">Posicionamiento</span>
+                          <h4>Estrategia sugerida</h4>
+                        </div>
+                        <button
+                          type="button"
+                          class="copy-btn"
+                          [class.copied]="copiedKey() === 'positioning'"
+                          [disabled]="!data.ai_suggestions.positioning_strategy"
+                          (click)="copyText(data.ai_suggestions.positioning_strategy, 'positioning')"
+                        >
+                          {{ copiedKey() === 'positioning' ? 'Copiado' : 'Copiar' }}
+                        </button>
+                      </div>
+                      <p class="strategy-copy">
+                        {{ displayedPositioning() || data.ai_suggestions.positioning_strategy || 'Sin estrategia adicional.' }}
+                      </p>
+                    </article>
+
+                    <article class="ai-card">
+                      <div class="ai-card-header">
+                        <div>
+                          <span class="section-label">Descripcion mejorada</span>
+                          <h4>Version sugerida</h4>
+                        </div>
+                        <button
+                          type="button"
+                          class="copy-btn"
+                          [class.copied]="copiedKey() === 'description'"
+                          [disabled]="!data.ai_suggestions.suggested_description"
+                          (click)="copyText(data.ai_suggestions.suggested_description, 'description')"
+                        >
+                          {{ copiedKey() === 'description' ? 'Copiado' : 'Copiar' }}
+                        </button>
+                      </div>
+                      <pre>{{ displayedDescription() || data.ai_suggestions.suggested_description || 'Sin descripcion adicional.' }}</pre>
+                    </article>
+                  </div>
+                }
+              </section>
+            }
+
+            @if (activeResultTab() === 'evidence') {
+              <section class="report-section">
+                <app-listing-doctor-evidence
+                  [evidence]="data.evidence"
+                />
+              </section>
+            }
           </div>
         }
       </div>
     </div>
+
+    @if (pickerOpen()) {
+      <div class="picker-backdrop" (click)="closePicker()">
+        <div class="picker-panel" (click)="$event.stopPropagation()">
+          <div class="picker-header">
+            <div>
+              <p class="eyebrow">Picker</p>
+              <h3>Publicaciones activas recientes</h3>
+            </div>
+            <button type="button" class="picker-close" (click)="closePicker()">x</button>
+          </div>
+
+          <div class="picker-toolbar">
+            <input
+              type="text"
+              class="input-text"
+              placeholder="Filtrar por titulo o ID..."
+              [ngModel]="recentItemsQuery()"
+              (ngModelChange)="recentItemsQuery.set($event)"
+            />
+            <button type="button" class="picker-refresh" (click)="refreshRecentItems()">
+              Refrescar
+            </button>
+          </div>
+
+          <div class="picker-body">
+            @if (recentItemsLoading()) {
+              <div class="picker-state">Cargando publicaciones activas...</div>
+            } @else if (recentItemsError()) {
+              <div class="picker-state error">{{ recentItemsError() }}</div>
+            } @else if (filteredRecentItems().length === 0) {
+              <div class="picker-state">No hay publicaciones que coincidan con ese filtro.</div>
+            } @else {
+              <div class="picker-list">
+                @for (item of filteredRecentItems(); track item.id) {
+                  <button type="button" class="picker-item" (click)="selectRecentItem(item)">
+                    <div class="picker-thumb">
+                      @if (item.thumbnail) {
+                        <img [src]="item.thumbnail" [alt]="item.title" />
+                      } @else {
+                        <span>{{ item.title.slice(0, 1) }}</span>
+                      }
+                    </div>
+                    <div class="picker-copy">
+                      <div class="picker-top">
+                        <span class="item-id">{{ item.id }}</span>
+                        @if (item.price !== null) {
+                          <strong>{{ item.price | currency: item.currency_id || 'ARS' }}</strong>
+                        }
+                      </div>
+                      <h4>{{ item.title }}</h4>
+                      <div class="picker-meta">
+                        <span>{{ item.status || 'Estado N/D' }}</span>
+                        <span>Stock {{ item.available_quantity ?? 'N/D' }}</span>
+                      </div>
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
   }
 </section>
