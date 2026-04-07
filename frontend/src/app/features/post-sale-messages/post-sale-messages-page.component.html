@@ -1,0 +1,50 @@
+<section class="page-container animate-slide-up stagger-1">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Mensajes post venta</h1>
+      <p class="page-subtitle">
+        Responde consultas privadas de compradores luego de la venta para la cuenta {{ activeAccountLabel() }}.
+      </p>
+    </div>
+
+    <div class="quick-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total</span>
+        <strong class="stat-value">{{ totalConversations() }}</strong>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Sin leer</span>
+        <strong class="stat-value warning">{{ unreadConversations() }}</strong>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Bloqueadas</span>
+        <strong class="stat-value danger">{{ blockedConversations() }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <section class="feature-layout">
+    <app-post-sale-message-list
+      class="list-section"
+      [conversations]="filteredConversations()"
+      [selectedId]="selectedPackId()"
+      [loading]="loadingList()"
+      [error]="listError()"
+      [searchText]="searchText()"
+      [statusFilter]="statusFilter()"
+      (searchTextChange)="searchText.set($event)"
+      (statusFilterChange)="statusFilter.set($event)"
+      (refresh)="loadConversations(accountContext.selectedAccount()!)"
+      (selectConversation)="onSelectConversation($event)"
+    />
+
+    <app-post-sale-message-detail
+      class="detail-section"
+      [conversation]="selectedConversation()"
+      [loading]="loadingDetail()"
+      [error]="detailError()"
+      [sending]="sending()"
+      (sendReply)="onSendReply($event)"
+    />
+  </section>
+</section>

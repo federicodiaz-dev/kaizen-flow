@@ -19,6 +19,14 @@ export interface ClaimDraftResponse {
   draft_message: string;
 }
 
+export interface PostSaleDraftRequest {
+  current_draft?: string | null;
+}
+
+export interface PostSaleDraftResponse {
+  draft_message: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReplyAssistantApiService {
   private readonly http = inject(HttpClient);
@@ -44,6 +52,19 @@ export class ReplyAssistantApiService {
     const params = new HttpParams().set('account', account);
     return this.http.post<ClaimDraftResponse>(
       `/api/reply-assistant/claims/${claimId}/draft`,
+      payload,
+      { params }
+    );
+  }
+
+  suggestPostSaleMessage(
+    account: string,
+    packId: string,
+    payload: PostSaleDraftRequest
+  ): Observable<PostSaleDraftResponse> {
+    const params = new HttpParams().set('account', account);
+    return this.http.post<PostSaleDraftResponse>(
+      `/api/reply-assistant/post-sale/${packId}/draft`,
       payload,
       { params }
     );

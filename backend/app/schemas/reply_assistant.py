@@ -18,3 +18,11 @@ class ClaimDraftRequest(BaseModel):
 
 class ClaimDraftResponse(BaseModel):
     draft_message: str
+
+
+class PostSaleDraftRequest(BaseModel):
+    current_draft: str | None = Field(default=None, max_length=3500)
+
+
+class PostSaleDraftResponse(BaseModel):
+    draft_message: str

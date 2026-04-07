@@ -8,6 +8,8 @@ from app.api.dependencies import get_reply_assistant_service, resolve_account
 from app.schemas.reply_assistant import (
     ClaimDraftRequest,
     ClaimDraftResponse,
+    PostSaleDraftRequest,
+    PostSaleDraftResponse,
     QuestionDraftRequest,
     QuestionDraftResponse,
 )
@@ -35,3 +37,13 @@ async def suggest_claim_message(
     account_key: Annotated[str, Depends(resolve_account)],
 ) -> ClaimDraftResponse:
     return await service.suggest_claim_message(account_key, claim_id, payload)
+
+
+@router.post("/post-sale/{pack_id}/draft", response_model=PostSaleDraftResponse)
+async def suggest_post_sale_message(
+    pack_id: str,
+    payload: PostSaleDraftRequest,
+    service: Annotated[ReplyAssistantService, Depends(get_reply_assistant_service)],
+    account_key: Annotated[str, Depends(resolve_account)],
+) -> PostSaleDraftResponse:
+    return await service.suggest_post_sale_message(account_key, pack_id, payload)

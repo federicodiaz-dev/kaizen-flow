@@ -11,6 +11,7 @@ from app.agents.service import BusinessAssistantService
 from app.adapters.claims import ClaimsAdapter
 from app.adapters.items import ItemsAdapter
 from app.adapters.market_research import MarketResearchAdapter
+from app.adapters.post_sale_messages import PostSaleMessagesAdapter
 from app.adapters.questions import QuestionsAdapter
 from app.clients.mercadolibre import MercadoLibreClient
 from app.core.account_store import AccountStore
@@ -24,6 +25,7 @@ from app.services.claims import ClaimsService
 from app.services.copywriter import CopywriterService
 from app.services.items import ItemsService
 from app.services.listing_doctor import ListingDoctorService
+from app.services.post_sale_messages import PostSaleMessagesService
 from app.services.questions import QuestionsService
 
 
@@ -132,6 +134,17 @@ def get_items_service(
     return ItemsService(account_store=account_store, client=client, items_adapter=ItemsAdapter(client))
 
 
+def get_post_sale_messages_service(
+    account_store: Annotated[AccountStore, Depends(get_account_store)],
+    client: Annotated[MercadoLibreClient, Depends(get_ml_client)],
+) -> PostSaleMessagesService:
+    return PostSaleMessagesService(
+        account_store=account_store,
+        client=client,
+        adapter=PostSaleMessagesAdapter(client),
+    )
+
+
 def resolve_account(
     account_store: Annotated[AccountStore, Depends(get_account_store)],
     account: str | None = Query(default=None),
@@ -203,6 +216,11 @@ def get_reply_assistant_service(
             account_store=account_store,
             client=ml_client,
             claims_adapter=ClaimsAdapter(ml_client),
+        ),
+        post_sale_messages_service=PostSaleMessagesService(
+            account_store=account_store,
+            client=ml_client,
+            adapter=PostSaleMessagesAdapter(ml_client),
         ),
         items_service=ItemsService(
             account_store=account_store,
