@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaizen Flow — Copiloto IA para Mercado Libre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090b;
+    --bg2: #18181b;
+    --surface: #18181b;
+    --surface2: #27272a;
+    --border: rgba(255,255,255,0.08);
+    --border-lit: rgba(45,104,255,0.3);
+    --text: #fafafa;
+    --muted: #a1a1aa;
+    --accent: #2563eb;
+    --accent2: #60a5fa;
+    --accent-glow: rgba(37,99,235,0.2);
+    --gold: #d97706;
+    --gold-light: #f59e0b;
+    --green: #059669;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── CURSOR GLOW ── */
+  .cursor-glow {
+    position: fixed;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 18px 0;
+    transition: background 0.4s, backdrop-filter 0.4s, border-bottom 0.4s;
+  }
+  nav.scrolled {
+    background: rgba(7,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: -0.5px;
+    color: #fff;
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 400;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 9px 22px;
+    border-radius: 50px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    text-decoration: none;
+  }
+  .nav-cta:hover {
+    background: #2563eb;
+    box-shadow: 0 0 28px var(--accent-glow);
+    transform: translateY(-1px);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 32px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Orbs */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    animation: orb-float 8s ease-in-out infinite;
+  }
+  .orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(37,99,235,0.08), transparent 70%);
+    top: -100px; left: -150px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(129,140,248,0.06), transparent 70%);
+    top: 20%; right: -100px;
+    animation-delay: -3s;
+  }
+  .orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(16,185,129,0.05), transparent 70%);
+    bottom: 0; left: 30%;
+    animation-delay: -5s;
+  }
+
+  @keyframes orb-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    33% { transform: translateY(-30px) scale(1.05); }
+    66% { transform: translateY(20px) scale(0.97); }
+  }
+
+  /* Grid lines */
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 0%, transparent 100%);
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 860px; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent2);
+    margin-bottom: 32px;
+    animation: fade-up 0.6s ease both;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse-dot 2s ease infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.7); }
+  }
+
+  h1 {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    animation: fade-up 0.7s 0.1s ease both;
+  }
+  h1 .line-accent {
+    background: linear-gradient(90deg, #60a5fa 0%, #818cf8 50%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--muted);
+    max-width: 620px;
+    margin: 0 auto 48px;
+    font-weight: 300;
+    animation: fade-up 0.7s 0.2s ease both;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fade-up 0.7s 0.3s ease both;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 32px;
+    border-radius: 50px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 40px var(--accent-glow); }
+  .btn-primary:hover::after { opacity: 1; }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--text);
+    padding: 14px 32px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent2); transform: translateY(-2px); }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    padding: 0 32px 80px;
+    position: relative;
+    z-index: 1;
+  }
+  .stats-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .stat-item {
+    flex: 1;
+    padding: 28px 24px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #60a5fa, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+  }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+  /* ── SECTION BASE ── */
+  section { padding: 100px 32px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .section-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+  .section-sub {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 560px;
+    font-weight: 300;
+  }
+
+  /* ── PAIN SECTION ── */
+  .pain { background: var(--bg2); }
+  .pain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    margin-top: 60px;
+  }
+  .pain-items { display: flex; flex-direction: column; gap: 20px; }
+  .pain-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .pain-item:hover { border-color: var(--border-lit); transform: translateX(6px); }
+  .pain-icon {
+    width: 40px; height: 40px;
+    min-width: 40px;
+    background: rgba(239,68,68,0.12);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+  .pain-text h4 {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .pain-text p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+  .pain-visual {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pain-visual::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(239,68,68,0.15), transparent 70%);
+    border-radius: 50%;
+  }
+  .pain-quote {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .pain-quote::before {
+    content: '"';
+    font-size: 5rem;
+    line-height: 1;
+    color: rgba(239,68,68,0.2);
+    position: absolute;
+    top: -20px;
+    left: -10px;
+    font-family: Georgia, serif;
+  }
+  .pain-meta { display: flex; align-items: center; gap: 12px; }
+  .pain-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #fff;
+  }
+  .pain-meta-text { font-size: 0.82rem; }
+  .pain-meta-name { font-weight: 600; color: var(--text); }
+  .pain-meta-desc { color: var(--muted); }
+
+  /* ── FEATURES ── */
+  .features-header { text-align: center; margin-bottom: 64px; }
+  .features-header .section-sub { margin: 0 auto; }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    cursor: default;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background: linear-gradient(135deg, rgba(59,130,246,0.06), transparent);
+  }
+  .feature-card:hover {
+    border-color: var(--border-lit);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-card.featured {
+    border-color: rgba(59,130,246,0.4);
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), var(--surface));
+    grid-column: span 2;
+  }
+  .feat-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+  .feat-icon.blue { background: rgba(59,130,246,0.15); }
+  .feat-icon.purple { background: rgba(139,92,246,0.15); }
+  .feat-icon.green { background: rgba(16,185,129,0.15); }
+  .feat-icon.gold { background: rgba(245,158,11,0.15); }
+  .feature-card h3 {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .feature-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+  .feat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .feat-chip {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 50px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    font-weight: 500;
+  }
+
+  /* ── LISTING DOCTOR ── */
+  .listing-doctor { background: var(--bg2); overflow: hidden; }
+  .ld-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .ld-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 50px;
+    padding: 5px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gold-light);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .ld-content h2 { margin-bottom: 20px; }
+
+  .ld-steps { display: flex; flex-direction: column; gap: 20px; margin-top: 32px; }
+  .ld-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .ld-step-num {
+    width: 32px; height: 32px;
+    min-width: 32px;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--gold-light);
+  }
+  .ld-step-text h4 {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .ld-step-text p { font-size: 0.82rem; color: var(--muted); }
+
+  /* LD UI Mock */
+  .ld-visual {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.5);
+    animation: float-ui 6s ease-in-out infinite;
+  }
+  @keyframes float-ui {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .ld-header {
+    background: var(--surface2);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ld-dots { display: flex; gap: 6px; }
+  .ld-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .ld-dot.r { background: #ef4444; }
+  .ld-dot.y { background: #f59e0b; }
+  .ld-dot.g { background: #10b981; }
+  .ld-title { font-size: 0.8rem; color: var(--muted); font-weight: 500; margin-left: 8px; }
+  .ld-body { padding: 24px; }
+
+  .ld-listing {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .ld-listing-title {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .ld-listing-price { font-size: 1.2rem; font-weight: 600; color: var(--accent2); }
+
+  .ld-scores { display: flex; flex-direction: column; gap: 10px; }
+  .score-row { display: flex; flex-direction: column; gap: 5px; }
+  .score-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+  }
+  .score-label span:first-child { color: var(--muted); }
+  .score-label span:last-child { font-weight: 600; }
+  .score-bar {
+    height: 6px;
+    background: var(--bg2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 10px;
+    animation: fill-bar 1.5s cubic-bezier(0.4,0,0.2,1) both;
+  }
+  @keyframes fill-bar {
+    from { width: 0 !important; }
+  }
+  .score-fill.good { background: linear-gradient(90deg, #10b981, #34d399); }
+  .score-fill.mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .score-fill.bad { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+  .ld-action-banner {
+    margin-top: 16px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 0.8rem;
+    color: var(--accent2);
+  }
+  .ld-action-banner strong { display: block; font-weight: 600; margin-bottom: 2px; }
+
+  /* ── HOW IT WORKS ── */
+  .how-works { text-align: center; }
+  .steps-row {
+    display: flex;
+    gap: 0;
+    margin-top: 64px;
+    position: relative;
+    justify-content: center;
+  }
+  .steps-row::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    z-index: 0;
+  }
+  .step-item {
+    flex: 1;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .step-circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 1.5rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .step-circle::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+  .step-item:hover .step-circle {
+    border-color: var(--accent);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .step-item:hover .step-circle::after {
+    border-color: rgba(59,130,246,0.3);
+  }
+  .step-item h4 {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .step-item p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; max-width: 180px; margin: 0 auto; }
+
+  /* ── PRICING ── */
+  .pricing { background: var(--bg2); }
+  .pricing-header { text-align: center; margin-bottom: 60px; }
+
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1040px;
+    margin: 0 auto;
+    align-items: stretch;
+  }
+
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 30px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .plan-card:hover { transform: translateY(-6px); }
+
+  .plan-card.anchor {
+    opacity: 0.75;
+    transform: scale(0.97);
+  }
+  .plan-card.anchor:hover { transform: scale(0.97) translateY(-4px); }
+
+  .plan-card.recommended {
+    border-color: var(--accent);
+    background: linear-gradient(160deg, rgba(59,130,246,0.1), var(--surface));
+    box-shadow: 0 0 80px rgba(59,130,246,0.2);
+    transform: scale(1.04);
+  }
+  .plan-card.recommended:hover { transform: scale(1.04) translateY(-6px); }
+
+  .plan-badge-rec {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 5px 18px;
+    border-radius: 50px;
+    white-space: nowrap;
+  }
+  .plan-badge-anchor {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--gold-light);
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+  }
+
+  .plan-name {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .plan-price {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .plan-currency { font-size: 1.2rem; font-weight: 600; color: var(--muted); padding-top: 10px; }
+  .plan-amount {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .plan-period { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+  .plan-desc { font-size: 0.84rem; color: var(--muted); margin-bottom: 28px; line-height: 1.5; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+
+  .plan-features { flex: 1; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+  .plan-feat {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.85rem;
+  }
+  .plan-feat-icon { min-width: 18px; margin-top: 1px; }
+  .check { color: var(--green); }
+  .cross { color: #4b5563; }
+
+  .plan-cta {
+    display: block;
+    text-align: center;
+    padding: 14px;
+    border-radius: 50px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s;
+    cursor: pointer;
+    border: none;
+  }
+  .plan-cta.primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .plan-cta.primary:hover { background: #2563eb; box-shadow: 0 8px 30px var(--accent-glow); }
+  .plan-cta.ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .plan-cta.ghost:hover { border-color: var(--accent); color: var(--accent2); }
+
+  /* Custom / Agency */
+  .custom-band {
+    max-width: 1040px;
+    margin: 24px auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  .custom-band p { font-size: 0.88rem; color: var(--muted); }
+  .custom-band strong { color: var(--text); font-weight: 600; }
+
+  /* ── FAQ ── */
+  .faq-grid {
+    max-width: 800px;
+    margin: 60px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .faq-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .faq-item.open { border-color: var(--border-lit); }
+  .faq-q {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-size: 0.92rem;
+    font-weight: 700;
+    gap: 16px;
+    user-select: none;
+  }
+  .faq-arrow {
+    min-width: 22px;
+    height: 22px;
+    background: var(--bg2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: transform 0.3s, background 0.2s;
+  }
+  .faq-item.open .faq-arrow { transform: rotate(180deg); background: var(--accent); }
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), padding 0.3s;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 0 24px;
+  }
+  .faq-item.open .faq-a { max-height: 300px; padding: 0 24px 20px; }
+
+  /* ── FINAL CTA ── */
+  .final-cta {
+    text-align: center;
+    padding: 120px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .final-cta::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .final-cta h2 { position: relative; margin-bottom: 20px; }
+  .final-cta .section-sub { margin: 0 auto 40px; position: relative; }
+
+  /* ── WHATSAPP ── */
+  .wa-float {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 200;
+    width: 60px; height: 60px;
+    background: #25d366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 30px rgba(37,211,102,0.4);
+    cursor: pointer;
+    text-decoration: none;
+    animation: wa-bounce 3s ease-in-out infinite;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .wa-float:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 40px rgba(37,211,102,0.55);
+    animation: none;
+  }
+  @keyframes wa-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .wa-float svg { width: 30px; height: 30px; }
+  .wa-tooltip {
+    position: absolute;
+    right: 72px;
+    background: #111;
+    color: #fff;
+    font-size: 0.8rem;
+    padding: 7px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  .wa-float:hover .wa-tooltip { opacity: 1; transform: translateX(0); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 32px;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .footer-logo {
+    font-family: 'Inter', -apple-system, sans-serif; letter-spacing: -0.02em;
+    font-weight: 800;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, #60a5fa, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .pain-grid, .ld-grid, .features-grid { grid-template-columns: 1fr; }
+    .feature-card.featured { grid-column: span 1; }
+    .plans-grid { grid-template-columns: 1fr; max-width: 420px; }
+    .plan-card.recommended, .plan-card.anchor { transform: none; }
+    .steps-row { flex-direction: column; align-items: center; }
+    .steps-row::before { display: none; }
+    .stats-inner { flex-direction: column; }
+    .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat-item:last-child { border-bottom: none; }
+    .custom-band { flex-direction: column; text-align: center; }
+    .nav-links { display: none; }
+  }
+
+  /* Animated gradient text shimmer on hover */
+  .shimmer-hover {
+    background-size: 200% auto;
+    transition: background-position 0.5s;
+  }
+  .shimmer-hover:hover { background-position: right center; }
+
+  /* Typewriter cursor */
+  .cursor-blink {
+    display: inline-block;
+    width: 3px;
+    height: 0.9em;
+    background: var(--accent2);
+    border-radius: 2px;
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* Glowing ring on featured plan */
+  @keyframes ring-pulse {
+    0%, 100% { box-shadow: 0 0 80px rgba(59,130,246,0.2); }
+    50% { box-shadow: 0 0 120px rgba(59,130,246,0.35); }
+  }
+  .plan-card.recommended { animation: ring-pulse 3s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- Cursor Glow -->
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20saber%20más%20sobre%20Kaizen%20Flow" target="_blank" class="wa-float" aria-label="Contactar por WhatsApp">
+  <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+  <span class="wa-tooltip">💬 Hablar por WhatsApp</span>
+</a>
+
+<!-- NAV -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="logo">Kaizen Flow</a>
+    <ul class="nav-links">
+      <li><a href="#features">Producto</a></li>
+      <li><a href="#listing-doctor">Listing Doctor</a></li>
+      <li><a href="#pricing">Precios</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a href="#pricing" class="nav-cta">Ver planes →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      IA nativa para Mercado Libre · Ya disponible
+    </div>
+    <h1>
+      Escala tu operación.<br>
+      <span class="line-accent" id="typewriter-target"></span><span class="cursor-blink" id="typewriter-cursor"></span>
+    </h1>
+    <p class="hero-sub">
+      Plataforma enterprise para Mercado Libre. La Inteligencia Artificial resuelve y automatiza tus reclamos, diagnostica el mercado y optimiza tu catálogo al instante.
+    </p>
+    <div class="hero-btns">
+      <a href="#pricing" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Empezar ahora
+      </a>
+      <a href="#listing-doctor" class="btn-ghost">
+        Ver Listing Doctor →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item reveal">
+      <span class="stat-num" data-count="68">0</span>
+      <div class="stat-label">% menos tiempo operativo</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-1">
+      <span class="stat-num" data-count="3" data-prefix="+" data-suffix="x">0</span>
+      <div class="stat-label">velocidad de respuesta a compradores</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-2">
+      <span class="stat-num" data-count="94" data-suffix="%">0</span>
+      <div class="stat-label">de sellers detectan oportunidades en el primer uso</div>
+    </div>
+    <div class="stat-item reveal reveal-delay-3">
+      <span class="stat-num" data-count="8" data-suffix="min">0</span>
+      <div class="stat-label">para conectar tu cuenta y empezar</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAIN -->
+<section class="pain" id="problema">
+  <div class="container">
+    <div class="pain-grid">
+      <div>
+        <span class="section-tag reveal">El Desafío Operativo</span>
+        <h2 class="reveal reveal-delay-1">A mayor volumen,<br>mayor riesgo reputacional</h2>
+        <p class="section-sub reveal reveal-delay-2">Operar cuentas pesadas en Mercado Libre implica riesgos. Reclamos sin gestionar, métricas desatendidas y falta de respuestas instantáneas destruyen tus márgenes y posicionamiento.</p>
+        <div class="pain-items" style="margin-top:36px;">
+          <div class="pain-item reveal reveal-delay-1">
+            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">⚠️</div>
+            <div class="pain-text">
+              <h4>Reclamos que golpean reputación</h4>
+              <p>Demorar en dar respuesta a reclamos o devoluciones escala rápido a mediaciones, destruyendo la exposición de toda tu cuenta.</p>
+            </div>
+          </div>
+          <div class="pain-item reveal reveal-delay-2">
+            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">🤖</div>
+            <div class="pain-text">
+              <h4>Soporte manual ineficiente</h4>
+              <p>El soporte manual no escala para preguntas frecuentes. Incrementa tus costos, pierde intención de compra y reduce la agilidad comercial.</p>
+            </div>
+          </div>
+          <div class="pain-item reveal reveal-delay-3">
+            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">📊</div>
+            <div class="pain-text">
+              <h4>Precios fuera de mercado</h4>
+              <p>Operar sin monitoreo automático significa que la competencia absorbe tu demanda sin que te des cuenta. Tus publicaciones quedan rezagadas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pain-visual reveal reveal-delay-2">
+        <p class="pain-quote">
+          "La implementación de IA nos permitió automatizar la gestión de reclamos. Liberamos al equipo para dedicarnos 100% al catálogo."
+        </p>
+        <div class="pain-meta">
+          <div class="pain-avatar" style="background: #2563eb;">DO</div>
+          <div class="pain-meta-text">
+            <div class="pain-meta-name">Dirección de Operaciones</div>
+            <div class="pain-meta-desc">Operador Enterprise · Mercado Libre Platinum</div>
+          </div>
+        </div>
+        <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border);">
+          <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Soluciones integradas:</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">IA para Reclamos</span>
+            <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">Automatización</span>
+            <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">Soporte Copilot</span>
+            <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">Benchmark Integrado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="features-header">
+      <span class="section-tag reveal">La suite completa</span>
+      <h2 class="reveal reveal-delay-1">Todo lo que necesitás.<br>En un solo lugar.</h2>
+      <p class="section-sub reveal reveal-delay-2">Kaizen Flow no es un panel más. Es un copiloto que entiende tu operación, te advierte antes de que haya problemas y te da criterio para cada decisión.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card featured reveal">
+        <div class="feat-icon blue">🛡️</div>
+        <h3>Resolución IA de Reclamos</h3>
+        <p>Los reclamos exigen rapidez y precisión. Nuestra Inteligencia Artificial agrupa, comprende y resuelve reclamos o disputas siguiendo estrictamente tus políticas de devolución, frenando el riesgo de mediaciones y protegiendo tu cuenta.</p>
+        <div class="feat-chips">
+          <span class="feat-chip">Soporte Inteligente</span>
+          <span class="feat-chip">Anti-Mediaciones</span>
+          <span class="feat-chip">Score Protegido</span>
+          <span class="feat-chip">Panel Centralizado</span>
+        </div>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feat-icon purple">🤖</div>
+        <h3>Asistentes con IA</h3>
+        <p>Reply Assistant responde preguntas con contexto real de tu publicación. Copywriter genera títulos y descripciones optimizados para ML.</p>
+        <div class="feat-chips">
+          <span class="feat-chip">Reply AI</span>
+          <span class="feat-chip">Copywriter ML</span>
+        </div>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feat-icon green">📊</div>
+        <h3>Benchmark Competitivo</h3>
+        <p>Compará tus publicaciones contra competidores reales dentro de ML: precio, atributos, completitud y posicionamiento.</p>
+        <div class="feat-chips">
+          <span class="feat-chip">Score por dimensión</span>
+          <span class="feat-chip">Análisis de precio</span>
+        </div>
+      </div>
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feat-icon gold">⚡</div>
+        <h3>Quick Wins Automáticos</h3>
+        <p>La IA detecta acciones de alto impacto y las prioriza para vos. Siempre sabés qué atender primero para mejorar tus métricas.</p>
+        <div class="feat-chips">
+          <span class="feat-chip">Impacto esperado</span>
+          <span class="feat-chip">Priorización IA</span>
+        </div>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feat-icon blue">🔔</div>
+        <h3>Sistema de Alertas</h3>
+        <p>Te avisamos antes de que los problemas afecten tu reputación: métricas en riesgo, preguntas sin responder y reclamos próximos a vencer.</p>
+        <div class="feat-chips">
+          <span class="feat-chip">Reputación protegida</span>
+          <span class="feat-chip">Tiempo real</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LISTING DOCTOR -->
+<section class="listing-doctor" id="listing-doctor">
+  <div class="container">
+    <div class="ld-grid">
+      <div class="ld-content reveal">
+        <div class="ld-tag">⭐ Benchmark IA</div>
+        <h2>Monitoreo Competitivo:<br>el diagnóstico que<br>cambia el mercado</h2>
+        <p style="color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 8px;">
+          Descubre brechas de precios, atributos omitidos e ineficiencias. Kaizen Flow compara tu catálogo contra los principales actores de tu categoría y te otorga un plan de acción priorizado por IA para ganar posición en búsquedas.
+        </p>
+        <div class="ld-steps">
+          <div class="ld-step">
+            <div class="ld-step-num">1</div>
+            <div class="ld-step-text">
+              <h4>Analizamos tu publicación</h4>
+              <p>Título, precio, atributos, descripción, imágenes y completitud.</p>
+            </div>
+          </div>
+          <div class="ld-step">
+            <div class="ld-step-num">2</div>
+            <div class="ld-step-text">
+              <h4>Buscamos tu competencia real</h4>
+              <p>La IA encuentra listings reales de ML para comparar con criterio, no al azar.</p>
+            </div>
+          </div>
+          <div class="ld-step">
+            <div class="ld-step-num">3</div>
+            <div class="ld-step-text">
+              <h4>Recibís el benchmark completo</h4>
+              <p>Scores, gaps, fortalezas y acciones priorizadas con impacto esperado.</p>
+            </div>
+          </div>
+          <div class="ld-step">
+            <div class="ld-step-num">4</div>
+            <div class="ld-step-text">
+              <h4>Ejecutás los cambios con Copywriter</h4>
+              <p>El asistente genera el título y la descripción mejorados al instante.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LD UI MOCK -->
+      <div class="ld-visual reveal reveal-delay-2">
+        <div class="ld-header">
+          <div class="ld-dots">
+            <div class="ld-dot r"></div>
+            <div class="ld-dot y"></div>
+            <div class="ld-dot g"></div>
+          </div>
+          <span class="ld-title">Listing Doctor — Análisis en progreso</span>
+        </div>
+        <div class="ld-body">
+          <div class="ld-listing">
+            <div class="ld-listing-title">Auriculares Bluetooth Pro X2 — Negro — Inalámbrico</div>
+            <div class="ld-listing-price">$47.990</div>
+          </div>
+
+          <div style="font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 12px;">Scores vs competencia</div>
+
+          <div class="ld-scores">
+            <div class="score-row">
+              <div class="score-label"><span>Título</span><span style="color: #34d399;">82/100</span></div>
+              <div class="score-bar"><div class="score-fill good" style="width: 82%;"></div></div>
+            </div>
+            <div class="score-row">
+              <div class="score-label"><span>Precio</span><span style="color: #fbbf24;">61/100</span></div>
+              <div class="score-bar"><div class="score-fill mid" style="width: 61%;"></div></div>
+            </div>
+            <div class="score-row">
+              <div class="score-label"><span>Atributos</span><span style="color: #f87171;">38/100</span></div>
+              <div class="score-bar"><div class="score-fill bad" style="width: 38%;"></div></div>
+            </div>
+            <div class="score-row">
+              <div class="score-label"><span>Descripción</span><span style="color: #fbbf24;">55/100</span></div>
+              <div class="score-bar"><div class="score-fill mid" style="width: 55%;"></div></div>
+            </div>
+            <div class="score-row">
+              <div class="score-label"><span>Competitividad</span><span style="color: #34d399;">74/100</span></div>
+              <div class="score-bar"><div class="score-fill good" style="width: 74%;"></div></div>
+            </div>
+          </div>
+
+          <div class="ld-action-banner">
+            <strong>🎯 Acción prioritaria detectada</strong>
+            Completá 4 atributos técnicos faltantes: conectividad, autonomía, versión BT y peso. El 78% de los competidores top los tiene completos.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-works" id="como">
+  <div class="container">
+    <span class="section-tag reveal">Así funciona</span>
+    <h2 class="reveal reveal-delay-1">De cero a operando<br>en minutos</h2>
+    <div class="steps-row">
+      <div class="step-item reveal">
+        <div class="step-circle">🔗</div>
+        <h4>Conectás tu cuenta</h4>
+        <p>OAuth seguro con Mercado Libre. Sin contraseñas, sin riesgos.</p>
+      </div>
+      <div class="step-item reveal reveal-delay-1">
+        <div class="step-circle">🏠</div>
+        <h4>Centralizás la operación</h4>
+        <p>Preguntas, reclamos y pedidos en un solo espacio.</p>
+      </div>
+      <div class="step-item reveal reveal-delay-2">
+        <div class="step-circle">🔬</div>
+        <h4>Analizás tus listings</h4>
+        <p>Listing Doctor diagnostica y compara contra el mercado real.</p>
+      </div>
+      <div class="step-item reveal reveal-delay-3">
+        <div class="step-circle">🚀</div>
+        <h4>Ejecutás mejoras</h4>
+        <p>Acciones priorizadas y asistentes IA que aceleran cada cambio.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="pricing-header">
+      <span class="section-tag reveal">Planes</span>
+      <h2 class="reveal reveal-delay-1">Elegí el plan que tiene sentido<br>para tu operación</h2>
+      <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Sin contratos anuales forzados. Sin comisiones por ventas. Solo una suscripción plana que se paga sola en la primera semana.</p>
+    </div>
+
+    <div class="plans-grid">
+
+      <!-- STARTER -->
+      <div class="plan-card anchor reveal">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">
+          <span class="plan-currency">US$</span>
+          <span class="plan-amount" style="background: linear-gradient(135deg, #94a3b8, #64748b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">29</span>
+        </div>
+        <div class="plan-period">por mes · cancel anytime</div>
+        <p class="plan-desc">Para sellers que recién empiezan a tomar el control. Cubrí lo básico y eliminá el caos operativo inicial.</p>
+        <div class="plan-features">
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Panel de operaciones unificado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Gestión de preguntas y reclamos</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Alertas básicas de cuenta</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Reply Assistant (hasta 200 msgs/mes)</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Listing Doctor: 5 análisis/mes</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Benchmark competitivo profundo</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Quick wins automáticos</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Copywriter ilimitado</span></div>
+        </div>
+        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Starter%20de%20Kaizen%20Flow" target="_blank" class="plan-cta ghost">Empezar con Starter</a>
+      </div>
+
+      <!-- GROWTH (RECOMMENDED) -->
+      <div class="plan-card recommended reveal reveal-delay-1">
+        <div class="plan-badge-rec">⚡ Más elegido</div>
+        <div class="plan-name" style="color: var(--accent2);">Growth</div>
+        <div class="plan-price">
+          <span class="plan-currency">US$</span>
+          <span class="plan-amount" style="background: linear-gradient(135deg, #60a5fa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">79</span>
+        </div>
+        <div class="plan-period">por mes · cancel anytime</div>
+        <p class="plan-desc">Para el seller que ya vende y quiere vender mejor. Listing Doctor completo, benchmarks profundos y IA sin límites.</p>
+        <div class="plan-features">
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Todo lo del plan Starter</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Listing Doctor ilimitado + benchmark profundo</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Reply Assistant ilimitado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Copywriter con contexto de mercado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Quick wins automáticos + priorización IA</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Alertas proactivas de reputación</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Análisis de precio y oportunidades</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Multi-cuenta</span></div>
+        </div>
+        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Growth%20de%20Kaizen%20Flow" target="_blank" class="plan-cta primary">Probar Growth →</a>
+      </div>
+
+      <!-- SCALE -->
+      <div class="plan-card reveal reveal-delay-2">
+        <div class="plan-badge-anchor">Para agencias</div>
+        <div class="plan-name" style="color: var(--gold-light);">Scale</div>
+        <div class="plan-price">
+          <span class="plan-currency">US$</span>
+          <span class="plan-amount" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">149</span>
+        </div>
+        <div class="plan-period">por mes · cancel anytime</div>
+        <p class="plan-desc">Para operadores intensivos, agencias y marcas en serio. Multi-cuenta, reportes avanzados y prioridad de soporte.</p>
+        <div class="plan-features">
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Todo lo del plan Growth</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Multi-cuenta (hasta 5 cuentas ML)</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Dashboard de agencia con reportes</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Exportación de datos e informes</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Acceso anticipado a nuevas features</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Soporte prioritario por WhatsApp</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Onboarding personalizado 1:1</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>API de integraciones (próximamente)</span></div>
+        </div>
+        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Scale%20de%20Kaizen%20Flow" target="_blank" class="plan-cta ghost" style="border-color: rgba(245,158,11,0.4); color: var(--gold-light);">Escalar con Scale →</a>
+      </div>
+    </div>
+
+    <div class="custom-band reveal" style="margin-top: 24px;">
+      <p><strong>¿Agencia con más de 5 cuentas o volumen enterprise?</strong> Tenemos un plan Custom con capacidad a medida, SLA y factura.</p>
+      <a href="https://wa.me/5491100000000?text=Quiero%20saber%20sobre%20el%20plan%20enterprise%20de%20Kaizen%20Flow" target="_blank" class="btn-ghost" style="padding: 10px 24px; font-size: 0.85rem; white-space: nowrap;">Hablar con ventas →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div style="text-align: center; margin-bottom: 0;">
+      <span class="section-tag reveal">FAQ</span>
+      <h2 class="reveal reveal-delay-1">Las preguntas que<br>siempre nos hacen</h2>
+    </div>
+    <div class="faq-grid">
+      <div class="faq-item reveal" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Esto es solo un chatbot de IA genérico? <div class="faq-arrow">▼</div></div>
+        <div class="faq-a">No. Kaizen Flow trabaja sobre objetos reales de tu operación: tus publicaciones, tus preguntas, tus reclamos, tu competencia en ML. La IA no vive aislada respondiendo preguntas al aire — tiene contexto de tu negocio y opera sobre datos concretos.</div>
+      </div>
+      <div class="faq-item reveal reveal-delay-1" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Reemplaza a Mercado Libre? <div class="faq-arrow">▼</div></div>
+        <div class="faq-a">No. Se conecta vía OAuth oficial a tu cuenta de ML y actúa como una capa de trabajo encima: centraliza, analiza y sugiere, pero las publicaciones siguen viviendo en Mercado Libre.</div>
+      </div>
+      <div class="faq-item reveal reveal-delay-2" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Es seguro conectar mi cuenta? <div class="faq-arrow">▼</div></div>
+        <div class="faq-a">Totalmente. Usamos el sistema de autenticación oficial de Mercado Libre (OAuth 2.0). Nunca te pedimos tu contraseña directamente. Podés revocar el acceso desde tu cuenta de ML cuando quieras.</div>
+      </div>
+      <div class="faq-item reveal" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Para quién es Kaizen Flow? <div class="faq-arrow">▼</div></div>
+        <div class="faq-a">Para sellers que ya venden en Mercado Libre y quieren operar con más criterio. No es ideal para quienes recién crean su primera publicación, sino para quienes ya tienen volumen y quieren optimizarlo.</div>
+      </div>
+      <div class="faq-item reveal reveal-delay-1" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Cómo funciona Listing Doctor exactamente? <div class="faq-arrow">▼</div></div>
+        <div class="faq-a">Tomás una de tus publicaciones, la procesamos con IA y buscamos competidores reales dentro de ML. Analizamos título, precio, atributos, descripción y competitividad. Te devolvemos un score por dimensión, un benchmark y un plan de acción priorizado con impacto esperado.</div>
+      </div>
+      <div class="faq-item reveal reveal-delay-2" onclick="toggleFaq(this)">
+        <div class="faq-q">¿Puedo cancelar cuando quiero? <div class="faq-arrow">▼</div></div>
+        <div class="faq-a">Sí, sin penalidades. Los planes son mensuales y podés cancelar desde el panel en cualquier momento. No hay contratos anuales ni cargos ocultos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="container">
+    <span class="section-tag reveal">Empezá hoy</span>
+    <h2 class="reveal reveal-delay-1">Menos caos. Más criterio.<br>Más ventas.</h2>
+    <p class="section-sub reveal reveal-delay-2">Conectá tu cuenta en menos de 10 minutos y descubrí exactamente qué está frenando tus ventas en Mercado Libre.</p>
+    <div class="hero-btns reveal reveal-delay-3">
+      <a href="#pricing" class="btn-primary" style="font-size: 1.05rem; padding: 16px 36px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Ver planes y empezar
+      </a>
+      <a href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20saber%20más%20sobre%20Kaizen%20Flow" target="_blank" class="btn-ghost" style="font-size: 1.05rem; padding: 16px 36px;">
+        💬 Hablar con el equipo
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">Kaizen Flow</span>
+  <p>El copiloto con IA para vendedores de Mercado Libre</p>
+  <p style="margin-top: 8px;">© 2024 Kaizen Flow · Todos los derechos reservados</p>
+</footer>
+
+<script>
+  // ── CURSOR GLOW
+  const glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+
+  // ── NAV SCROLL
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 30);
+  });
+
+  // ── INTERSECTION OBSERVER (reveal)
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+
+  // ── COUNTER ANIMATION
+  function animateCounter(el) {
+    const target = parseInt(el.dataset.count);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    const duration = 1800;
+    const start = performance.now();
+    function step(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      el.textContent = prefix + Math.round(target * ease) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  const statNums = document.querySelectorAll('.stat-num[data-count]');
+  const counterObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCounter(e.target);
+        counterObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  statNums.forEach(el => counterObserver.observe(el));
+
+  // ── TYPEWRITER
+  const phrases = ['Resolviendo reclamos con IA.', 'Impulsada por datos.', 'Automatizando tu soporte.', 'Optimizada con IA.'];
+  let pIdx = 0, cIdx = 0, deleting = false;
+  const twTarget = document.getElementById('typewriter-target');
+
+  function typeWrite() {
+    const phrase = phrases[pIdx];
+    if (!deleting) {
+      twTarget.textContent = phrase.slice(0, cIdx + 1);
+      cIdx++;
+      if (cIdx === phrase.length) { deleting = true; setTimeout(typeWrite, 1800); return; }
+    } else {
+      twTarget.textContent = phrase.slice(0, cIdx - 1);
+      cIdx--;
+      if (cIdx === 0) {
+        deleting = false;
+        pIdx = (pIdx + 1) % phrases.length;
+        setTimeout(typeWrite, 300); return;
+      }
+    }
+    setTimeout(typeWrite, deleting ? 50 : 80);
+  }
+  setTimeout(typeWrite, 800);
+
+  // ── FAQ
+  function toggleFaq(item) {
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  // ── Subtle parallax on orbs
+  document.addEventListener('mousemove', e => {
+    const mx = (e.clientX / window.innerWidth - 0.5) * 20;
+    const my = (e.clientY / window.innerHeight - 0.5) * 20;
+    document.querySelectorAll('.orb').forEach((orb, i) => {
+      const factor = (i + 1) * 0.5;
+      orb.style.transform = `translate(${mx * factor}px, ${my * factor}px)`;
+    });
+  });
+
+  // ── Re-trigger score bar animations when visible
+  const ldVisual = document.querySelector('.ld-visual');
+  const scoreObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.score-fill').forEach(fill => {
+          fill.style.animation = 'none';
+          fill.offsetHeight;
+          fill.style.animation = '';
+        });
+        scoreObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  if (ldVisual) scoreObserver.observe(ldVisual);
+</script>
+</body>
+</html>

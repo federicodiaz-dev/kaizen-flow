@@ -8,8 +8,8 @@ import { ItemDetail, ItemListResponse, ItemUpdatePayload } from '../../core/mode
 export class ItemsApiService {
   private readonly http = inject(HttpClient);
 
-  list(account: string, status?: string): Observable<ItemListResponse> {
-    let params = new HttpParams().set('account', account);
+  list(account: string, status?: string, limit = 50): Observable<ItemListResponse> {
+    let params = new HttpParams().set('account', account).set('limit', limit);
     if (status && status !== 'all') {
       params = params.set('status', status);
     }

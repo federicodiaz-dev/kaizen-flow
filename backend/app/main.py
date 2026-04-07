@@ -33,10 +33,13 @@ async def lifespan(app: FastAPI):
         http_client=app.state.http_client,
     )
     app.state.agents_services = {}
+    app.state.listing_doctor_services = {}
     try:
         yield
     finally:
         for service in app.state.agents_services.values():
+            await service.aclose()
+        for service in app.state.listing_doctor_services.values():
             await service.aclose()
         await app.state.http_client.aclose()
 

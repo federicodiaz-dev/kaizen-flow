@@ -7,6 +7,7 @@ import { MercadoLibreCallbackComponent } from './features/auth/mercadolibre-call
 import { ClaimsPageComponent } from './features/claims/claims-page.component';
 import { CopywriterPageComponent } from './features/copywriter/copywriter-page.component';
 import { ItemsPageComponent } from './features/items/items-page.component';
+import { ListingDoctorPageComponent } from './features/listing-doctor/listing-doctor-page.component';
 import { QuestionsPageComponent } from './features/questions/questions-page.component';
 
 export const routes: Routes = [
@@ -16,6 +17,7 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'questions' },
   { path: 'agents', component: AgentsPageComponent, canActivate: [authGuard] },
   { path: 'copywriter', component: CopywriterPageComponent, canActivate: [authGuard] },
+  { path: 'listing-doctor', component: ListingDoctorPageComponent, canActivate: [authGuard] },
   { path: 'questions', component: QuestionsPageComponent, canActivate: [authGuard] },
   { path: 'claims', component: ClaimsPageComponent, canActivate: [authGuard] },
   { path: 'items', component: ItemsPageComponent, canActivate: [authGuard] },

@@ -1,0 +1,57 @@
+<section class="competitors-shell glass-panel">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Competition</p>
+      <h3>Comparables del mismo segmento</h3>
+      <p class="section-copy">Se priorizan listings parecidos del mismo tipo de producto, no clones exactos del item analizado.</p>
+    </div>
+    <span class="count-pill">{{ competitors().length }} comparables</span>
+  </div>
+
+  @if (competitors().length === 0) {
+    <div class="empty-state">No hubo competidores suficientes para armar el benchmark visual.</div>
+  } @else {
+    <div class="competitors-grid">
+      @for (competitor of competitors(); track competitor.item_id) {
+        <article class="competitor-card">
+          <div class="competitor-top">
+            <div class="thumb-shell">
+              @if (competitor.thumbnail) {
+                <img [src]="competitor.thumbnail" [alt]="competitor.title" />
+              } @else {
+                <span>{{ competitor.title.slice(0, 1) }}</span>
+              }
+            </div>
+
+            <div class="competitor-headline">
+              <span class="badge">{{ competitor.status || 'activo' }}</span>
+              <h4>{{ competitor.title }}</h4>
+              <p>{{ competitor.selection_reason }}</p>
+            </div>
+          </div>
+
+          <div class="metric-row">
+            <div>
+              <label>Precio</label>
+              <strong>{{ competitor.price | currency: competitor.currency_id || 'ARS' }}</strong>
+            </div>
+            <div>
+              <label>Sold Qty</label>
+              <strong>{{ competitor.sold_quantity ?? 'N/D' }}</strong>
+            </div>
+            <div>
+              <label>Benchmark</label>
+              <strong>{{ competitor.benchmark_score | number: '1.0-0' }}</strong>
+            </div>
+          </div>
+
+          <div class="signal-row">
+            @for (signal of competitor.signals; track signal) {
+              <span class="signal-pill">{{ signal }}</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

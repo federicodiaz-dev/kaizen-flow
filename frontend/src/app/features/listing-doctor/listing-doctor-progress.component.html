@@ -1,0 +1,63 @@
+<section class="progress-shell glass-panel">
+  <div class="progress-header">
+    <div>
+      <p class="eyebrow">Progreso del analisis</p>
+      <h3>{{ progressLabel() }}</h3>
+      <p class="progress-note">
+        {{ completedCount() }} de {{ totalSteps() }} etapas completadas.
+      </p>
+    </div>
+    <span class="status-pill" [class.is-terminal]="jobStatus() === 'completed' || jobStatus() === 'partial'">
+      {{ jobStatus() === 'completed' || jobStatus() === 'partial' ? 'Listo' : 'En proceso' }}
+    </span>
+  </div>
+
+  @if (runningStep() || leadingStep(); as focusStep) {
+    <article class="focus-card" [class.running]="focusStep.status === 'running'">
+      <div class="focus-badge">
+        @if (focusStep.status === 'completed') {
+          <span>OK</span>
+        } @else if (focusStep.status === 'running') {
+          <span class="dot"></span>
+        } @else if (focusStep.status === 'failed') {
+          <span>!</span>
+        } @else {
+          <span>{{ statusLabel(focusStep.status) }}</span>
+        }
+      </div>
+
+      <div class="focus-copy">
+        <span class="focus-label">
+          {{ focusStep.status === 'running' ? 'Etapa actual' : 'Siguiente etapa' }}
+        </span>
+        <strong>{{ focusStep.label }}</strong>
+        <p>{{ focusStep.message || 'Preparando esta etapa del analisis.' }}</p>
+      </div>
+    </article>
+  }
+
+  <div class="step-list">
+    @for (step of steps(); track step.key) {
+      <article class="step-row" [class]="step.status">
+        <div class="step-marker">
+          @if (step.status === 'completed') {
+            <span>OK</span>
+          } @else if (step.status === 'running') {
+            <span class="dot"></span>
+          } @else if (step.status === 'failed') {
+            <span>!</span>
+          } @else {
+            <span>{{ $index + 1 }}</span>
+          }
+        </div>
+
+        <div class="step-copy">
+          <strong>{{ step.label }}</strong>
+          <p>{{ step.message || 'Sin novedades todavia.' }}</p>
+        </div>
+
+        <span class="step-state">{{ statusLabel(step.status) }}</span>
+      </article>
+    }
+  </div>
+</section>

@@ -1,0 +1,42 @@
+<section class="evidence-shell glass-panel">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Transparency</p>
+      <h3>Evidencia y credibilidad</h3>
+    </div>
+  </div>
+
+  @if (evidence(); as data) {
+    <div class="tab-row">
+      <button type="button" [class.active]="activeTab() === 'facts'" (click)="activeTab.set('facts')">
+        Datos observados
+      </button>
+      <button type="button" [class.active]="activeTab() === 'proxies'" (click)="activeTab.set('proxies')">
+        Proxies
+      </button>
+      <button type="button" [class.active]="activeTab() === 'uncertainties'" (click)="activeTab.set('uncertainties')">
+        Incertidumbres
+      </button>
+    </div>
+
+    <div class="evidence-list">
+      @if (activeTab() === 'facts') {
+        @for (point of data.factual_points; track point) {
+          <div class="evidence-item">{{ point }}</div>
+        }
+      }
+
+      @if (activeTab() === 'proxies') {
+        @for (point of data.proxy_points; track point) {
+          <div class="evidence-item proxy">{{ point }}</div>
+        }
+      }
+
+      @if (activeTab() === 'uncertainties') {
+        @for (point of data.uncertainties; track point) {
+          <div class="evidence-item warning">{{ point }}</div>
+        }
+      }
+    </div>
+  }
+</section>

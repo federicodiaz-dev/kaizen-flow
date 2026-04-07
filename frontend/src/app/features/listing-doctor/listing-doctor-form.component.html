@@ -1,0 +1,85 @@
+<section class="doctor-form glass-panel">
+  <div class="panel-header">
+    <div class="panel-icon">LD</div>
+    <div>
+      <p class="eyebrow">Entrada</p>
+      <h2>Elegi la publicacion</h2>
+    </div>
+  </div>
+
+  <p class="panel-copy">
+    Pega un <strong>item_id</strong> o explora las publicaciones activas de
+    <strong>{{ accountLabel() }}</strong>. El analisis ordena prioridades, benchmark y mejoras sin
+    mostrar todo de golpe.
+  </p>
+
+  <div class="form-stack">
+    <div class="field">
+      <label for="listing-doctor-item-id">Item ID</label>
+      <div class="id-row">
+        <input
+          id="listing-doctor-item-id"
+          type="text"
+          class="input-text"
+          placeholder="Ej: MLA1234567890"
+          [ngModel]="itemId()"
+          (ngModelChange)="itemIdChange.emit($event)"
+        />
+        <button type="button" class="picker-btn" (click)="openPicker.emit()">
+          Explorar
+        </button>
+      </div>
+      <span class="hint">Puedes pegar el ID exacto o elegir una publicacion reciente.</span>
+    </div>
+
+    @if (selectedItem(); as item) {
+      <article class="selected-item">
+        <div class="selected-thumb">
+          @if (item.thumbnail) {
+            <img [src]="item.thumbnail" [alt]="item.title" />
+          } @else {
+            <span>{{ item.title.slice(0, 1) }}</span>
+          }
+        </div>
+        <div class="selected-copy">
+          <span class="selected-badge">Publicacion seleccionada</span>
+          <h3>{{ item.title }}</h3>
+          <div class="selected-meta">
+            <span>{{ item.id }}</span>
+            @if (item.price !== null) {
+              <strong>{{ item.price | currency: item.currency_id || 'ARS' }}</strong>
+            }
+          </div>
+        </div>
+      </article>
+    }
+
+    <label class="toggle-card">
+      <input
+        type="checkbox"
+        [ngModel]="includeCopywriter()"
+        (ngModelChange)="includeCopywriterChange.emit($event)"
+      />
+      <div>
+        <strong>Incluir sugerencias del Copywriter</strong>
+        <span>Activa titulos sugeridos, estrategia de reposicionamiento y descripcion mejorada.</span>
+      </div>
+    </label>
+
+    <button
+      type="button"
+      class="analyze-btn"
+      [disabled]="!canAnalyze()"
+      [class.is-loading]="loading()"
+      (click)="analyze.emit()"
+    >
+      @if (loading()) {
+        <span class="btn-spinner"></span>
+        <span>Analizando listing...</span>
+      } @else {
+        <span class="btn-spark">+</span>
+        <span>Iniciar Listing Doctor</span>
+      }
+    </button>
+  </div>
+</section>

@@ -1,0 +1,59 @@
+<section class="actions-shell glass-panel">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Action Plan</p>
+      <h3>Que mover primero</h3>
+    </div>
+  </div>
+
+  @if (actions().length === 0) {
+    <div class="empty-state">Todavia no hay acciones priorizadas para mostrar.</div>
+  } @else {
+    <div class="action-columns">
+      <article class="action-group">
+        <div class="group-header">Alto impacto</div>
+        @for (action of highImpact(); track action.title) {
+          <div class="action-card">
+            <strong>{{ action.title }}</strong>
+            <p>{{ action.summary }}</p>
+            <div class="tag-row">
+              @for (tag of action.tags; track tag) {
+                <span>{{ tag }}</span>
+              }
+            </div>
+          </div>
+        }
+      </article>
+
+      <article class="action-group">
+        <div class="group-header">Impacto medio</div>
+        @for (action of mediumImpact(); track action.title) {
+          <div class="action-card">
+            <strong>{{ action.title }}</strong>
+            <p>{{ action.summary }}</p>
+            <div class="tag-row">
+              @for (tag of action.tags; track tag) {
+                <span>{{ tag }}</span>
+              }
+            </div>
+          </div>
+        }
+      </article>
+
+      <article class="action-group">
+        <div class="group-header">Rapido de ejecutar</div>
+        @for (action of lowEffort(); track action.title) {
+          <div class="action-card">
+            <strong>{{ action.title }}</strong>
+            <p>{{ action.summary }}</p>
+            <div class="tag-row">
+              @for (tag of action.tags; track tag) {
+                <span>{{ tag }}</span>
+              }
+            </div>
+          </div>
+        }
+      </article>
+    </div>
+  }
+</section>

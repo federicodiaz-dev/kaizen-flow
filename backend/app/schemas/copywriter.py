@@ -29,6 +29,7 @@ class DescriptionEnhanceRequest(BaseModel):
     currency: str | None = None
     condition: str | None = None
     attributes: list[dict] = Field(default_factory=list)
+    improvement_notes: str | None = Field(default=None, max_length=3000)
 
 
 class DescriptionEnhanceResponse(BaseModel):

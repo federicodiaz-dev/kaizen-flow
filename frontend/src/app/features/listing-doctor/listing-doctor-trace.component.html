@@ -1,0 +1,51 @@
+<section class="trace-shell glass-panel">
+  <div class="trace-header">
+    <div>
+      <p class="eyebrow">Execution Trace</p>
+      <h3>Que hizo cada agente y cada nodo</h3>
+      @if (logFilePath()) {
+        <p class="trace-path">{{ logFilePath() }}</p>
+      }
+    </div>
+    <span class="trace-count">{{ trace().length }} eventos</span>
+  </div>
+
+  @if (trace().length === 0) {
+    <div class="empty-state">Todavia no hay trazas para este job.</div>
+  } @else {
+    <div class="trace-groups">
+      @for (group of groupedTrace(); track group.agent) {
+        <article class="agent-group">
+          <div class="agent-header">
+            <h4>{{ agentLabel(group.agent) }}</h4>
+            <span>{{ group.entries.length }} eventos</span>
+          </div>
+
+          <div class="trace-list">
+            @for (entry of group.entries; track entry.sequence) {
+              <details class="trace-entry" [class.failed]="entry.phase === 'failed'">
+                <summary>
+                  <div class="summary-left">
+                    <span class="phase-pill" [class]="entry.phase">{{ phaseLabel(entry.phase) }}</span>
+                    <strong>{{ entry.node }}</strong>
+                    <p>{{ entry.message }}</p>
+                  </div>
+                  <div class="summary-right">
+                    <span>#{{ entry.sequence }}</span>
+                    <small>{{ entry.timestamp }}</small>
+                  </div>
+                </summary>
+
+                @if (entry.details) {
+                  <pre>{{ formatDetails(entry.details) }}</pre>
+                } @else {
+                  <div class="trace-empty">Sin detalles adicionales.</div>
+                }
+              </details>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
