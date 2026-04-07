@@ -208,3 +208,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+backend/data/market_insights/user_*/logs/
+backend/data/market_insights/user_*/runs/
