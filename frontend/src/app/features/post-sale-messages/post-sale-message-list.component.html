@@ -1,0 +1,80 @@
+<div class="list-container glass-panel animate-slide-up stagger-2">
+  <div class="list-header">
+    <div class="toolbar">
+      <div class="search-box">
+        <input
+          type="text"
+          class="input-text"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchTextChange.emit($event)"
+          placeholder="Buscar por pack, comprador, item u orden..."
+        />
+      </div>
+
+      <div class="toolbar-row">
+        <select
+          class="input-text filter-select"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="statusFilterChange.emit($event)"
+        >
+          <option value="all">Todas</option>
+          <option value="unread">Sin leer</option>
+          <option value="active">Activas</option>
+          <option value="blocked">Bloqueadas</option>
+        </select>
+
+        <button type="button" class="refresh-btn" (click)="refresh.emit()">Actualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="list-content">
+    @if (loading()) {
+      <div class="state-msg">Cargando conversaciones post venta...</div>
+    } @else if (error()) {
+      <div class="state-msg error">{{ error() }}</div>
+    } @else if (conversations().length === 0) {
+      <div class="state-msg">No hay conversaciones post venta para mostrar.</div>
+    } @else {
+      <div class="items-grid">
+        @for (conversation of conversations(); track conversation.pack_id) {
+          <button
+            type="button"
+            class="list-item"
+            [class.selected]="conversation.pack_id === selectedId()"
+            [class.is-blocked]="statusTone(conversation) === 'blocked'"
+            [class.is-unread]="statusTone(conversation) === 'unread'"
+            (click)="selectConversation.emit(conversation.pack_id)"
+          >
+            <div class="item-top">
+              <span class="status-pill" [class.blocked]="statusTone(conversation) === 'blocked'">
+                {{ statusLabel(conversation.conversation_status) }}
+              </span>
+              <span class="item-id">Pack #{{ conversation.pack_id }}</span>
+            </div>
+
+            <h4 class="item-title">{{ conversation.primary_item_title || 'Conversacion post venta' }}</h4>
+            <p class="item-meta">{{ buyerLabel(conversation) }}</p>
+
+            <div class="item-chip-row">
+              <span class="item-chip">{{ conversation.message_count }} mensajes</span>
+              @if (conversation.unread_count > 0) {
+                <span class="item-chip item-chip--unread">{{ conversation.unread_count }} sin leer</span>
+              }
+              @if (conversation.order_ids.length > 0) {
+                <span class="item-chip">Orden {{ conversation.order_ids[0] }}</span>
+              }
+            </div>
+
+            <div class="item-bottom">
+              <span class="item-date">{{ conversation.last_updated | date: 'short' }}</span>
+              @if (conversation.total_amount !== null) {
+                <span class="item-total">{{ conversation.total_amount | currency: conversation.currency_id || 'ARS' }}</span>
+              }
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

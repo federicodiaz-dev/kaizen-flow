@@ -10,19 +10,24 @@ from app.agents.config import AgentSettings, get_agent_settings
 from app.core.exceptions import AppError, BadRequestError
 from app.schemas.claims import ClaimDetail
 from app.schemas.items import ItemDetail
+from app.schemas.post_sale_messages import PostSaleConversationDetail
 from app.schemas.questions import QuestionDetail
 from app.schemas.reply_assistant import (
     ClaimDraftRequest,
     ClaimDraftResponse,
+    PostSaleDraftRequest,
+    PostSaleDraftResponse,
     QuestionDraftRequest,
     QuestionDraftResponse,
 )
 from app.services.claims import ClaimsService
 from app.services.items import ItemsService
+from app.services.post_sale_messages import PostSaleMessagesService
 from app.services.questions import QuestionsService
 from app.services.reply_assistant_prompts import (
     CLAIM_REPLY_DRAFTER_PROMPT,
     MERCADO_LIBRE_POLICY_BASELINE_PROMPT,
+    POST_SALE_REPLY_DRAFTER_PROMPT,
     QUESTION_REPLY_DRAFTER_PROMPT,
 )
 
@@ -54,11 +59,13 @@ class ReplyAssistantService:
         *,
         questions_service: QuestionsService,
         claims_service: ClaimsService,
+        post_sale_messages_service: PostSaleMessagesService,
         items_service: ItemsService,
         settings: AgentSettings | None = None,
     ) -> None:
         self._questions_service = questions_service
         self._claims_service = claims_service
+        self._post_sale_messages_service = post_sale_messages_service
         self._items_service = items_service
         self._settings = settings or get_agent_settings()
         self._llm = None
@@ -115,6 +122,34 @@ class ReplyAssistantService:
         )
         return ClaimDraftResponse(draft_message=draft)
 
+    async def suggest_post_sale_message(
+        self,
+        account_key: str,
+        pack_id: str,
+        payload: PostSaleDraftRequest,
+    ) -> PostSaleDraftResponse:
+        conversation = await self._post_sale_messages_service.get_conversation(
+            account_key,
+            pack_id,
+            mark_as_read=False,
+        )
+        if not conversation.can_reply:
+            raise BadRequestError(
+                conversation.reply_limitations or "La conversación post venta no admite respuestas en este momento."
+            )
+
+        item_detail = await self._load_post_sale_item_context(account_key, conversation)
+        prompt = self._build_post_sale_prompt(
+            conversation=conversation,
+            item_detail=item_detail,
+            payload=payload,
+        )
+        draft = await self._invoke_plain_text(
+            prompt,
+            fallback=self._fallback_post_sale_draft(conversation, item_detail),
+        )
+        return PostSaleDraftResponse(draft_message=draft)
+
     async def _load_item_context(self, account_key: str, question: QuestionDetail) -> ItemDetail | None:
         item_id = question.item.id if question.item else None
         if not item_id:
@@ -125,6 +160,30 @@ class ReplyAssistantService:
             return None
         except Exception:
             logger.warning("Could not load item context for question draft.", exc_info=True)
+            return None
+
+    async def _load_post_sale_item_context(
+        self,
+        account_key: str,
+        conversation: PostSaleConversationDetail,
+    ) -> ItemDetail | None:
+        first_item_id = None
+        for order in conversation.orders:
+            for item in order.items:
+                if item.item_id:
+                    first_item_id = item.item_id
+                    break
+            if first_item_id:
+                break
+
+        if not first_item_id:
+            return None
+        try:
+            return await self._items_service.get_item(account_key, first_item_id)
+        except AppError:
+            return None
+        except Exception:
+            logger.warning("Could not load item context for post-sale draft.", exc_info=True)
             return None
 
     def _build_question_prompt(
@@ -247,6 +306,86 @@ class ReplyAssistantService:
             HumanMessage(content=user_prompt),
         ]
 
+    def _build_post_sale_prompt(
+        self,
+        *,
+        conversation: PostSaleConversationDetail,
+        item_detail: ItemDetail | None,
+        payload: PostSaleDraftRequest,
+    ) -> list[SystemMessage | HumanMessage]:
+        recent_messages = [
+            {
+                "from_user_id": message.from_user.user_id if message.from_user else None,
+                "from_name": message.from_user.nickname if message.from_user else None,
+                "date_created": message.date_created,
+                "text": _truncate(message.text, 700),
+                "is_from_seller": message.is_from_seller,
+            }
+            for message in conversation.messages[-12:]
+        ]
+        order_snapshot = [
+            {
+                "order_id": order.id,
+                "status": order.status,
+                "date_created": order.date_created,
+                "total_amount": order.total_amount,
+                "currency_id": order.currency_id,
+                "items": [
+                    {
+                        "item_id": item.item_id,
+                        "title": item.title,
+                        "quantity": item.quantity,
+                        "unit_price": item.unit_price,
+                    }
+                    for item in order.items
+                ],
+            }
+            for order in conversation.orders[:6]
+        ]
+
+        item_lines: list[str] = []
+        if item_detail is not None:
+            item_lines.extend(
+                [
+                    f"Titulo principal del item: {item_detail.title}",
+                    f"Estado de la publicacion: {item_detail.status or 'N/D'}",
+                    f"Precio actual: {item_detail.price} {item_detail.currency_id or ''}".strip(),
+                    f"Condicion: {item_detail.condition or 'N/D'}",
+                ]
+            )
+            attrs = [
+                {"name": attr.get("name"), "value_name": attr.get("value_name")}
+                for attr in item_detail.attributes[:12]
+                if isinstance(attr, dict)
+            ]
+            if attrs:
+                item_lines.append(f"Atributos: {_json_block(attrs, limit=1500)}")
+            if item_detail.description:
+                item_lines.append(f"Descripcion de la publicacion:\n{_truncate(item_detail.description, 2500)}")
+        elif conversation.primary_item_title:
+            item_lines.append(f"Titulo principal del item: {conversation.primary_item_title}")
+
+        current_draft = _truncate(payload.current_draft, 3000) if payload.current_draft else ""
+        user_prompt = (
+            f"Pack id: {conversation.pack_id}\n"
+            f"Comprador: {conversation.buyer_name or conversation.buyer_nickname or conversation.buyer_user_id or 'N/D'}\n"
+            f"Estado de la conversacion: {conversation.conversation_status or 'N/D'}\n"
+            f"Subestado: {conversation.conversation_substatus or 'N/D'}\n"
+            f"Cantidad de mensajes: {conversation.message_count}\n"
+            f"Maximo para el vendedor: {conversation.seller_max_message_length or 'N/D'} caracteres\n"
+            f"Limitaciones actuales: {conversation.reply_limitations or 'ninguna'}\n"
+            f"Ordenes del pack: {_json_block(order_snapshot, limit=2500) or 'N/D'}\n"
+            f"Mensajes recientes del pack: {_json_block(recent_messages, limit=3500) or 'N/D'}\n"
+            f"Contexto adicional del item:\n{chr(10).join(item_lines) or 'Sin contexto adicional del item.'}\n\n"
+            f"Borrador actual del vendedor:\n{current_draft or '(vacio)'}\n\n"
+            "Genera un solo mensaje final listo para pegar en Mercado Libre."
+        )
+        return [
+            SystemMessage(content=MERCADO_LIBRE_POLICY_BASELINE_PROMPT),
+            SystemMessage(content=POST_SALE_REPLY_DRAFTER_PROMPT),
+            HumanMessage(content=user_prompt),
+        ]
+
     async def _invoke_plain_text(
         self,
         messages: list[SystemMessage | HumanMessage],
@@ -322,4 +461,22 @@ class ReplyAssistantService:
             "Hola. Estamos revisando tu reclamo y queremos resolverlo correctamente. "
             "Para avanzar, necesitamos validar los hechos y la evidencia concreta del caso antes de tomar una definicion. "
             "Si corresponde, por favor envianos el detalle y respaldo adicional por este medio."
+        )
+
+    @staticmethod
+    def _fallback_post_sale_draft(
+        conversation: PostSaleConversationDetail,
+        item_detail: ItemDetail | None,
+    ) -> str:
+        title = item_detail.title if item_detail is not None else conversation.primary_item_title
+        if title:
+            return (
+                f"Hola. Gracias por escribirnos sobre tu compra de {title}. "
+                "Estoy revisando el detalle del pack para responderte con precision y ayudarte por esta misma via. "
+                "Si hace falta, indicanos puntualmente lo que necesitas y seguimos desde aca."
+            )
+        return (
+            "Hola. Gracias por escribirnos. "
+            "Estoy revisando el detalle de tu compra para responderte con precision y ayudarte por esta misma via. "
+            "Si hace falta, indicanos puntualmente lo que necesitas y seguimos desde aca."
         )
