@@ -1,0 +1,304 @@
+<section class="market-insights-page">
+  @if (errorMessage()) {
+    <div class="toast-error animate-fade-in">
+      <span>{{ errorMessage() }}</span>
+      <button type="button" (click)="errorMessage.set(null)">✕</button>
+    </div>
+  }
+
+  <div class="market-insights-layout">
+    <aside class="input-panel" data-tour-id="market-insights-input">
+      <div class="panel-header">
+        <div class="panel-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M4 18h16M6 14l3-3 3 2 5-6 1 1" />
+            <path d="M17 8h3v3" />
+          </svg>
+        </div>
+        <div>
+          <p class="eyebrow">Market Insights</p>
+          <h2>Tendencias Validadas</h2>
+        </div>
+      </div>
+
+      <p class="panel-desc">
+        Escribí una categoría natural y el sistema va a
+        <strong>resolver categorías de Mercado Libre</strong>,
+        <strong>consultar tendencias</strong> y
+        <strong>validar productos específicos</strong> antes de recomendarlos.
+      </p>
+
+      <div class="account-pill">
+        <span class="pill-label">Cuenta activa</span>
+        <strong>{{ currentAccountLabel() }}</strong>
+      </div>
+
+      <div class="form-stack">
+        <div class="form-group">
+          <label for="market-natural-query">Categoría en lenguaje natural</label>
+          <textarea
+            id="market-natural-query"
+            class="input-text"
+            rows="4"
+            placeholder="Ej: rimel, productos para hombres, cartucheras escolares, mochilas urbanas, sabanas..."
+            [ngModel]="naturalQuery()"
+            (ngModelChange)="naturalQuery.set($event)"
+            (keydown)="handleKeydown($event)"
+          ></textarea>
+          <span class="hint">
+            Podés escribir algo amplio; el reporte intentará bajar eso a productos concretos y válidos.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="market-limit">Cantidad máxima de oportunidades</label>
+          <select
+            id="market-limit"
+            class="input-text"
+            [ngModel]="limit()"
+            (ngModelChange)="limit.set(+$event)"
+          >
+            <option [ngValue]="3">3 oportunidades</option>
+            <option [ngValue]="5">5 oportunidades</option>
+            <option [ngValue]="8">8 oportunidades</option>
+          </select>
+        </div>
+
+        <div class="examples-block">
+          <span class="examples-label">Ideas rápidas</span>
+          <div class="examples-grid">
+            @for (example of examples; track example) {
+              <button type="button" class="example-chip" (click)="applyExample(example)">
+                {{ example }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="generate-btn"
+          [class.is-loading]="loading()"
+          [disabled]="!canGenerate()"
+          (click)="buildReport()"
+        >
+          @if (loading()) {
+            <span class="btn-spinner"></span>
+            <span>{{ thinkingLabel() }}</span>
+          } @else {
+            <span class="btn-sparkle">↗</span>
+            <span>Generar reporte</span>
+          }
+        </button>
+      </div>
+    </aside>
+
+    <section class="results-panel" data-tour-id="market-insights-results">
+      @if (!result() && !loading()) {
+        <div class="empty-results">
+          <div class="empty-illustration">
+            <div class="empty-glow"></div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M3 17l5-5 4 3 7-9" />
+              <path d="M18 6h3v3" />
+              <circle cx="8" cy="8" r="2" />
+              <circle cx="12" cy="15" r="2" />
+              <circle cx="19" cy="6" r="2" />
+            </svg>
+          </div>
+          <h3>Investigá tendencias con criterio</h3>
+          <p>
+            La pantalla devuelve oportunidades concretas, con categoría resuelta, validación en la búsqueda visible,
+            rango de precios y señales de riesgo. No se queda en verticales genéricas.
+          </p>
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="orbit-ring"><span></span><span></span><span></span></div>
+          <div class="loading-copy">
+            <p class="eyebrow">Procesando</p>
+            <h3>{{ thinkingLabel() }}</h3>
+            <div class="wave-bars"><span></span><span></span><span></span><span></span></div>
+          </div>
+        </div>
+      }
+
+      @if (result(); as report) {
+        <div class="results-content animate-fade-in">
+          <div class="hero-card">
+            <p class="hero-eyebrow">Resumen ejecutivo</p>
+            <h3>{{ report.input_query }}</h3>
+            <p class="hero-summary">{{ displayedSummary() }}</p>
+          </div>
+
+          <div class="overview-grid">
+            <article class="overview-card">
+              <span class="overview-label">Validadas</span>
+              <strong>{{ report.summary.validated_opportunity_count }}</strong>
+              <p>Productos concretos con evidencia suficiente.</p>
+            </article>
+
+            <article class="overview-card">
+              <span class="overview-label">Categorías resueltas</span>
+              <strong>{{ report.summary.resolved_category_count }}</strong>
+              <p>Matches detectados desde lenguaje natural.</p>
+            </article>
+
+            <article class="overview-card">
+              <span class="overview-label">Señales descartadas</span>
+              <strong>{{ report.summary.discarded_signal_count }}</strong>
+              <p>Ideas rechazadas por poca especificidad o poca evidencia.</p>
+            </article>
+
+            <article class="overview-card">
+              <span class="overview-label">Sitio</span>
+              <strong>{{ report.site_id }}</strong>
+              <p>Mercado objetivo usado para la investigación.</p>
+            </article>
+          </div>
+
+          <div class="result-section">
+            <div class="section-header">
+              <h3>Productos En Tendencia Validados</h3>
+              <span class="count-badge">{{ report.validated_opportunities.length }}</span>
+            </div>
+
+            @if (report.validated_opportunities.length === 0) {
+              <div class="empty-block">
+                <h4>No hubo oportunidades suficientemente sólidas</h4>
+                <p>
+                  Probá con una categoría más precisa o revisá las señales descartadas para entender qué quedó corto en evidencia.
+                </p>
+              </div>
+            } @else {
+              <div class="opportunities-grid">
+                @for (opportunity of report.validated_opportunities; track opportunity.keyword) {
+                  <article class="opportunity-card">
+                    <div class="opportunity-header">
+                      <div>
+                        <p class="opportunity-kicker">Producto detectado</p>
+                        <h4>{{ opportunity.keyword }}</h4>
+                      </div>
+                      <div class="badge-stack">
+                        <span class="metric-badge">{{ opportunity.trend_bucket }}</span>
+                        <span class="metric-badge outline">Top {{ opportunity.trend_rank }}</span>
+                      </div>
+                    </div>
+
+                    <p class="category-trail">{{ categoryTrail(opportunity) }}</p>
+                    <p class="justification">{{ opportunity.justification }}</p>
+
+                    <div class="metrics-grid">
+                      <div class="metric-chip">
+                        <span>Resultados visibles</span>
+                        <strong>{{ opportunity.market_evidence.total_results ?? 'N/D' }}</strong>
+                      </div>
+                      <div class="metric-chip">
+                        <span>Rango de precios</span>
+                        <strong>{{ formatPriceRange(opportunity.market_evidence.price_stats, opportunity.market_evidence.sample_results[0]?.currency_id || 'ARS') }}</strong>
+                      </div>
+                      <div class="metric-chip">
+                        <span>Venta promedio</span>
+                        <strong>{{ formatAverageSold(opportunity.market_evidence.avg_sold_quantity) }}</strong>
+                      </div>
+                      <div class="metric-chip">
+                        <span>Coincidencia</span>
+                        <strong>{{ opportunity.market_evidence.matching_title_count }}</strong>
+                      </div>
+                    </div>
+
+                    <div class="score-rail">
+                      <div class="score-pill">
+                        <span>Especificidad</span>
+                        <strong>{{ formatScore(opportunity.specificity_score) }}</strong>
+                      </div>
+                      <div class="score-pill">
+                        <span>Evidencia</span>
+                        <strong>{{ formatScore(opportunity.evidence_score) }}</strong>
+                      </div>
+                      <div class="score-pill">
+                        <span>Ranking</span>
+                        <strong>{{ formatScore(opportunity.ranking_score) }}</strong>
+                      </div>
+                    </div>
+
+                    @if (opportunity.market_evidence.sample_titles.length > 0) {
+                      <div class="sample-block">
+                        <span class="subtle-label">Títulos observados</span>
+                        <div class="sample-list">
+                          @for (title of opportunity.market_evidence.sample_titles; track title) {
+                            <span class="sample-tag">{{ title }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    @if (opportunity.risk_flags.length > 0) {
+                      <div class="risk-block">
+                        <span class="subtle-label">Riesgos</span>
+                        <div class="risk-list">
+                          @for (risk of opportunity.risk_flags; track risk) {
+                            <span class="risk-tag">{{ risk }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </article>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="detail-grid">
+            <section class="detail-card">
+              <div class="section-header compact">
+                <h3>Categorías Resueltas</h3>
+                <span class="count-badge muted">{{ report.resolved_categories.length }}</span>
+              </div>
+
+              @if (report.resolved_categories.length === 0) {
+                <p class="detail-empty">No se pudieron resolver categorías con suficiente claridad.</p>
+              } @else {
+                <div class="detail-list">
+                  @for (category of report.resolved_categories; track category.category_id) {
+                    <article class="detail-item">
+                      <div class="detail-item__header">
+                        <strong>{{ category.category_name || category.category_id }}</strong>
+                        <span class="mini-badge">{{ resolutionLabel(category.resolved_by) }}</span>
+                      </div>
+                      <p>{{ categoryTrail(category) }}</p>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="detail-card">
+              <div class="section-header compact">
+                <h3>Señales Descartadas</h3>
+                <span class="count-badge muted">{{ report.discarded_signals.length }}</span>
+              </div>
+
+              @if (report.discarded_signals.length === 0) {
+                <p class="detail-empty">No hubo señales descartadas en esta corrida.</p>
+              } @else {
+                <div class="detail-list">
+                  @for (signal of report.discarded_signals; track $index) {
+                    <article class="detail-item discarded">
+                      <div class="detail-item__header">
+                        <strong>{{ signal.keyword || signal.category_name || 'Señal sin keyword' }}</strong>
+                      </div>
+                      <p>{{ signal.reason }}</p>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          </div>
+        </div>
+      }
+    </section>
+  </div>
+</section>

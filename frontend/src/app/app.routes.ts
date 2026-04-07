@@ -8,6 +8,7 @@ import { ClaimsPageComponent } from './features/claims/claims-page.component';
 import { CopywriterPageComponent } from './features/copywriter/copywriter-page.component';
 import { ItemsPageComponent } from './features/items/items-page.component';
 import { ListingDoctorPageComponent } from './features/listing-doctor/listing-doctor-page.component';
+import { MarketInsightsPageComponent } from './features/market-insights/market-insights-page.component';
 import { PostSaleMessagesPageComponent } from './features/post-sale-messages/post-sale-messages-page.component';
 import { QuestionsPageComponent } from './features/questions/questions-page.component';
 
@@ -18,6 +19,7 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'questions' },
   { path: 'agents', component: AgentsPageComponent, canActivate: [authGuard] },
   { path: 'copywriter', component: CopywriterPageComponent, canActivate: [authGuard] },
+  { path: 'market-insights', component: MarketInsightsPageComponent, canActivate: [authGuard] },
   { path: 'listing-doctor', component: ListingDoctorPageComponent, canActivate: [authGuard] },
   { path: 'questions', component: QuestionsPageComponent, canActivate: [authGuard] },
   { path: 'post-sale', component: PostSaleMessagesPageComponent, canActivate: [authGuard] },

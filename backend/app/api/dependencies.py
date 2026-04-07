@@ -25,6 +25,7 @@ from app.services.claims import ClaimsService
 from app.services.copywriter import CopywriterService
 from app.services.items import ItemsService
 from app.services.listing_doctor import ListingDoctorService
+from app.services.market_insights import MarketInsightsService
 from app.services.post_sale_messages import PostSaleMessagesService
 from app.services.questions import QuestionsService
 
@@ -132,6 +133,19 @@ def get_items_service(
     client: Annotated[MercadoLibreClient, Depends(get_ml_client)],
 ) -> ItemsService:
     return ItemsService(account_store=account_store, client=client, items_adapter=ItemsAdapter(client))
+
+
+def get_market_insights_service(
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    client: Annotated[MercadoLibreClient, Depends(get_ml_client)],
+) -> MarketInsightsService:
+    agent_settings = get_agent_settings()
+    return MarketInsightsService(
+        user_id=current_user.id,
+        market_research=MarketResearchAdapter(client),
+        default_site_id=agent_settings.default_site_id,
+        agent_settings=agent_settings,
+    )
 
 
 def get_post_sale_messages_service(

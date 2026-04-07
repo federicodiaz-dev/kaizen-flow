@@ -13,6 +13,12 @@ class AppError(Exception):
     code: str = "app_error"
     details: Any | None = None
 
+    def __post_init__(self) -> None:
+        self.args = (self.message,)
+
+    def __str__(self) -> str:
+        return self.message
+
 
 class ConfigurationError(AppError):
     def __init__(self, message: str, details: Any | None = None) -> None:
