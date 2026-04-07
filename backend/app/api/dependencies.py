@@ -10,6 +10,7 @@ from app.agents.config import get_agent_settings
 from app.agents.service import BusinessAssistantService
 from app.adapters.claims import ClaimsAdapter
 from app.adapters.items import ItemsAdapter
+from app.adapters.market_research import MarketResearchAdapter
 from app.adapters.questions import QuestionsAdapter
 from app.clients.mercadolibre import MercadoLibreClient
 from app.core.account_store import AccountStore
@@ -20,7 +21,9 @@ from app.schemas.auth import UserProfile
 from app.services.accounts import AccountsService
 from app.services.auth import AuthService, AuthenticatedUser
 from app.services.claims import ClaimsService
+from app.services.copywriter import CopywriterService
 from app.services.items import ItemsService
+from app.services.listing_doctor import ListingDoctorService
 from app.services.questions import QuestionsService
 
 
@@ -207,3 +210,34 @@ def get_reply_assistant_service(
             items_adapter=ItemsAdapter(ml_client),
         ),
     )
+
+
+def get_listing_doctor_service(
+    request: Request,
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    account_store: Annotated[AccountStore, Depends(get_account_store)],
+    http_client: Annotated[httpx.AsyncClient, Depends(get_http_client)],
+    copywriter_service: Annotated[CopywriterService, Depends(get_copywriter_service)],
+) -> ListingDoctorService:
+    services_cache = getattr(request.app.state, "listing_doctor_services", None)
+    if services_cache is None:
+        services_cache = {}
+        request.app.state.listing_doctor_services = services_cache
+
+    service = services_cache.get(current_user.id)
+    if service is None:
+        client = MercadoLibreClient(http_client=http_client, settings=settings, account_store=account_store)
+        service = ListingDoctorService(
+            user_id=current_user.id,
+            account_store=account_store,
+            items_service=ItemsService(
+                account_store=account_store,
+                client=client,
+                items_adapter=ItemsAdapter(client),
+            ),
+            market_research=MarketResearchAdapter(client),
+            copywriter_service=copywriter_service,
+        )
+        services_cache[current_user.id] = service
+    return service

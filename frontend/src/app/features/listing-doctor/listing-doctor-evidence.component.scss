@@ -1,0 +1,62 @@
+.evidence-shell {
+  padding: 1.2rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.section-header h3 {
+  margin: 0.25rem 0 0;
+}
+
+.tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.tab-row button {
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.tab-row button.active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border-color));
+  color: var(--accent);
+}
+
+.evidence-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.evidence-item {
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-primary) 82%, var(--bg-secondary));
+  color: var(--text-muted);
+  line-height: 1.62;
+}
+
+.evidence-item.proxy {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-color));
+}
+
+.evidence-item.warning {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--border-color));
+}

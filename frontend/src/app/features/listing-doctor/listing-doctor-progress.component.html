@@ -1,0 +1,37 @@
+<section class="progress-shell glass-panel">
+  <div class="progress-header">
+    <div>
+      <p class="eyebrow">Analysis Flow</p>
+      <h3>Seguimiento del workflow multiagente</h3>
+    </div>
+    <span class="status-pill" [class.is-terminal]="jobStatus() === 'completed' || jobStatus() === 'partial'">
+      {{ runningStep()?.label || 'Esperando siguiente etapa' }}
+    </span>
+  </div>
+
+  <div class="steps-grid">
+    @for (step of steps(); track step.key) {
+      <article class="step-card" [class]="step.status">
+        <div class="step-index">
+          @if (step.status === 'completed') {
+            <span>OK</span>
+          } @else if (step.status === 'running') {
+            <span class="dot"></span>
+          } @else if (step.status === 'failed') {
+            <span>!</span>
+          } @else {
+            <span>{{ $index + 1 }}</span>
+          }
+        </div>
+
+        <div class="step-copy">
+          <div class="step-top">
+            <strong>{{ step.label }}</strong>
+            <span class="step-state">{{ statusLabel(step.status) }}</span>
+          </div>
+          <p>{{ step.message || 'Sin novedades todavia.' }}</p>
+        </div>
+      </article>
+    }
+  </div>
+</section>

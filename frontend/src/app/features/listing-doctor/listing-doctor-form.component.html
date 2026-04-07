@@ -1,0 +1,149 @@
+<section class="doctor-form glass-panel">
+  <div class="panel-header">
+    <div class="panel-icon">LD</div>
+    <div>
+      <p class="eyebrow">Input Panel</p>
+      <h2>Analiza una publicacion real</h2>
+    </div>
+  </div>
+
+  <p class="panel-copy">
+    Ingresa un <strong>item_id</strong> manualmente o explora las publicaciones activas de
+    <strong>{{ accountLabel() }}</strong> para iniciar un diagnostico profundo de benchmark,
+    precio, atributos, descripcion y oportunidades.
+  </p>
+
+  <div class="form-stack">
+    <div class="field">
+      <label for="listing-doctor-item-id">Item ID</label>
+      <div class="id-row">
+        <input
+          id="listing-doctor-item-id"
+          type="text"
+          class="input-text"
+          placeholder="Ej: MLA1234567890"
+          [ngModel]="itemId()"
+          (ngModelChange)="itemIdChange.emit($event)"
+        />
+        <button type="button" class="picker-btn" (click)="openPicker.emit()">
+          Explorar
+        </button>
+      </div>
+      <span class="hint">Puedes pegar el ID exacto o elegir una publicacion reciente.</span>
+    </div>
+
+    @if (selectedItem(); as item) {
+      <article class="selected-item">
+        <div class="selected-thumb">
+          @if (item.thumbnail) {
+            <img [src]="item.thumbnail" [alt]="item.title" />
+          } @else {
+            <span>{{ item.title.slice(0, 1) }}</span>
+          }
+        </div>
+        <div class="selected-copy">
+          <span class="selected-badge">Publicacion seleccionada</span>
+          <h3>{{ item.title }}</h3>
+          <div class="selected-meta">
+            <span>{{ item.id }}</span>
+            @if (item.price !== null) {
+              <strong>{{ item.price | currency: item.currency_id || 'ARS' }}</strong>
+            }
+          </div>
+        </div>
+      </article>
+    }
+
+    <label class="toggle-card">
+      <input
+        type="checkbox"
+        [ngModel]="includeCopywriter()"
+        (ngModelChange)="includeCopywriterChange.emit($event)"
+      />
+      <div>
+        <strong>Incluir sugerencias del Copywriter</strong>
+        <span>Activa titulos sugeridos, estrategia de reposicionamiento y descripcion mejorada.</span>
+      </div>
+    </label>
+
+    <button
+      type="button"
+      class="analyze-btn"
+      [disabled]="!canAnalyze()"
+      [class.is-loading]="loading()"
+      (click)="analyze.emit()"
+    >
+      @if (loading()) {
+        <span class="btn-spinner"></span>
+        <span>Analizando listing...</span>
+      } @else {
+        <span class="btn-spark">+</span>
+        <span>Iniciar Listing Doctor</span>
+      }
+    </button>
+  </div>
+
+  @if (pickerOpen()) {
+    <div class="picker-backdrop" (click)="closePicker.emit()">
+      <div class="picker-panel" (click)="$event.stopPropagation()">
+        <div class="picker-header">
+          <div>
+            <p class="eyebrow">Picker</p>
+            <h3>Publicaciones activas recientes</h3>
+          </div>
+          <button type="button" class="picker-close" (click)="closePicker.emit()">x</button>
+        </div>
+
+        <div class="picker-toolbar">
+          <input
+            type="text"
+            class="input-text"
+            placeholder="Filtrar por titulo o ID..."
+            [ngModel]="recentItemsQuery()"
+            (ngModelChange)="recentItemsQueryChange.emit($event)"
+          />
+          <button type="button" class="picker-refresh" (click)="refreshRecentItems.emit()">
+            Refrescar
+          </button>
+        </div>
+
+        <div class="picker-body">
+          @if (recentItemsLoading()) {
+            <div class="picker-state">Cargando publicaciones activas...</div>
+          } @else if (recentItemsError()) {
+            <div class="picker-state error">{{ recentItemsError() }}</div>
+          } @else if (filteredItems().length === 0) {
+            <div class="picker-state">No hay publicaciones que coincidan con ese filtro.</div>
+          } @else {
+            <div class="picker-list">
+              @for (item of filteredItems(); track item.id) {
+                <button type="button" class="picker-item" (click)="selectRecentItem.emit(item)">
+                  <div class="picker-thumb">
+                    @if (item.thumbnail) {
+                      <img [src]="item.thumbnail" [alt]="item.title" />
+                    } @else {
+                      <span>{{ item.title.slice(0, 1) }}</span>
+                    }
+                  </div>
+                  <div class="picker-copy">
+                    <div class="picker-top">
+                      <span class="item-id">{{ item.id }}</span>
+                      @if (item.price !== null) {
+                        <strong>{{ item.price | currency: item.currency_id || 'ARS' }}</strong>
+                      }
+                    </div>
+                    <h4>{{ item.title }}</h4>
+                    <div class="picker-meta">
+                      <span>{{ item.status || 'Estado N/D' }}</span>
+                      <span>Stock {{ item.available_quantity ?? 'N/D' }}</span>
+                    </div>
+                  </div>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>

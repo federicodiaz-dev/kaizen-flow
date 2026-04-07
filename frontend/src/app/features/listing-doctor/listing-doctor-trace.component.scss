@@ -1,0 +1,158 @@
+.trace-shell {
+  display: grid;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.trace-header,
+.agent-header,
+.trace-entry summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.trace-header h3 {
+  margin-top: 0.25rem;
+}
+
+.trace-path {
+  margin: 0.45rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.trace-count,
+.agent-header span {
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.trace-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.agent-group {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.agent-header h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.trace-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.trace-entry {
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-primary) 82%, var(--bg-secondary));
+  overflow: hidden;
+}
+
+.trace-entry.failed {
+  border-color: color-mix(in srgb, var(--error) 28%, var(--border-color));
+}
+
+.trace-entry summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.9rem 1rem;
+}
+
+.trace-entry summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary-left {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.summary-left strong {
+  color: var(--text-main);
+}
+
+.summary-left p,
+.summary-right small,
+.trace-empty {
+  color: var(--text-muted);
+}
+
+.summary-left p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.summary-right {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.summary-right span {
+  color: var(--text-main);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.phase-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.24rem 0.58rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.phase-pill.started {
+  background: color-mix(in srgb, var(--accent-light) 88%, transparent);
+  color: var(--accent);
+}
+
+.phase-pill.completed {
+  background: color-mix(in srgb, var(--success-bg) 88%, transparent);
+  color: var(--success-text);
+}
+
+.phase-pill.failed {
+  background: color-mix(in srgb, var(--error-bg) 88%, transparent);
+  color: var(--error-text);
+}
+
+.phase-pill.info {
+  background: color-mix(in srgb, var(--warning-bg) 88%, transparent);
+  color: var(--warning-text);
+}
+
+.trace-entry pre,
+.trace-empty {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}

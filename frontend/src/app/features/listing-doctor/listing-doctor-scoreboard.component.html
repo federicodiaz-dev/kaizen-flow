@@ -1,0 +1,107 @@
+@if (result(); as data) {
+  <section class="scoreboard-shell">
+    <article class="hero-score glass-panel">
+      <div class="hero-copy">
+        <span class="eyebrow">Executive Score</span>
+        <h2>{{ data.listing.title }}</h2>
+        <p>{{ executiveSummary() || data.executive_summary }}</p>
+      </div>
+
+      <div class="score-orb">
+        <span class="score-label">Overall</span>
+        <strong>{{ data.scores.overall | number: '1.0-0' }}</strong>
+        <small>/100</small>
+      </div>
+    </article>
+
+    <section class="score-cards">
+      @for (card of scoreCards; track card.key) {
+        <article class="score-card glass-panel">
+          <span>{{ card.label }}</span>
+          <strong>{{ data.scores[card.key] | number: '1.0-0' }}</strong>
+        </article>
+      }
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card glass-panel">
+        <span class="section-label">Listing</span>
+        <div class="kv-grid">
+          <div>
+            <label>Categoria</label>
+            <strong>{{ data.listing.category_name || data.listing.category_id || 'N/D' }}</strong>
+          </div>
+          <div>
+            <label>Marca</label>
+            <strong>{{ data.listing.brand || 'N/D' }}</strong>
+          </div>
+          <div>
+            <label>Precio</label>
+            <strong>{{ data.listing.price | currency: data.listing.currency_id || 'ARS' }}</strong>
+          </div>
+          <div>
+            <label>Health</label>
+            <strong>{{ data.listing.health !== null ? (data.listing.health * 100 | number: '1.0-0') + '/100' : 'N/D' }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="summary-card glass-panel">
+        <span class="section-label">Market Snapshot</span>
+        <div class="kv-grid">
+          <div>
+            <label>Competidores</label>
+            <strong>{{ data.market_summary.shortlisted_competitors }}</strong>
+          </div>
+          <div>
+            <label>Queries</label>
+            <strong>{{ data.market_summary.query_count }}</strong>
+          </div>
+          <div>
+            <label>Mediana</label>
+            <strong>
+              @if (data.market_summary.median_price !== null) {
+                {{ data.market_summary.median_price | currency: data.listing.currency_id || 'ARS' }}
+              } @else {
+                Benchmark incompleto
+              }
+            </strong>
+          </div>
+          <div>
+            <label>Rango</label>
+            <strong>
+              @if (data.market_summary.min_price !== null && data.market_summary.max_price !== null) {
+                {{ data.market_summary.min_price | currency: data.listing.currency_id || 'ARS' }}
+                -
+                {{ data.market_summary.max_price | currency: data.listing.currency_id || 'ARS' }}
+              } @else {
+                Sin rango confiable
+              }
+            </strong>
+          </div>
+          <div>
+            <label>Precios usables</label>
+            <strong>{{ data.market_summary.priced_competitors }}/{{ data.market_summary.shortlisted_competitors }}</strong>
+          </div>
+          <div>
+            <label>Confianza</label>
+            <strong>{{ data.market_summary.benchmark_confidence | titlecase }}</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <article class="diagnosis-card glass-panel">
+      <div class="diagnosis-header">
+        <span class="section-label">Positioning Strategy</span>
+        <strong>{{ positioningStrategy() || data.ai_suggestions.positioning_strategy || 'Sin estrategia adicional' }}</strong>
+      </div>
+
+      <div class="diagnosis-list">
+        @for (bullet of data.detailed_diagnosis; track bullet) {
+          <div class="diagnosis-bullet">{{ bullet }}</div>
+        }
+      </div>
+    </article>
+  </section>
+}

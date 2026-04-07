@@ -62,6 +62,7 @@ db.sqlite3
 db.sqlite3-journal
 backend/data/*.sqlite3
 backend/data/*.sqlite3-journal
+backend/data/listing_doctor/
 
 # Flask stuff:
 instance/

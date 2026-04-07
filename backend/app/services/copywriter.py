@@ -81,6 +81,8 @@ class CopywriterService:
                 for a in request.attributes[:20]
             )
             context_parts.append(f"Atributos: {attrs}")
+        if request.improvement_notes:
+            context_parts.append(f"Notas de mejora priorizadas: {request.improvement_notes}")
         if request.current_description:
             context_parts.append(f"\nDescripción actual:\n{request.current_description}")
         else:
