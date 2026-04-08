@@ -5,21 +5,7 @@
   overflow: hidden;
 }
 
-.list-header {
-  padding: 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
 
-.toolbar {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.filter-select {
-  cursor: pointer;
-}
 
 .list-content {
   overflow-y: auto;

@@ -6,105 +6,79 @@
     </div>
   </div>
 } @else if (auth.isAuthenticated() && !isAuthScreen()) {
-  <div class="app-shell">
-    <button class="theme-toggle" (click)="toggleTheme()" [class.dark]="isDarkMode()" title="Cambiar a Modo Oscuro/Claro">
-      <span class="icon"></span>
-    </button>
-
-    <aside class="sidebar animate-slide-up stagger-1">
-      <div class="brand-shell">
+  <div class="app-shell layout-column">
+    <header class="top-nav animate-slide-down">
+      <div class="nav-brand">
         <div class="icon-logo">KF</div>
-        <div class="brand">
-          <h1>Kaizen Flow</h1>
-          <div class="brand-subtitle">Mercado Libre workspace</div>
-        </div>
-      </div>
-
-      <div class="session-card">
-        <div>
-          <span class="session-label">Sesión activa</span>
-          <strong>{{ currentUserEmail() }}</strong>
-        </div>
-        <button type="button" class="session-action" (click)="logout()">Salir</button>
-      </div>
-
-      <div class="account-selector">
-        <div class="selector-header">
-          <span class="label">Cuenta conectada</span>
-          <span class="status-dot" [class.inactive]="accountContext.currentAccount() && !currentAccountIsActive()"></span>
-        </div>
-        
-        <select
-          data-tour-id="account-selector"
-          class="minimal-select"
-          [disabled]="accountContext.loading() || accountContext.accounts().length === 0"
-          [ngModel]="accountContext.selectedAccount()"
-          (ngModelChange)="onAccountChange($event)"
-        >
-          @for (account of accountContext.accounts(); track account.key) {
-            <option [value]="account.key">{{ account.label }} ({{ account.key }}){{ account.is_active ? '' : ' - Inactiva' }}</option>
-          }
-        </select>
-
-        <button type="button" class="connect-btn" (click)="connectMercadoLibre()">
-          {{ accountContext.accountCount() > 0 ? 'Conectar otra cuenta ML' : 'Conectar Mercado Libre' }}
-        </button>
-        
-        @if (accountContext.loading()) {
-          <p class="status-msg">Cargando cuentas...</p>
-        }
-        @if (accountContext.error()) {
-          <p class="status-msg error">{{ accountContext.error() }}</p>
-        }
-        @if (accountContext.currentAccount() && !accountContext.hasActiveAccess()) {
-          <p class="status-msg warning">
-            La cuenta seleccionada está vinculada, pero su membresía está inactiva.
-          </p>
-        }
-        @if (!accountContext.loading() && accountContext.accountCount() === 0) {
-          <p class="status-msg">
-            Todavía no vinculaste ninguna cuenta. Conectá Mercado Libre para habilitar preguntas, reclamos, productos y agente.
-          </p>
-        }
+        <span class="brand-text">Kaizen Flow</span>
       </div>
 
       <nav class="nav-links">
-        <a routerLink="/agents" routerLinkActive="active" data-tour-id="nav-agents">
-          <span class="nav-icon">AI</span>
-          <span class="nav-copy">Agente IA</span>
-        </a>
-        <a routerLink="/copywriter" routerLinkActive="active">
-          <span class="nav-icon ai-sparkle">✦</span>
-          <span class="nav-copy">Copywriter IA</span>
-        </a>
-        <a routerLink="/market-insights" routerLinkActive="active">
-          <span class="nav-icon">TI</span>
-          <span class="nav-copy">Tendencias IA</span>
-        </a>
-        <a routerLink="/listing-doctor" routerLinkActive="active">
-          <span class="nav-icon">LD</span>
-          <span class="nav-copy">Listing Doctor</span>
-        </a>
-        <a routerLink="/questions" routerLinkActive="active">
-          <span class="nav-icon">Q</span>
+        <a routerLink="/questions" routerLinkActive="active" data-tour-id="nav-questions">
           <span class="nav-copy">Preguntas</span>
         </a>
-        <a routerLink="/post-sale" routerLinkActive="active">
-          <span class="nav-icon">PV</span>
-          <span class="nav-copy">Post venta</span>
-        </a>
         <a routerLink="/claims" routerLinkActive="active">
-          <span class="nav-icon">C</span>
           <span class="nav-copy">Reclamos</span>
         </a>
+        <a routerLink="/post-sale" routerLinkActive="active">
+          <span class="nav-copy">Post venta</span>
+        </a>
         <a routerLink="/items" routerLinkActive="active">
-          <span class="nav-icon">P</span>
           <span class="nav-copy">Productos</span>
         </a>
+        <div class="nav-divider"></div>
+        <a routerLink="/agents" routerLinkActive="active" data-tour-id="nav-agents">
+          <span class="nav-copy ai-text">Agente</span>
+        </a>
+        <a routerLink="/copywriter" routerLinkActive="active">
+          <span class="nav-copy ai-text">Copywriter</span>
+        </a>
+        <a routerLink="/market-insights" routerLinkActive="active">
+          <span class="nav-copy ai-text">Insights</span>
+        </a>
+        <a routerLink="/listing-doctor" routerLinkActive="active">
+          <span class="nav-copy ai-text">Doctor</span>
+        </a>
       </nav>
-    </aside>
 
-    <main class="page-content animate-slide-up stagger-2">
+      <div class="nav-actions">
+        <div class="account-dropdown-wrapper">
+          @if (accountContext.loading()) {
+            <div class="account-status">Cargando...</div>
+          } @else if (accountContext.accountCount() > 0) {
+            <select
+              data-tour-id="account-selector"
+              class="account-nav-select"
+              [ngModel]="accountContext.selectedAccount()"
+              (ngModelChange)="onAccountChange($event)"
+            >
+              @for (account of accountContext.accounts(); track account.key) {
+                <option [value]="account.key">{{ account.label }}</option>
+              }
+            </select>
+            <span class="status-indicator" [class.inactive]="accountContext.currentAccount() && !currentAccountIsActive()" title="Estado de la cuenta"></span>
+            
+            <button class="nav-icon-btn add-btn" (click)="connectMercadoLibre()" title="Vincular otra cuenta">
+              +
+            </button>
+          } @else {
+            <button type="button" class="button-primary small" (click)="connectMercadoLibre()">
+              Vincular ML
+            </button>
+          }
+        </div>
+
+        <button class="nav-icon-btn theme-toggle-btn" (click)="toggleTheme()" [class.dark]="isDarkMode()" title="Cambiar tema">
+          <span class="icon"></span>
+        </button>
+
+        <div class="user-menu" (click)="logout()" title="Cerrar Sesión ({{ currentUserEmail() }})">
+          <div class="user-avatar">{{ currentUserEmail()?.charAt(0)?.toUpperCase() || 'U' }}</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content layout-main animate-fade-in stagger-1">
       @if (showInactiveGate()) {
         <section class="membership-gate">
           <div class="membership-gate__card">

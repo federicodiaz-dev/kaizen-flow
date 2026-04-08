@@ -9,16 +9,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.list-header {
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
 
-.toolbar {
-  display: grid;
-  gap: 1rem;
-}
 
 .toolbar-row {
   display: grid;
@@ -26,9 +17,7 @@
   gap: 0.75rem;
 }
 
-.filter-select {
-  cursor: pointer;
-}
+
 
 .refresh-btn {
   border: 1px solid var(--border-color);
