@@ -27,12 +27,12 @@ class QuestionSummary(BaseModel):
     item: QuestionItemRef | None = None
     answer: QuestionAnswer | None = None
     has_answer: bool = False
+    can_answer: bool = False
+    answer_limitations: str | None = None
 
 
 class QuestionDetail(QuestionSummary):
     seller_id: int | None = None
-    can_answer: bool = False
-    answer_limitations: str | None = None
 
 
 class QuestionListResponse(BaseModel):

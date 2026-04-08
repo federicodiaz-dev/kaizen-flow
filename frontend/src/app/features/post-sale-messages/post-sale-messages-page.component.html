@@ -32,9 +32,15 @@
       [error]="listError()"
       [searchText]="searchText()"
       [statusFilter]="statusFilter()"
+      [sortOrder]="sortOrder()"
+      [resultCount]="filteredCount()"
+      [totalCount]="totalConversations()"
+      [activeFilterCount]="activeFilterCount()"
       (searchTextChange)="searchText.set($event)"
       (statusFilterChange)="statusFilter.set($event)"
-      (refresh)="loadConversations(accountContext.selectedAccount()!)"
+      (sortOrderChange)="onSortOrderChange($event)"
+      (resetFilters)="resetFilters()"
+      (refresh)="refreshConversations()"
       (selectConversation)="onSelectConversation($event)"
     />
 
@@ -44,7 +50,11 @@
       [loading]="loadingDetail()"
       [error]="detailError()"
       [sending]="sending()"
+      [nextPendingMessage]="followUpMessage()"
+      [hasNextPending]="!!nextPendingPackId()"
+      [clearDraftToken]="clearDraftToken()"
       (sendReply)="onSendReply($event)"
+      (jumpToNextPending)="goToNextPendingConversation()"
     />
   </section>
 </section>

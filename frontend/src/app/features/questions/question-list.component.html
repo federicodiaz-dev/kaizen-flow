@@ -1,21 +1,63 @@
 <div class="list-container glass-panel animate-slide-up stagger-2">
   <div class="list-header">
-    <div class="toolbar">
-      <div class="search-box">
-        <input
-          type="text"
-          class="input-text"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchTextChange.emit($event)"
-          placeholder="Buscar pregunta o item..."
-        />
+    <div class="toolbar toolbar--stacked">
+      <div class="toolbar-main">
+        <div class="search-box search-box--interactive">
+          <input
+            #searchInput
+            type="text"
+            class="input-text"
+            [ngModel]="searchText()"
+            (ngModelChange)="searchTextChange.emit($event)"
+            placeholder="Buscar pregunta o item..."
+          />
+          @if (searchText()) {
+            <button type="button" class="toolbar-icon-btn" (click)="searchTextChange.emit('')">Limpiar</button>
+          }
+        </div>
+
+        <div class="toolbar-actions">
+          <button type="button" class="refresh-btn" (click)="refresh.emit()">Actualizar</button>
+        </div>
       </div>
 
-      <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
-        <option value="all">Todas</option>
-        <option value="unanswered">Pendientes</option>
-        <option value="answered">Respondidas</option>
-      </select>
+      <div class="toolbar-row toolbar-row--triple">
+        <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
+          <option value="all">Todas</option>
+          <option value="unanswered">Pendientes</option>
+          <option value="answered">Respondidas</option>
+        </select>
+
+        <select
+          class="input-text filter-select"
+          [ngModel]="respondableFilter()"
+          (ngModelChange)="respondableFilterChange.emit($event)"
+        >
+          <option value="all">Todas las capacidades</option>
+          <option value="respondable">Solo respondibles</option>
+          <option value="limited">Con limitaciones</option>
+        </select>
+
+        <select class="input-text filter-select" [ngModel]="sortOrder()" (ngModelChange)="sortOrderChange.emit($event)">
+          <option value="recent">Mas recientes primero</option>
+          <option value="oldest">Mas antiguas primero</option>
+          <option value="pending">Pendientes primero</option>
+        </select>
+      </div>
+
+      <div class="toolbar-meta">
+        <span class="results-copy">{{ resultCount() }} de {{ totalCount() }} preguntas</span>
+
+        <div class="toolbar-meta__actions">
+          @if (activeFilterCount() > 0) {
+            <span class="filter-pill">
+              {{ activeFilterCount() }} filtro{{ activeFilterCount() === 1 ? '' : 's' }} activo{{ activeFilterCount() === 1 ? '' : 's' }}
+            </span>
+            <button type="button" class="toolbar-link-btn" (click)="resetFilters.emit()">Limpiar filtros</button>
+          }
+          <span class="shortcut-hint"><kbd>/</kbd> Buscar</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -25,7 +67,7 @@
     } @else if (error()) {
       <div class="state-msg error">{{ error() }}</div>
     } @else if (questions().length === 0) {
-      <div class="state-msg">Bandeja vacía. Todo al día.</div>
+      <div class="state-msg">Bandeja vacia. Todo al dia.</div>
     } @else {
       <div class="items-grid">
         @for (question of questions(); track question.id) {
@@ -43,9 +85,17 @@
             </div>
             <h4 class="item-title">{{ question.text }}</h4>
             <p class="item-meta truncate">{{ question.item?.title || 'Sin publicacion' }}</p>
+            <div class="item-chip-row">
+              @if (!question.has_answer && question.can_answer) {
+                <span class="item-chip item-chip--accent">Respondible</span>
+              }
+              @if (!question.has_answer && !question.can_answer) {
+                <span class="item-chip item-chip--warning">Con limitaciones</span>
+              }
+            </div>
             <div class="item-bottom">
               <span class="item-date">{{ question.date_created | date: 'short' }}</span>
-              <span class="item-user">{{ question.from_user_id || 'Usuario Anónimo' }}</span>
+              <span class="item-user">{{ question.from_user_id || 'Usuario anonimo' }}</span>
             </div>
           </button>
         }

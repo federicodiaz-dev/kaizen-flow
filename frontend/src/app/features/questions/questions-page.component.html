@@ -4,7 +4,7 @@
       <h1 class="page-title">Preguntas</h1>
       <p class="page-subtitle">Gestiona y responde las consultas de tu cuenta {{ activeAccountLabel() }}.</p>
     </div>
-    
+
     <div class="quick-stats">
       <div class="stat-item">
         <span class="stat-label">Total</span>
@@ -30,9 +30,17 @@
       [error]="listError()"
       [searchText]="searchText()"
       [statusFilter]="statusFilter()"
+      [respondableFilter]="respondableFilter()"
+      [sortOrder]="sortOrder()"
+      [resultCount]="filteredCount()"
+      [totalCount]="totalQuestions()"
+      [activeFilterCount]="activeFilterCount()"
       (searchTextChange)="searchText.set($event)"
       (statusFilterChange)="statusFilter.set($event)"
-      (refresh)="loadQuestions(accountContext.selectedAccount()!)"
+      (respondableFilterChange)="onRespondableFilterChange($event)"
+      (sortOrderChange)="onSortOrderChange($event)"
+      (resetFilters)="resetFilters()"
+      (refresh)="refreshQuestions()"
       (selectQuestion)="onSelectQuestion($event)"
     />
 
@@ -42,7 +50,10 @@
       [loading]="loadingDetail()"
       [error]="detailError()"
       [submitting]="submitting()"
+      [nextPendingMessage]="followUpMessage()"
+      [hasNextPending]="!!nextPendingQuestionId()"
       (submitAnswer)="onSubmitAnswer($event)"
+      (jumpToNextPending)="goToNextPendingQuestion()"
     />
   </section>
 </section>

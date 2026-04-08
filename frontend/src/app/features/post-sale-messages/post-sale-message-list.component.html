@@ -1,29 +1,53 @@
 <div class="list-container glass-panel animate-slide-up stagger-2">
   <div class="list-header">
-    <div class="toolbar">
-      <div class="search-box">
-        <input
-          type="text"
-          class="input-text"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchTextChange.emit($event)"
-          placeholder="Buscar por pack, comprador, item u orden..."
-        />
+    <div class="toolbar toolbar--stacked">
+      <div class="toolbar-main">
+        <div class="search-box search-box--interactive">
+          <input
+            #searchInput
+            type="text"
+            class="input-text"
+            [ngModel]="searchText()"
+            (ngModelChange)="searchTextChange.emit($event)"
+            placeholder="Buscar por pack, comprador, item u orden..."
+          />
+          @if (searchText()) {
+            <button type="button" class="toolbar-icon-btn" (click)="searchTextChange.emit('')">Limpiar</button>
+          }
+        </div>
+
+        <div class="toolbar-actions">
+          <button type="button" class="refresh-btn" (click)="refresh.emit()">Actualizar</button>
+        </div>
       </div>
 
-      <div class="toolbar-row">
-        <select
-          class="input-text filter-select"
-          [ngModel]="statusFilter()"
-          (ngModelChange)="statusFilterChange.emit($event)"
-        >
+      <div class="toolbar-row toolbar-row--double">
+        <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
           <option value="all">Todas</option>
-          <option value="unread">Sin leer</option>
+          <option value="unread">Con mensajes no leidos</option>
+          <option value="claim">Con reclamo</option>
           <option value="active">Activas</option>
           <option value="blocked">Bloqueadas</option>
         </select>
 
-        <button type="button" class="refresh-btn" (click)="refresh.emit()">Actualizar</button>
+        <select class="input-text filter-select" [ngModel]="sortOrder()" (ngModelChange)="sortOrderChange.emit($event)">
+          <option value="recent">Ultima actividad mas reciente</option>
+          <option value="oldest">Ultima actividad mas antigua</option>
+        </select>
+      </div>
+
+      <div class="toolbar-meta">
+        <span class="results-copy">{{ resultCount() }} de {{ totalCount() }} conversaciones</span>
+
+        <div class="toolbar-meta__actions">
+          @if (activeFilterCount() > 0) {
+            <span class="filter-pill">
+              {{ activeFilterCount() }} filtro{{ activeFilterCount() === 1 ? '' : 's' }} activo{{ activeFilterCount() === 1 ? '' : 's' }}
+            </span>
+            <button type="button" class="toolbar-link-btn" (click)="resetFilters.emit()">Limpiar filtros</button>
+          }
+          <span class="shortcut-hint"><kbd>/</kbd> Buscar</span>
+        </div>
       </div>
     </div>
   </div>
@@ -60,6 +84,9 @@
               <span class="item-chip">{{ conversation.message_count }} mensajes</span>
               @if (conversation.unread_count > 0) {
                 <span class="item-chip item-chip--unread">{{ conversation.unread_count }} sin leer</span>
+              }
+              @if (conversation.claim_ids.length > 0) {
+                <span class="item-chip item-chip--claim">Con reclamo</span>
               }
               @if (conversation.order_ids.length > 0) {
                 <span class="item-chip">Orden {{ conversation.order_ids[0] }}</span>

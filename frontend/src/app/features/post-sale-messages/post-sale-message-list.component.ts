@@ -1,10 +1,11 @@
-import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
-import { Component, input, output } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { Component, ElementRef, input, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { PostSaleConversationSummary } from '../../core/models/post-sale-messages.models';
 
-export type PostSaleStatusFilter = 'all' | 'unread' | 'active' | 'blocked';
+export type PostSaleStatusFilter = 'all' | 'unread' | 'active' | 'blocked' | 'claim';
+export type PostSaleSortOrder = 'recent' | 'oldest';
 
 @Component({
   selector: 'app-post-sale-message-list',
@@ -20,11 +21,29 @@ export class PostSaleMessageListComponent {
   readonly error = input<string | null>(null);
   readonly searchText = input('');
   readonly statusFilter = input<PostSaleStatusFilter>('all');
+  readonly sortOrder = input<PostSaleSortOrder>('recent');
+  readonly resultCount = input(0);
+  readonly totalCount = input(0);
+  readonly activeFilterCount = input(0);
 
   readonly searchTextChange = output<string>();
   readonly statusFilterChange = output<PostSaleStatusFilter>();
+  readonly sortOrderChange = output<PostSaleSortOrder>();
+  readonly resetFilters = output<void>();
   readonly refresh = output<void>();
   readonly selectConversation = output<string>();
+
+  private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+
+  focusSearch(): void {
+    const input = this.searchInput()?.nativeElement;
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+    input.select();
+  }
 
   statusLabel(status: string | null | undefined): string {
     if (!status) return 'Sin estado';

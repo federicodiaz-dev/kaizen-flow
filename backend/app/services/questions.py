@@ -82,7 +82,13 @@ class QuestionsService:
         return None
 
     @staticmethod
-    def _serialize_question(raw: dict[str, Any], item_map: dict[str, dict[str, Any]]) -> QuestionSummary:
+    def _serialize_question(
+        raw: dict[str, Any],
+        item_map: dict[str, dict[str, Any]],
+        *,
+        can_answer: bool = False,
+        answer_limitations: str | None = None,
+    ) -> QuestionSummary:
         item_id = raw.get("item_id")
         raw_item = item_map.get(str(item_id), {}) if item_id else {}
         answer_payload = raw.get("answer") or None
@@ -116,6 +122,8 @@ class QuestionsService:
             item=item,
             answer=answer,
             has_answer=bool(answer and answer.text),
+            can_answer=can_answer,
+            answer_limitations=answer_limitations,
         )
 
     async def list_questions(self, account_key: str, *, limit: int, offset: int) -> QuestionListResponse:
@@ -134,7 +142,17 @@ class QuestionsService:
             for entry in item_details
             if isinstance(entry, dict) and entry.get("code") == 200 and isinstance(entry.get("body"), dict)
         }
-        items = [self._serialize_question(question, item_map) for question in raw_questions]
+        items = []
+        for question in raw_questions:
+            limitation = self._answer_limitation(question, seller_id)
+            items.append(
+                self._serialize_question(
+                    question,
+                    item_map,
+                    can_answer=limitation is None,
+                    answer_limitations=limitation,
+                )
+            )
         return QuestionListResponse(items=items, total=total, offset=offset, limit=limit)
 
     async def get_question(self, account_key: str, question_id: int) -> QuestionDetail:
@@ -147,13 +165,16 @@ class QuestionsService:
                 if isinstance(entry, dict) and entry.get("code") == 200 and isinstance(entry.get("body"), dict):
                     item_map[str(entry["body"]["id"])] = entry["body"]
 
-        question = self._serialize_question(raw, item_map)
         answer_limitations = self._answer_limitation(raw, account_user_id)
+        question = self._serialize_question(
+            raw,
+            item_map,
+            can_answer=answer_limitations is None,
+            answer_limitations=answer_limitations,
+        )
         return QuestionDetail(
             **question.model_dump(),
             seller_id=raw.get("seller_id"),
-            can_answer=answer_limitations is None,
-            answer_limitations=answer_limitations,
         )
 
     async def answer_question(self, account_key: str, question_id: int, text: str) -> QuestionDetail:

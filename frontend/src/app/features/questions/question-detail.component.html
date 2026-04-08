@@ -1,7 +1,7 @@
 <div class="detail-container glass-panel animate-slide-up stagger-3" data-tour-id="questions-detail">
-  @if (loading()) {
+  @if (loading() && !question()) {
     <div class="empty-state">Detalles cargando...</div>
-  } @else if (error()) {
+  } @else if (error() && !question()) {
     <div class="empty-state error">{{ error() }}</div>
   } @else if (!question()) {
     <div class="empty-state">
@@ -10,106 +10,137 @@
     </div>
   } @else {
     @if (question(); as q) {
-      <div class="detail-header">
-        <div class="header-tags">
-          <span class="status-tag" [class.answered]="q.has_answer">
-            {{ q.has_answer ? 'Respondida' : 'Pendiente' }}
-          </span>
-          <span class="id-tag">#{{ q.id }}</span>
-        </div>
-        <h2 class="question-text">"{{ q.text }}"</h2>
-      </div>
+      <div class="detail-shell">
+        @if (loading()) {
+          <div class="detail-overlay">
+            <span>Actualizando detalle...</span>
+          </div>
+        }
 
-      <div class="detail-body">
-        <div class="info-section">
-          <h3 class="section-title">Contexto de la Pregunta</h3>
-          <div class="data-grid">
-            <div class="data-group">
-              <label>Fecha Creada</label>
-              <span>{{ q.date_created | date: 'short' }}</span>
-            </div>
-            <div class="data-group">
-              <label>Usuario</label>
-              <span>{{ q.from_user_id || 'Desconocido' }}</span>
-            </div>
-            <div class="data-group">
-              <label>Estado MP</label>
-              <span class="mono">{{ q.status || 'N/A' }}</span>
+        <div class="detail-header">
+          <div class="header-tags">
+            <span class="status-tag" [class.answered]="q.has_answer">
+              {{ q.has_answer ? 'Respondida' : 'Pendiente' }}
+            </span>
+            <span class="id-tag">#{{ q.id }}</span>
+          </div>
+          <h2 class="question-text">"{{ q.text }}"</h2>
+        </div>
+
+        <div class="detail-body">
+          @if (error()) {
+            <div class="detail-banner error">{{ error() }}</div>
+          }
+
+          <div class="info-section">
+            <h3 class="section-title">Contexto de la Pregunta</h3>
+            <div class="data-grid">
+              <div class="data-group">
+                <label>Fecha Creada</label>
+                <span>{{ q.date_created | date: 'short' }}</span>
+              </div>
+              <div class="data-group">
+                <label>Usuario</label>
+                <span>{{ q.from_user_id || 'Desconocido' }}</span>
+              </div>
+              <div class="data-group">
+                <label>Estado MP</label>
+                <span class="mono">{{ q.status || 'N/A' }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="info-section">
-          <h3 class="section-title">Publicación Asociada</h3>
-          <div class="item-card">
-            <div class="item-info">
-              <strong>{{ q.item?.title || 'Generica' }}</strong>
-              <span class="mono">{{ q.item?.id }}</span>
+          <div class="info-section">
+            <h3 class="section-title">Publicacion Asociada</h3>
+            <div class="item-card">
+              <div class="item-info">
+                <strong>{{ q.item?.title || 'Generica' }}</strong>
+                <span class="mono">{{ q.item?.id }}</span>
+              </div>
+              @if (q.item?.permalink) {
+                <a [href]="q.item?.permalink" target="_blank" class="link-btn">Ver en ML ↗</a>
+              }
             </div>
-            @if (q.item?.permalink) {
-              <a [href]="q.item?.permalink" target="_blank" class="link-btn">Ver en ML ↗</a>
+          </div>
+
+          <div class="response-section" data-tour-id="questions-response-panel">
+            <h3 class="section-title">Respuesta</h3>
+
+            @if (nextPendingMessage()) {
+              <div class="follow-up-banner">
+                <span>{{ nextPendingMessage() }}</span>
+                @if (hasNextPending()) {
+                  <button type="button" class="button-secondary" (click)="jumpToNextPending.emit()">
+                    Ir a la siguiente pendiente
+                  </button>
+                }
+              </div>
+            }
+
+            @if (q.answer?.text) {
+              <div class="answer-box">
+                <p>{{ q.answer?.text }}</p>
+                <span class="answer-date">Enviada: {{ q.answer?.date_created | date: 'medium' }}</span>
+              </div>
+            } @else if (!q.can_answer) {
+              <div class="limitation-alert">
+                <strong>No se puede responder</strong>
+                <p>{{ q.answer_limitations || 'Restriccion de Mercado Libre.' }}</p>
+              </div>
+            } @else {
+              <div class="reply-form">
+                <div class="reply-label-row">
+                  <div class="reply-label-block">
+                    <span class="reply-label">Borrador de respuesta</span>
+                    @if (answerText().trim()) {
+                      <span class="draft-status">Borrador guardado</span>
+                    }
+                  </div>
+
+                  <button
+                    type="button"
+                    class="ai-enhance-btn"
+                    [class.is-enhancing]="draftingAnswer()"
+                    [disabled]="draftingAnswer()"
+                    (click)="generateDraft()"
+                    title="Sugerir respuesta con IA"
+                  >
+                    <span class="ai-btn-bg"></span>
+                    <span class="ai-btn-content">
+                      @if (draftingAnswer()) {
+                        <span class="ai-spinner"></span>
+                        <span>Redactando...</span>
+                      } @else {
+                        <span class="ai-icon">AI</span>
+                        <span>Sugerir con IA</span>
+                      }
+                    </span>
+                  </button>
+                </div>
+
+                <textarea
+                  #answerTextarea
+                  class="input-text"
+                  rows="5"
+                  [ngModel]="answerText()"
+                  (ngModelChange)="updateAnswerText($event)"
+                  placeholder="Escribe tu respuesta aqui..."
+                ></textarea>
+
+                <div class="reply-shortcut">Ctrl/Cmd + Enter para enviar</div>
+
+                @if (draftError()) {
+                  <div class="draft-error">{{ draftError() }}</div>
+                }
+
+                <div class="form-actions">
+                  <button class="button-primary" [disabled]="submitting() || !answerText().trim()" (click)="sendAnswer()">
+                    {{ submitting() ? 'Enviando...' : 'Enviar Respuesta' }}
+                  </button>
+                </div>
+              </div>
             }
           </div>
-        </div>
-
-        <div class="response-section" data-tour-id="questions-response-panel">
-          <h3 class="section-title">Respuesta</h3>
-          
-          @if (q.answer?.text) {
-            <div class="answer-box">
-              <p>{{ q.answer?.text }}</p>
-              <span class="answer-date">Enviada: {{ q.answer?.date_created | date: 'medium' }}</span>
-            </div>
-          } @else if (!q.can_answer) {
-            <div class="limitation-alert">
-              <strong>No se puede responder</strong>
-              <p>{{ q.answer_limitations || 'Restricción de Mercado Libre.' }}</p>
-            </div>
-          } @else {
-            <div class="reply-form">
-              <div class="reply-label-row">
-                <span class="reply-label">Borrador de respuesta</span>
-                <button
-                  type="button"
-                  class="ai-enhance-btn"
-                  [class.is-enhancing]="draftingAnswer()"
-                  [disabled]="draftingAnswer()"
-                  (click)="generateDraft()"
-                  title="Sugerir respuesta con IA"
-                >
-                  <span class="ai-btn-bg"></span>
-                  <span class="ai-btn-content">
-                    @if (draftingAnswer()) {
-                      <span class="ai-spinner"></span>
-                      <span>Redactando...</span>
-                    } @else {
-                      <span class="ai-icon">AI</span>
-                      <span>Sugerir con IA</span>
-                    }
-                  </span>
-                </button>
-              </div>
-              <textarea
-                class="input-text"
-                rows="5"
-                [ngModel]="answerText()"
-                (ngModelChange)="updateAnswerText($event)"
-                placeholder="Escribe tu respuesta aquí..."
-              ></textarea>
-              @if (draftError()) {
-                <div class="draft-error">{{ draftError() }}</div>
-              }
-              <div class="form-actions">
-                <button 
-                  class="button-primary" 
-                  [disabled]="submitting() || !answerText().trim()" 
-                  (click)="sendAnswer()"
-                >
-                  {{ submitting() ? 'Enviando...' : 'Enviar Respuesta' }}
-                </button>
-              </div>
-            </div>
-          }
         </div>
       </div>
     }

@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  HostListener,
   computed,
   effect,
   inject,
@@ -17,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { PostSaleConversationDetail } from '../../core/models/post-sale-messages.models';
 import { AccountContextService } from '../../core/services/account-context.service';
 import { AiTypewriterService } from '../../core/services/ai-typewriter.service';
+import { WorkspaceStateService } from '../../core/services/workspace-state.service';
 import { ReplyAssistantApiService } from '../reply-assistant/reply-assistant-api.service';
 
 @Component({
@@ -29,17 +31,24 @@ import { ReplyAssistantApiService } from '../reply-assistant/reply-assistant-api
 export class PostSaleMessageDetailComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly accountContext = inject(AccountContextService);
+  private readonly workspaceState = inject(WorkspaceStateService);
   private readonly replyAssistantApi = inject(ReplyAssistantApiService);
   private readonly typewriter = inject(AiTypewriterService);
   private readonly composerTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('composerTextarea');
   private readonly animationKey = 'post-sale-message-detail';
+  private readonly storageKey = 'post-sale-detail';
+  private lastClearDraftToken = 0;
 
   readonly conversation = input<PostSaleConversationDetail | null>(null);
   readonly loading = input(false);
   readonly error = input<string | null>(null);
   readonly sending = input(false);
+  readonly nextPendingMessage = input<string | null>(null);
+  readonly hasNextPending = input(false);
+  readonly clearDraftToken = input(0);
 
   readonly sendReply = output<string>();
+  readonly jumpToNextPending = output<void>();
 
   readonly messageText = signal('');
   readonly draftingMessage = signal(false);
@@ -62,16 +71,74 @@ export class PostSaleMessageDetailComponent {
 
     effect(
       () => {
-        this.conversation();
+        const conversation = this.conversation();
+        const account = this.accountContext.selectedAccount();
+        const clearDraftToken = this.clearDraftToken();
+
         this.typewriter.cancel(this.animationKey);
-        this.messageText.set('');
         this.draftError.set(null);
-        this.composerExpanded.set(false);
+
+        if (!conversation) {
+          this.messageText.set('');
+          this.composerExpanded.set(false);
+          this.composerOverflowing.set(false);
+          queueMicrotask(() => this.resizeComposer());
+          return;
+        }
+
+        if (account && clearDraftToken !== this.lastClearDraftToken) {
+          this.workspaceState.removeDraft(this.storageKey, account, this.draftKey(conversation.pack_id));
+          this.lastClearDraftToken = clearDraftToken;
+        }
+
+        const nextText = account
+          ? this.workspaceState.loadDraft<{ text: string; expanded: boolean }>(
+              this.storageKey,
+              account,
+              this.draftKey(conversation.pack_id),
+              { text: '', expanded: false }
+            )
+          : { text: '', expanded: false };
+
+        this.messageText.set(nextText.text || '');
+        this.composerExpanded.set(Boolean(nextText.expanded));
         this.composerOverflowing.set(false);
         queueMicrotask(() => this.resizeComposer());
       },
       { allowSignalWrites: true }
     );
+
+    effect(() => {
+      const conversation = this.conversation();
+      const account = this.accountContext.selectedAccount();
+      const text = this.messageText();
+      const expanded = this.composerExpanded();
+      if (!conversation || !account) {
+        return;
+      }
+
+      if (text.trim()) {
+        this.workspaceState.saveDraft(this.storageKey, account, this.draftKey(conversation.pack_id), {
+          text,
+          expanded,
+        });
+      } else {
+        this.workspaceState.removeDraft(this.storageKey, account, this.draftKey(conversation.pack_id));
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardShortcut(event: KeyboardEvent): void {
+    const textarea = this.composerTextarea()?.nativeElement;
+    if (!textarea || document.activeElement !== textarea) {
+      return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      event.preventDefault();
+      this.submitMessage();
+    }
   }
 
   statusLabel(status: string | null | undefined): string {
@@ -188,5 +255,9 @@ export class PostSaleMessageDetailComponent {
     textarea.style.height = `${nextHeight}px`;
     textarea.style.overflowY = hasOverflow ? 'auto' : 'hidden';
     this.composerOverflowing.set(hasOverflow);
+  }
+
+  private draftKey(packId: string): string {
+    return `pack:${packId}`;
   }
 }

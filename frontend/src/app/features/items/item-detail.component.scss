@@ -9,6 +9,33 @@
   overflow: hidden;
 }
 
+.detail-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.detail-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  backdrop-filter: blur(6px);
+
+  span {
+    padding: 0.8rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -177,6 +204,20 @@
   background: var(--bg-primary);
   padding: 3rem;
   gap: 3rem;
+}
+
+.detail-banner {
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-main);
+}
+
+.detail-banner.error {
+  border-color: color-mix(in srgb, var(--error) 32%, var(--border-color));
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 /* Premium Card */

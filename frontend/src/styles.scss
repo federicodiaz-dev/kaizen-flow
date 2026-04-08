@@ -424,6 +424,11 @@ button, input, select, textarea { font-family: var(--font-body); }
   align-items: center;
   gap: 1rem;
   width: 100%;
+
+  &.toolbar--stacked {
+    flex-direction: column;
+    align-items: stretch;
+  }
   
   .search-box {
     flex: 1;
@@ -457,3 +462,104 @@ button, input, select, textarea { font-family: var(--font-body); }
   }
 }
 
+.search-box--interactive {
+  position: relative;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toolbar-icon-btn,
+.toolbar-link-btn,
+.refresh-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.toolbar-icon-btn {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  transform: translateY(-50%);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.72rem;
+}
+
+.toolbar-link-btn {
+  padding: 0.35rem 0.8rem;
+}
+
+.toolbar-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.toolbar-meta__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.results-copy {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-light) 70%, var(--bg-primary));
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+kbd {
+  border: 1px solid var(--border-color);
+  border-bottom-width: 2px;
+  border-radius: 0.45rem;
+  padding: 0.15rem 0.4rem;
+  background: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@media (max-width: 960px) {
+  .toolbar-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
