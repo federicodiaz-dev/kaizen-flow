@@ -10,20 +10,7 @@
   transition: all 0.3s ease;
 }
 
-.list-header {
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-}
 
-.toolbar {
-  display: grid;
-  gap: 1rem;
-}
-
-.filter-select {
-  cursor: pointer;
-}
 
 .list-content {
   overflow-y: auto;
