@@ -18,6 +18,7 @@
         }
 
         <div class="detail-header">
+          <button type="button" class="mobile-back-btn" (click)="closeDetail.emit()">← Volver a la lista</button>
           <div class="header-tags">
             <span class="status-tag" [class.answered]="q.has_answer">
               {{ q.has_answer ? 'Respondida' : 'Pendiente' }}

@@ -215,6 +215,11 @@ export class ClaimsPageComponent {
     this.loadClaimDetail(claimId);
   }
 
+  closeSelectedClaim(): void {
+    this.selectedClaimId.set(null);
+    this.selectedClaim.set(null);
+  }
+
   onSendMessage(payload: { message: string; receiverRole?: string }): void {
     const account = this.accountContext.selectedAccount();
     const claimId = this.selectedClaimId();

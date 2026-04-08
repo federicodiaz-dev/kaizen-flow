@@ -37,6 +37,7 @@ export class QuestionDetailComponent {
 
   readonly submitAnswer = output<string>();
   readonly jumpToNextPending = output<void>();
+  readonly closeDetail = output<void>();
   readonly answerText = signal('');
   readonly draftingAnswer = signal(false);
   readonly draftError = signal<string | null>(null);

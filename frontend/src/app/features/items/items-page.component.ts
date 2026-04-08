@@ -176,6 +176,11 @@ export class ItemsPageComponent {
     this.loadItemDetail(itemId);
   }
 
+  closeSelectedItem(): void {
+    this.selectedItemId.set(null);
+    this.selectedItem.set(null);
+  }
+
   onStatusFilterChange(nextStatus: ItemStatusFilter): void {
     this.statusFilter.set(nextStatus);
     const account = this.accountContext.selectedAccount();

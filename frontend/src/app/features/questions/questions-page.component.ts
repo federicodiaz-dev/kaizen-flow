@@ -210,6 +210,11 @@ export class QuestionsPageComponent {
     this.loadQuestionDetail(questionId);
   }
 
+  closeSelectedQuestion(): void {
+    this.selectedQuestionId.set(null);
+    this.selectedQuestion.set(null);
+  }
+
   onSubmitAnswer(text: string): void {
     const account = this.accountContext.selectedAccount();
     const questionId = this.selectedQuestionId();

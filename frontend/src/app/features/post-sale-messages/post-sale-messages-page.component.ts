@@ -230,6 +230,11 @@ export class PostSaleMessagesPageComponent {
     this.loadConversationDetail(packId, true);
   }
 
+  closeSelected(): void {
+    this.selectedPackId.set(null);
+    this.selectedConversation.set(null);
+  }
+
   onSendReply(text: string): void {
     const account = this.accountContext.selectedAccount();
     const packId = this.selectedPackId();

@@ -49,6 +49,7 @@ export class App {
   });
 
   readonly isDarkMode = signal(false);
+  readonly isMobileMenuOpen = signal(false);
 
   constructor() {
     void this.auth.ensureInitialized();
@@ -58,7 +59,10 @@ export class App {
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => this.currentUrl.set(event.urlAfterRedirects));
+      .subscribe((event) => {
+        this.currentUrl.set(event.urlAfterRedirects);
+        this.isMobileMenuOpen.set(false);
+      });
 
     effect(() => {
       const dark = this.isDarkMode();
@@ -116,5 +120,9 @@ export class App {
   
   toggleTheme(): void {
     this.isDarkMode.update(v => !v);
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update(v => !v);
   }
 }

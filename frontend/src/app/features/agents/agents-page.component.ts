@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
@@ -24,7 +24,7 @@ import { AgentsApiService } from './agents-api.service';
 @Component({
   selector: 'app-agents-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule],
   templateUrl: './agents-page.component.html',
   styleUrl: './agents-page.component.scss',
 })

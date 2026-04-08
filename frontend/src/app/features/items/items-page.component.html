@@ -21,7 +21,7 @@
     </div>
   </header>
 
-  <section class="feature-layout">
+  <section class="feature-layout" [class.has-selection]="!!selectedItemId()">
     <app-item-list
       class="list-section"
       [items]="filteredItems()"
@@ -49,6 +49,7 @@
       [error]="detailError()"
       [saving]="saving()"
       (save)="onSave($event)"
+      (closeDetail)="closeSelectedItem()"
     />
   </section>
 </section>

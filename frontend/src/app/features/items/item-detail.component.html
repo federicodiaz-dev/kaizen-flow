@@ -20,6 +20,7 @@
         }
 
         <div class="detail-header">
+          <button type="button" class="mobile-back-btn" (click)="closeDetail.emit()">← Volver a la lista</button>
           <div class="header-tags">
             <span class="badge" [class.paused]="c.status === 'paused'">
               {{ c.status || 'N/D' }}

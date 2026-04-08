@@ -51,6 +51,7 @@ export class ClaimDetailComponent {
 
   readonly sendMessage = output<{ message: string; receiverRole?: string }>();
   readonly jumpToNextPending = output<void>();
+  readonly closeDetail = output<void>();
 
   readonly messageText = signal('');
   readonly draftingMessage = signal(false);

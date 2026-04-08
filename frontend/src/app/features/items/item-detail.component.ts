@@ -30,6 +30,11 @@ export class ItemDetailComponent {
   readonly item = input<ItemDetail | null>(null);
   readonly loading = input(false);
   readonly error = input<string | null>(null);
+  readonly generateCopy = output<void>();
+  readonly closeDetail = output<void>();
+  
+  readonly showCopywriterDraftModal = signal(false);
+
   readonly saving = input(false);
   readonly enhancingDescription = signal(false);
 

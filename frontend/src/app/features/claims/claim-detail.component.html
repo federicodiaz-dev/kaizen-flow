@@ -20,6 +20,7 @@
         }
 
         <div class="detail-header">
+          <button type="button" class="mobile-back-btn" (click)="closeDetail.emit()">← Volver a la lista</button>
           <div class="header-tags">
             <span class="badge" [class.closed]="c.status === 'closed'">{{ translateStatus(c.status) }}</span>
             <span class="id-tag">#{{ c.id }}</span>

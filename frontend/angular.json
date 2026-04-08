@@ -62,7 +62,7 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "allowedHosts": [
-              "arctic-ciao-breeding-flu.trycloudflare.com"
+              "leaf-archive-wav-jade.trycloudflare.com"
             ]
           },
           "configurations": {

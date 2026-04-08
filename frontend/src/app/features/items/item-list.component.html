@@ -9,7 +9,7 @@
             class="input-text"
             [ngModel]="searchText()"
             (ngModelChange)="searchTextChange.emit($event)"
-            placeholder="Buscar por titulo o ID..."
+            placeholder="Buscar producto por titulo o ID..."
           />
           @if (searchText()) {
             <button type="button" class="toolbar-icon-btn" (click)="searchTextChange.emit('')">Limpiar</button>
@@ -22,18 +22,34 @@
       </div>
 
       <div class="toolbar-row toolbar-row--double">
-        <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
-          <option value="all">Todos</option>
-          <option value="active">Activos</option>
-          <option value="paused">Pausados</option>
-          <option value="closed">Cerrados</option>
-        </select>
+        <div class="filter-field">
+          <span class="filter-field__label">Estado</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="statusFilterChange.emit($event)"
+            aria-label="Filtrar productos por estado"
+          >
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="paused">Pausados</option>
+            <option value="closed">Cerrados</option>
+          </select>
+        </div>
 
-        <select class="input-text filter-select" [ngModel]="sortOrder()" (ngModelChange)="sortOrderChange.emit($event)">
-          <option value="recent">Ultima actualizacion</option>
-          <option value="sold">Mas vendidos</option>
-          <option value="stock">Mayor stock</option>
-        </select>
+        <div class="filter-field">
+          <span class="filter-field__label">Orden</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="sortOrder()"
+            (ngModelChange)="sortOrderChange.emit($event)"
+            aria-label="Ordenar productos"
+          >
+            <option value="recent">Mas recientes</option>
+            <option value="sold">Mas vendidos</option>
+            <option value="stock">Mayor stock</option>
+          </select>
+        </div>
       </div>
 
       <div class="toolbar-meta">

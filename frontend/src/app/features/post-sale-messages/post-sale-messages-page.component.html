@@ -23,7 +23,7 @@
     </div>
   </header>
 
-  <section class="feature-layout">
+  <section class="feature-layout" [class.has-selection]="!!selectedPackId()">
     <app-post-sale-message-list
       class="list-section"
       [conversations]="filteredConversations()"
@@ -55,6 +55,7 @@
       [clearDraftToken]="clearDraftToken()"
       (sendReply)="onSendReply($event)"
       (jumpToNextPending)="goToNextPendingConversation()"
+      (closeDetail)="closeSelected()"
     />
   </section>
 </section>

@@ -48,6 +48,8 @@ export class PostSaleMessageDetailComponent {
   readonly clearDraftToken = input(0);
 
   readonly sendReply = output<string>();
+  readonly resolveBlock = output<{ message: string }>();
+  readonly closeDetail = output<void>();
   readonly jumpToNextPending = output<void>();
 
   readonly messageText = signal('');

@@ -9,7 +9,7 @@
             class="input-text"
             [ngModel]="searchText()"
             (ngModelChange)="searchTextChange.emit($event)"
-            placeholder="Buscar pregunta o item..."
+            placeholder="Buscar pregunta o publicacion..."
           />
           @if (searchText()) {
             <button type="button" class="toolbar-icon-btn" (click)="searchTextChange.emit('')">Limpiar</button>
@@ -22,27 +22,47 @@
       </div>
 
       <div class="toolbar-row toolbar-row--triple">
-        <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
-          <option value="all">Todas</option>
-          <option value="unanswered">Pendientes</option>
-          <option value="answered">Respondidas</option>
-        </select>
+        <div class="filter-field">
+          <span class="filter-field__label">Estado</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="statusFilterChange.emit($event)"
+            aria-label="Filtrar preguntas por estado"
+          >
+            <option value="all">Todas</option>
+            <option value="unanswered">Pendientes</option>
+            <option value="answered">Respondidas</option>
+          </select>
+        </div>
 
-        <select
-          class="input-text filter-select"
-          [ngModel]="respondableFilter()"
-          (ngModelChange)="respondableFilterChange.emit($event)"
-        >
-          <option value="all">Todas las capacidades</option>
-          <option value="respondable">Solo respondibles</option>
-          <option value="limited">Con limitaciones</option>
-        </select>
+        <div class="filter-field">
+          <span class="filter-field__label">Respuesta</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="respondableFilter()"
+            (ngModelChange)="respondableFilterChange.emit($event)"
+            aria-label="Filtrar preguntas por posibilidad de respuesta"
+          >
+            <option value="all">Todas</option>
+            <option value="respondable">Respondibles</option>
+            <option value="limited">Con limite</option>
+          </select>
+        </div>
 
-        <select class="input-text filter-select" [ngModel]="sortOrder()" (ngModelChange)="sortOrderChange.emit($event)">
-          <option value="recent">Mas recientes primero</option>
-          <option value="oldest">Mas antiguas primero</option>
-          <option value="pending">Pendientes primero</option>
-        </select>
+        <div class="filter-field">
+          <span class="filter-field__label">Orden</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="sortOrder()"
+            (ngModelChange)="sortOrderChange.emit($event)"
+            aria-label="Ordenar preguntas"
+          >
+            <option value="recent">Mas nuevas</option>
+            <option value="oldest">Mas antiguas</option>
+            <option value="pending">Pendientes primero</option>
+          </select>
+        </div>
       </div>
 
       <div class="toolbar-meta">
