@@ -93,13 +93,13 @@ class PostSaleConversationSummary(BaseModel):
     shipping_id: int | None = None
     total_amount: float | None = None
     currency_id: str | None = None
+    claim_ids: list[int] = Field(default_factory=list)
 
 
 class PostSaleConversationDetail(PostSaleConversationSummary):
     seller_user_id: int | None = None
     messages: list[PostSaleMessage] = Field(default_factory=list)
     orders: list[PostSaleOrderRef] = Field(default_factory=list)
-    claim_ids: list[int] = Field(default_factory=list)
 
 
 class PostSaleConversationListResponse(BaseModel):

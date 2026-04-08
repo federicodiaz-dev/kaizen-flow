@@ -24,12 +24,12 @@ export interface QuestionSummary {
   item: QuestionItemRef | null;
   answer: QuestionAnswer | null;
   has_answer: boolean;
+  can_answer: boolean;
+  answer_limitations: string | null;
 }
 
 export interface QuestionDetail extends QuestionSummary {
   seller_id: number | null;
-  can_answer: boolean;
-  answer_limitations: string | null;
 }
 
 export interface QuestionListResponse {

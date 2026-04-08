@@ -64,6 +64,10 @@
   width: 240px; /* Fixed width for alignment */
 }
 
+.mobile-menu-btn {
+  display: none;
+}
+
 .icon-logo {
   flex-shrink: 0;
   width: 28px;
@@ -95,6 +99,10 @@
   justify-content: center;
 }
 
+.nav-drawer {
+  display: contents; /* Desktops: it acts as a ghost container wrapper */
+}
+
 .nav-links a {
   padding: 0.4rem 0.75rem;
   border-radius: var(--radius-md);
@@ -116,6 +124,7 @@
 
 .nav-copy.ai-text {
   background: linear-gradient(135deg, var(--ai-primary), var(--ai-secondary));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 600;
@@ -354,16 +363,75 @@
 }
 
 @media (max-width: 1024px) {
-  .nav-links {
-    display: none; /* In a real app we'd add a hamburger menu */
+  .mobile-menu-btn {
+    display: flex;
   }
+  
   .nav-brand {
     width: auto;
   }
-  .nav-actions {
-    width: auto;
-  }
-  .layout-main.page-content {
+
+  .nav-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 64px; /* header height */
+    left: 0;
+    width: 280px;
+    height: calc(100vh - 64px);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 40;
     padding: 1.5rem;
+    overflow-y: auto;
+    gap: 2rem;
+
+    &.is-open {
+      transform: translateX(0);
+    }
+  }
+
+  .nav-drawer-backdrop {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 64px);
+    background: rgba(0,0,0,0.5);
+    z-index: 30;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease forwards;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    
+    a {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+    }
+  }
+  
+  .nav-divider {
+    width: 100%;
+    height: 1px;
+    margin: 0.5rem 0;
+  }
+
+  .nav-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 1.5rem;
+  }
+
+  .layout-main.page-content {
+    padding: 1rem;
   }
 }

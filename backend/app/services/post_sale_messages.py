@@ -405,6 +405,13 @@ class PostSaleMessagesService:
                 conversation_status=conversation_status.get("status"),
                 conversation_substatus=conversation_status.get("substatus"),
             )
+            claim_ids = [
+                claim_id
+                for claim_id in (
+                    self._safe_int(entry) for entry in (conversation_status.get("claim_ids") or [])
+                )
+                if claim_id is not None
+            ]
             conversations.append(
                 PostSaleConversationSummary(
                     pack_id=str(candidate["pack_id"]),
@@ -432,6 +439,7 @@ class PostSaleMessagesService:
                     ),
                     total_amount=self._safe_float(candidate.get("total_amount")),
                     currency_id=candidate.get("currency_id"),
+                    claim_ids=claim_ids,
                 )
             )
 

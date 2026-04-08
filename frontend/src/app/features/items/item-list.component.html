@@ -1,32 +1,80 @@
 <div class="list-container glass-panel animate-slide-up stagger-2">
   <div class="list-header">
-    <div class="toolbar">
-      <div class="search-box">
-        <input
-          type="text"
-          class="input-text"
-          [ngModel]="searchText()"
-          (ngModelChange)="searchTextChange.emit($event)"
-          placeholder="Buscar por título o ID..."
-        />
+    <div class="toolbar toolbar--stacked">
+      <div class="toolbar-main">
+        <div class="search-box search-box--interactive">
+          <input
+            #searchInput
+            type="text"
+            class="input-text"
+            [ngModel]="searchText()"
+            (ngModelChange)="searchTextChange.emit($event)"
+            placeholder="Buscar producto por titulo o ID..."
+          />
+          @if (searchText()) {
+            <button type="button" class="toolbar-icon-btn" (click)="searchTextChange.emit('')">Limpiar</button>
+          }
+        </div>
+
+        <div class="toolbar-actions">
+          <button type="button" class="refresh-btn" (click)="refresh.emit()">Actualizar</button>
+        </div>
       </div>
 
-      <select class="input-text filter-select" [ngModel]="statusFilter()" (ngModelChange)="statusFilterChange.emit($event)">
-        <option value="all">Todos</option>
-        <option value="active">Activos</option>
-        <option value="paused">Pausados</option>
-        <option value="closed">Cerrados</option>
-      </select>
+      <div class="toolbar-row toolbar-row--double">
+        <div class="filter-field">
+          <span class="filter-field__label">Estado</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="statusFilterChange.emit($event)"
+            aria-label="Filtrar productos por estado"
+          >
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="paused">Pausados</option>
+            <option value="closed">Cerrados</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <span class="filter-field__label">Orden</span>
+          <select
+            class="input-text filter-select"
+            [ngModel]="sortOrder()"
+            (ngModelChange)="sortOrderChange.emit($event)"
+            aria-label="Ordenar productos"
+          >
+            <option value="recent">Mas recientes</option>
+            <option value="sold">Mas vendidos</option>
+            <option value="stock">Mayor stock</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar-meta">
+        <span class="results-copy">{{ resultCount() }} de {{ totalCount() }} productos</span>
+
+        <div class="toolbar-meta__actions">
+          @if (activeFilterCount() > 0) {
+            <span class="filter-pill">
+              {{ activeFilterCount() }} filtro{{ activeFilterCount() === 1 ? '' : 's' }} activo{{ activeFilterCount() === 1 ? '' : 's' }}
+            </span>
+            <button type="button" class="toolbar-link-btn" (click)="resetFilters.emit()">Limpiar filtros</button>
+          }
+          <span class="shortcut-hint"><kbd>/</kbd> Buscar</span>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="list-content">
     @if (loading()) {
-      <div class="state-msg">Cargando catálogo...</div>
+      <div class="state-msg">Cargando catalogo...</div>
     } @else if (error()) {
       <div class="state-msg error">{{ error() }}</div>
     } @else if (items().length === 0) {
-      <div class="state-msg">Catálogo vacío.</div>
+      <div class="state-msg">Catalogo vacio.</div>
     } @else {
       <div class="items-grid">
         @for (item of items(); track item.id) {
@@ -43,7 +91,7 @@
                 <div class="thumb-placeholder">{{ item.title.slice(0, 1) }}</div>
               }
             </div>
-            
+
             <div class="item-details">
               <div class="item-top">
                 <span class="status-pill" [class.paused]="item.status === 'paused'">
@@ -52,9 +100,13 @@
                 <span class="item-id">{{ item.id }}</span>
               </div>
               <h4 class="item-title">{{ item.title }}</h4>
+              <div class="item-chip-row">
+                <span class="item-chip">{{ item.sold_quantity ?? 0 }} vendidos</span>
+                <span class="item-chip">{{ item.available_quantity ?? 0 }} stock</span>
+              </div>
               <div class="item-bottom">
                 <span class="item-price">{{ item.price | currency: item.currency_id || 'ARS' }}</span>
-                <span class="item-date">Stock: {{ item.available_quantity ?? 'N/D' }}</span>
+                <span class="item-date">{{ item.last_updated | date: 'shortDate' }}</span>
               </div>
             </div>
           </button>

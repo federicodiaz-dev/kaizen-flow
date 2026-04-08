@@ -1,9 +1,9 @@
 <div class="detail-wrapper animate-fade-in">
-  @if (loading()) {
+  @if (loading() && !conversation()) {
     <div class="empty-state">
       <div class="pulse">Cargando conversacion post venta...</div>
     </div>
-  } @else if (error()) {
+  } @else if (error() && !conversation()) {
     <div class="empty-state text-error">{{ error() }}</div>
   } @else if (!conversation()) {
     <div class="empty-state">
@@ -12,218 +12,245 @@
     </div>
   } @else {
     @if (conversation(); as c) {
-      <div class="detail-header">
-        <div class="header-tags">
-          <span class="badge" [class.blocked]="(c.conversation_status || '').toLowerCase() === 'blocked'">
-            {{ statusLabel(c.conversation_status) }}
-          </span>
-          <span class="id-tag">Pack #{{ c.pack_id }}</span>
+      <div class="detail-shell">
+        @if (loading()) {
+          <div class="detail-overlay">
+            <span>Actualizando conversacion...</span>
+          </div>
+        }
+
+        <div class="detail-header">
+          <button type="button" class="mobile-back-btn" (click)="closeDetail.emit()">← Volver a la lista</button>
+          <div class="header-tags">
+            <span class="badge" [class.blocked]="(c.conversation_status || '').toLowerCase() === 'blocked'">
+              {{ statusLabel(c.conversation_status) }}
+            </span>
+            <span class="id-tag">Pack #{{ c.pack_id }}</span>
+          </div>
+
+          <h1 class="conversation-title">{{ c.primary_item_title || 'Mensajes post venta' }}</h1>
+
+          <div class="meta-pills">
+            <span class="meta-pill">
+              <span class="dot"></span> {{ buyerLabel() }}
+            </span>
+            <span class="meta-pill">Pack: {{ packStatusLabel(c.pack_status) }}</span>
+            <span class="meta-pill">{{ c.message_count }} mensajes</span>
+            @if (c.unread_count > 0) {
+              <span class="meta-pill meta-pill--warning">{{ c.unread_count }} sin leer</span>
+            }
+          </div>
         </div>
 
-        <h1 class="conversation-title">{{ c.primary_item_title || 'Mensajes post venta' }}</h1>
+        <div class="premium-layout-grid">
+          <div class="data-col">
+            @if (error()) {
+              <div class="detail-banner error">{{ error() }}</div>
+            }
 
-        <div class="meta-pills">
-          <span class="meta-pill">
-            <span class="dot"></span> {{ buyerLabel() }}
-          </span>
-          <span class="meta-pill">Pack: {{ packStatusLabel(c.pack_status) }}</span>
-          <span class="meta-pill">{{ c.message_count }} mensajes</span>
-          @if (c.unread_count > 0) {
-            <span class="meta-pill meta-pill--warning">{{ c.unread_count }} sin leer</span>
-          }
-        </div>
-      </div>
-
-      <div class="premium-layout-grid">
-        <div class="data-col">
-          <section class="premium-card">
-            <h3>Resumen del Pack</h3>
-            <div class="kv-grid">
-              <div class="kv-item">
-                <label>Comprador</label>
-                <span>{{ buyerLabel() }}</span>
-              </div>
-              <div class="kv-item">
-                <label>Estado del canal</label>
-                <span>{{ statusLabel(c.conversation_status) }}</span>
-              </div>
-              <div class="kv-item">
-                <label>Subestado</label>
-                <span>{{ c.conversation_substatus || 'N/D' }}</span>
-              </div>
-              <div class="kv-item">
-                <label>Ultima actividad</label>
-                <span>{{ c.last_updated | date: 'short' }}</span>
-              </div>
-              <div class="kv-item">
-                <label>Ordenes</label>
-                <span>{{ c.order_ids.join(', ') || '-' }}</span>
-              </div>
-              <div class="kv-item">
-                <label>Monto total</label>
-                <span>
-                  @if (c.total_amount !== null) {
-                    {{ c.total_amount | currency: c.currency_id || 'ARS' }}
-                  } @else {
-                    -
-                  }
-                </span>
-              </div>
-            </div>
-          </section>
-
-          <section class="premium-card">
-            <h3>Ordenes del Pack</h3>
-            <div class="order-list">
-              @for (order of c.orders; track order.id) {
-                <article class="order-card">
-                  <div class="order-card__top">
-                    <strong>Orden {{ order.id }}</strong>
-                    <span>{{ packStatusLabel(order.status) }}</span>
-                  </div>
-                  <div class="order-card__meta">
-                    <span>{{ order.date_created | date: 'short' }}</span>
-                    @if (order.total_amount !== null) {
-                      <span>{{ order.total_amount | currency: order.currency_id || 'ARS' }}</span>
-                    }
-                  </div>
-                  <div class="order-items">
-                    @for (item of order.items; track item.item_id || item.title) {
-                      <div class="order-item">
-                        <strong>{{ item.title || 'Item sin titulo' }}</strong>
-                        <span>
-                          {{ item.quantity || 1 }} x
-                          @if (item.unit_price !== null) {
-                            {{ item.unit_price | currency: item.currency_id || order.currency_id || 'ARS' }}
-                          } @else {
-                            Sin precio
-                          }
-                        </span>
-                      </div>
-                    }
-                  </div>
-                </article>
-              }
-            </div>
-          </section>
-
-          @if (!c.can_reply) {
-            <div class="alert-banner danger">
-              <span class="alert-icon">!</span>
-              <div class="alert-content">
-                <strong>No se puede responder</strong>
-                <span>{{ c.reply_limitations || 'Mercado Libre bloquea temporalmente esta conversacion.' }}</span>
-              </div>
-            </div>
-          }
-
-          @if (c.claim_ids.length > 0) {
             <section class="premium-card">
-              <h3>Escalada</h3>
-              <div class="claim-chip-row">
-                @for (claimId of c.claim_ids; track claimId) {
-                  <span class="claim-chip">Reclamo #{{ claimId }}</span>
+              <h3>Resumen del Pack</h3>
+              <div class="kv-grid">
+                <div class="kv-item">
+                  <label>Comprador</label>
+                  <span>{{ buyerLabel() }}</span>
+                </div>
+                <div class="kv-item">
+                  <label>Estado del canal</label>
+                  <span>{{ statusLabel(c.conversation_status) }}</span>
+                </div>
+                <div class="kv-item">
+                  <label>Subestado</label>
+                  <span>{{ c.conversation_substatus || 'N/D' }}</span>
+                </div>
+                <div class="kv-item">
+                  <label>Ultima actividad</label>
+                  <span>{{ c.last_updated | date: 'short' }}</span>
+                </div>
+                <div class="kv-item">
+                  <label>Ordenes</label>
+                  <span>{{ c.order_ids.join(', ') || '-' }}</span>
+                </div>
+                <div class="kv-item">
+                  <label>Monto total</label>
+                  <span>
+                    @if (c.total_amount !== null) {
+                      {{ c.total_amount | currency: c.currency_id || 'ARS' }}
+                    } @else {
+                      -
+                    }
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section class="premium-card">
+              <h3>Ordenes del Pack</h3>
+              <div class="order-list">
+                @for (order of c.orders; track order.id) {
+                  <article class="order-card">
+                    <div class="order-card__top">
+                      <strong>Orden {{ order.id }}</strong>
+                      <span>{{ packStatusLabel(order.status) }}</span>
+                    </div>
+                    <div class="order-card__meta">
+                      <span>{{ order.date_created | date: 'short' }}</span>
+                      @if (order.total_amount !== null) {
+                        <span>{{ order.total_amount | currency: order.currency_id || 'ARS' }}</span>
+                      }
+                    </div>
+                    <div class="order-items">
+                      @for (item of order.items; track item.item_id || item.title) {
+                        <div class="order-item">
+                          <strong>{{ item.title || 'Item sin titulo' }}</strong>
+                          <span>
+                            {{ item.quantity || 1 }} x
+                            @if (item.unit_price !== null) {
+                              {{ item.unit_price | currency: item.currency_id || order.currency_id || 'ARS' }}
+                            } @else {
+                              Sin precio
+                            }
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </article>
                 }
               </div>
             </section>
-          }
-        </div>
 
-        <div class="chat-col">
-          <div class="premium-chat-container">
-            <div class="chat-header">
-              <div class="chat-header__meta">
-                <strong>Conversacion con {{ buyerLabel() }}</strong>
-                <span>Limite vendedor: {{ c.seller_max_message_length || 350 }} caracteres</span>
+            @if (!c.can_reply) {
+              <div class="alert-banner danger">
+                <span class="alert-icon">!</span>
+                <div class="alert-content">
+                  <strong>No se puede responder</strong>
+                  <span>{{ c.reply_limitations || 'Mercado Libre bloquea temporalmente esta conversacion.' }}</span>
+                </div>
               </div>
-            </div>
+            }
 
-            <div class="chat-feed">
-              @if (c.messages.length === 0) {
-                <div class="chat-empty">Todavia no hay mensajes visibles en este pack.</div>
-              } @else {
-                @for (message of c.messages; track message.id || message.date_created || $index) {
-                  <div class="chat-bubble" [class.is-me]="message.is_from_seller">
-                    <div class="chat-bubble__header">
-                      <strong>
-                        {{
-                          message.is_from_seller
-                            ? 'Tu cuenta'
-                            : message.from_user?.nickname || message.from_user?.name || buyerLabel()
-                        }}
-                      </strong>
-                      <em>{{ (message.date_created || message.date_available) | date: 'short' }}</em>
+            @if (c.claim_ids.length > 0) {
+              <section class="premium-card">
+                <h3>Escalada</h3>
+                <div class="claim-chip-row">
+                  @for (claimId of c.claim_ids; track claimId) {
+                    <span class="claim-chip">Reclamo #{{ claimId }}</span>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+
+          <div class="chat-col">
+            <div class="premium-chat-container">
+              <div class="chat-header">
+                <div class="chat-header__meta">
+                  <strong>Conversacion con {{ buyerLabel() }}</strong>
+                  <span>Limite vendedor: {{ c.seller_max_message_length || 350 }} caracteres</span>
+                </div>
+              </div>
+
+              <div class="chat-feed">
+                @if (c.messages.length === 0) {
+                  <div class="chat-empty">Todavia no hay mensajes visibles en este pack.</div>
+                } @else {
+                  @for (message of c.messages; track message.id || message.date_created || $index) {
+                    <div class="chat-bubble" [class.is-me]="message.is_from_seller">
+                      <div class="chat-bubble__header">
+                        <strong>
+                          {{
+                            message.is_from_seller
+                              ? 'Tu cuenta'
+                              : message.from_user?.nickname || message.from_user?.name || buyerLabel()
+                          }}
+                        </strong>
+                        <em>{{ (message.date_created || message.date_available) | date: 'short' }}</em>
+                      </div>
+                      <span>{{ message.text || 'Mensaje sin contenido legible.' }}</span>
                     </div>
-                    <span>{{ message.text || 'Mensaje sin contenido legible.' }}</span>
-                  </div>
+                  }
                 }
-              }
-            </div>
+              </div>
 
-            <div class="chat-composer">
-              @if (!c.can_reply) {
-                <div class="composer-alert">{{ c.reply_limitations || 'Mercado Libre no permite responder este pack.' }}</div>
-              } @else {
-                <div class="composer-label-row">
-                  <span class="composer-label">Borrador de respuesta</span>
-                  <div class="composer-actions">
-                    @if (messageText().trim() || composerOverflowing()) {
-                      <button type="button" class="composer-size-btn" (click)="toggleComposerExpanded()">
-                        {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
+              <div class="chat-composer">
+                @if (nextPendingMessage()) {
+                  <div class="follow-up-banner">
+                    <span>{{ nextPendingMessage() }}</span>
+                    @if (hasNextPending()) {
+                      <button type="button" class="button-secondary" (click)="jumpToNextPending.emit()">
+                        Ir a la siguiente pendiente
                       </button>
                     }
-                    <button
-                      type="button"
-                      class="ai-enhance-btn"
-                      [class.is-enhancing]="draftingMessage()"
-                      [disabled]="draftingMessage() || sending()"
-                      (click)="generateDraft()"
-                      title="Sugerir mensaje con IA"
-                    >
-                      <span class="ai-btn-bg"></span>
-                      <span class="ai-btn-content">
-                        @if (draftingMessage()) {
-                          <span class="ai-spinner"></span>
-                          <span>Redactando...</span>
-                        } @else {
-                          <span class="ai-icon">AI</span>
-                          <span>Sugerir con IA</span>
-                        }
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                <textarea
-                  #composerTextarea
-                  class="composer-textarea"
-                  [class.is-overflowing]="composerOverflowing()"
-                  rows="6"
-                  placeholder="Escribe tu respuesta post venta..."
-                  [ngModel]="messageText()"
-                  (ngModelChange)="updateMessageText($event)"
-                ></textarea>
-
-                @if (composerOverflowing()) {
-                  <div class="composer-overflow-hint">
-                    {{ composerExpanded()
-                      ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
-                      : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar Expandir para leerlo mejor.' }}
                   </div>
                 }
 
-                @if (draftError()) {
-                  <div class="draft-error">{{ draftError() }}</div>
-                }
+                @if (!c.can_reply) {
+                  <div class="composer-alert">{{ c.reply_limitations || 'Mercado Libre no permite responder este pack.' }}</div>
+                } @else {
+                  <div class="composer-label-row">
+                    <div class="composer-label-stack">
+                      <span class="composer-label">Borrador de respuesta</span>
+                      @if (messageText().trim()) {
+                        <span class="draft-status">Borrador guardado</span>
+                      }
+                    </div>
+                    <div class="composer-actions">
+                      @if (messageText().trim() || composerOverflowing()) {
+                        <button type="button" class="composer-size-btn" (click)="toggleComposerExpanded()">
+                          {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="ai-enhance-btn"
+                        [class.is-enhancing]="draftingMessage()"
+                        [disabled]="draftingMessage() || sending()"
+                        (click)="generateDraft()"
+                        title="Sugerir mensaje con IA"
+                      >
+                        <span class="ai-btn-bg"></span>
+                        <span class="ai-btn-content">
+                          @if (draftingMessage()) {
+                            <span class="ai-spinner"></span>
+                            <span>Redactando...</span>
+                          } @else {
+                            <span class="ai-icon">AI</span>
+                            <span>Sugerir con IA</span>
+                          }
+                        </span>
+                      </button>
+                    </div>
+                  </div>
 
-                <button
-                  class="send-action"
-                  [disabled]="!messageText().trim() || sending()"
-                  (click)="submitMessage()"
-                >
-                  {{ sending() ? 'Enviando...' : 'Responder en Mercado Libre' }}
-                </button>
-              }
+                  <textarea
+                    #composerTextarea
+                    class="composer-textarea"
+                    [class.is-overflowing]="composerOverflowing()"
+                    rows="6"
+                    placeholder="Escribe tu respuesta post venta..."
+                    [ngModel]="messageText()"
+                    (ngModelChange)="updateMessageText($event)"
+                  ></textarea>
+
+                  <div class="composer-shortcut">Ctrl/Cmd + Enter para enviar</div>
+
+                  @if (composerOverflowing()) {
+                    <div class="composer-overflow-hint">
+                      {{ composerExpanded()
+                        ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
+                        : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar Expandir para leerlo mejor.' }}
+                    </div>
+                  }
+
+                  @if (draftError()) {
+                    <div class="draft-error">{{ draftError() }}</div>
+                  }
+
+                  <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">
+                    {{ sending() ? 'Enviando...' : 'Responder en Mercado Libre' }}
+                  </button>
+                }
+              </div>
             </div>
           </div>
         </div>

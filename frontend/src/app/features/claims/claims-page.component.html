@@ -2,9 +2,9 @@
   <header class="page-header">
     <div class="header-content">
       <h1 class="page-title">Reclamos</h1>
-      <p class="page-subtitle">Seguimiento postventa y resolución de conflictos de la cuenta {{ activeAccountLabel() }}.</p>
+      <p class="page-subtitle">Seguimiento postventa y resolucion de conflictos de la cuenta {{ activeAccountLabel() }}.</p>
     </div>
-    
+
     <div class="quick-stats">
       <div class="stat-item">
         <span class="stat-label">Total</span>
@@ -15,13 +15,13 @@
         <strong class="stat-value warning">{{ openClaims() }}</strong>
       </div>
       <div class="stat-item">
-        <span class="stat-label">Con Acción</span>
+        <span class="stat-label">Con Accion</span>
         <strong class="stat-value success">{{ actionableClaims() }}</strong>
       </div>
     </div>
   </header>
 
-  <section class="feature-layout">
+  <section class="feature-layout" [class.has-selection]="!!selectedClaimId()">
     <app-claim-list
       class="list-section"
       [claims]="filteredClaims()"
@@ -30,9 +30,17 @@
       [error]="listError()"
       [searchText]="searchText()"
       [statusFilter]="statusFilter()"
+      [stageFilter]="stageFilter()"
+      [actionFilter]="actionFilter()"
+      [resultCount]="filteredCount()"
+      [totalCount]="totalClaims()"
+      [activeFilterCount]="activeFilterCount()"
       (searchTextChange)="searchText.set($event)"
       (statusFilterChange)="statusFilter.set($event)"
-      (refresh)="loadClaims(accountContext.selectedAccount()!)"
+      (stageFilterChange)="stageFilter.set($event)"
+      (actionFilterChange)="actionFilter.set($event)"
+      (resetFilters)="resetFilters()"
+      (refresh)="refreshClaims()"
       (selectClaim)="onSelectClaim($event)"
     />
 
@@ -42,7 +50,12 @@
       [loading]="loadingDetail()"
       [error]="detailError()"
       [sending]="sending()"
+      [nextPendingMessage]="followUpMessage()"
+      [hasNextPending]="!!nextPendingClaimId()"
+      [clearDraftToken]="clearDraftToken()"
       (sendMessage)="onSendMessage($event)"
+      (jumpToNextPending)="goToNextPendingClaim()"
+      (closeDetail)="closeSelectedClaim()"
     />
   </section>
 </section>

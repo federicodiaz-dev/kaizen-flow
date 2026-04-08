@@ -2,9 +2,9 @@
   <header class="page-header">
     <div class="header-content">
       <h1 class="page-title">Productos</h1>
-      <p class="page-subtitle">Gestiona el catálogo, stock y precios de tu cuenta {{ activeAccountLabel() }}.</p>
+      <p class="page-subtitle">Gestiona el catalogo, stock y precios de tu cuenta {{ activeAccountLabel() }}.</p>
     </div>
-    
+
     <div class="quick-stats">
       <div class="stat-item">
         <span class="stat-label">Total</span>
@@ -21,7 +21,7 @@
     </div>
   </header>
 
-  <section class="feature-layout">
+  <section class="feature-layout" [class.has-selection]="!!selectedItemId()">
     <app-item-list
       class="list-section"
       [items]="filteredItems()"
@@ -30,9 +30,15 @@
       [error]="listError()"
       [searchText]="searchText()"
       [statusFilter]="statusFilter()"
+      [sortOrder]="sortOrder()"
+      [resultCount]="filteredCount()"
+      [totalCount]="totalItems()"
+      [activeFilterCount]="activeFilterCount()"
       (searchTextChange)="searchText.set($event)"
       (statusFilterChange)="onStatusFilterChange($event)"
-      (refresh)="loadItems(accountContext.selectedAccount()!)"
+      (sortOrderChange)="onSortOrderChange($event)"
+      (resetFilters)="resetFilters()"
+      (refresh)="refreshItems()"
       (selectItem)="onSelectItem($event)"
     />
 
@@ -43,6 +49,7 @@
       [error]="detailError()"
       [saving]="saving()"
       (save)="onSave($event)"
+      (closeDetail)="closeSelectedItem()"
     />
   </section>
 </section>

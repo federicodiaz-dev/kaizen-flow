@@ -9,11 +9,16 @@
   <div class="app-shell layout-column">
     <header class="top-nav animate-slide-down">
       <div class="nav-brand">
+        <button class="nav-icon-btn mobile-menu-btn" (click)="toggleMobileMenu()" title="Menú">
+          <svg *ngIf="!isMobileMenuOpen()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <svg *ngIf="isMobileMenuOpen()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
         <div class="icon-logo">KF</div>
         <span class="brand-text">Kaizen Flow</span>
       </div>
 
-      <nav class="nav-links">
+      <div class="nav-drawer" [class.is-open]="isMobileMenuOpen()">
+        <nav class="nav-links">
         <a routerLink="/questions" routerLinkActive="active" data-tour-id="nav-questions">
           <span class="nav-copy">Preguntas</span>
         </a>
@@ -73,8 +78,13 @@
         </button>
 
         <div class="user-menu" (click)="logout()" title="Cerrar Sesión ({{ currentUserEmail() }})">
-          <div class="user-avatar">{{ currentUserEmail()?.charAt(0)?.toUpperCase() || 'U' }}</div>
+          <div class="user-avatar">{{ currentUserEmail().charAt(0).toUpperCase() || 'U' }}</div>
         </div>
+      </div>
+      
+      @if (isMobileMenuOpen()) {
+        <div class="nav-drawer-backdrop" (click)="toggleMobileMenu()"></div>
+      }
       </div>
     </header>
 

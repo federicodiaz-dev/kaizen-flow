@@ -1,9 +1,9 @@
 <div class="detail-wrapper animate-fade-in">
-  @if (loading()) {
+  @if (loading() && !claim()) {
     <div class="empty-state">
-      <div class="pulse">Buscando información detallada...</div>
+      <div class="pulse">Buscando informacion detallada...</div>
     </div>
-  } @else if (error()) {
+  } @else if (error() && !claim()) {
     <div class="empty-state text-error">{{ error() }}</div>
   } @else if (!claim()) {
     <div class="empty-state">
@@ -12,252 +12,280 @@
     </div>
   } @else {
     @if (claim(); as c) {
-      <div class="detail-header">
-        <div class="header-tags">
-          <span class="badge" [class.closed]="c.status === 'closed'">{{ translateStatus(c.status) }}</span>
-          <span class="id-tag">#{{ c.id }}</span>
-        </div>
-        <h1 class="claim-title">{{ c.reason_detail?.name || c.reason_id || 'Indeterminado' }}</h1>
-        <div class="meta-pills">
-          <span class="meta-pill" [class.feature-ml]="isMLClaim(c.type)" [class.feature-buyer]="!isMLClaim(c.type)">
-            <span class="dot"></span> {{ isMLClaim(c.type) ? 'Mercado Libre' : 'Solo Comprador' }}
-          </span>
-          <span class="meta-pill">Etapa: {{ translateStage(c.stage) }}</span>
-          <span class="meta-pill">Flujo: {{ translateType(c.type) }}</span>
-        </div>
-      </div>
+      <div class="detail-shell">
+        @if (loading()) {
+          <div class="detail-overlay">
+            <span>Actualizando reclamo...</span>
+          </div>
+        }
 
-      <div class="premium-layout-grid">
-        
-        <div class="data-col">
-          <section class="premium-card">
-            <h3>Información General</h3>
-            <div class="kv-grid">
-              <div class="kv-item"><label>Estado Actual</label><span>{{ translateStatus(c.status) }}</span></div>
-              <div class="kv-item"><label>Motivo API</label><span><pre>{{ c.reason_id || '-' }}</pre></span></div>
-              <div class="kv-item"><label>Etiquetado</label><span>{{ translateStage(c.stage) }}</span></div>
-            </div>
-            @if (c.reason_detail?.detail) {
-              <div class="detail-text">{{ c.reason_detail?.detail }}</div>
-            }
-          </section>
-
-          <section class="premium-card">
-            <h3>Participantes</h3>
-            <div class="avatar-list">
-              @for (player of c.players; track player.role) {
-                <div class="avatar-row">
-                  <div class="avatar-circle">
-                    {{ roleLabel(player.role).charAt(0) }}
-                  </div>
-                  <div class="avatar-data">
-                    <span class="name">{{ roleLabel(player.role) }}</span>
-                    <span class="sub">{{ player.type || 'N/a' }} {{ player.user_id ? '· ' + player.user_id : '' }}</span>
-                  </div>
-                  <span class="badge gray">{{ player.available_actions.length }} reqs.</span>
-                </div>
-              }
-            </div>
-          </section>
-
-          @if (c.reputation_impact) {
-            <div class="alert-banner" [class.danger]="c.reputation_impact.affects_reputation !== 'not_affected'">
-              <span class="alert-icon">!</span>
-              <div class="alert-content">
-                <strong>Impacto Reputacional</strong>
-                <span>{{ c.reputation_impact.affects_reputation }}</span>
-              </div>
-            </div>
-          }
-
-          @if (c.available_actions.length > 0) {
-            <section class="premium-card actions-card">
-              <h3>Debes Resolver</h3>
-              <div class="action-items">
-                @for (action of c.available_actions; track action.action) {
-                  <span class="action-dot">{{ roleLabel(action.player_role) }}: {{ action.action }}</span>
-                }
-              </div>
-            </section>
-          }
-        </div>
-
-        <div class="chat-col">
-          <div class="premium-chat-container">
-            <div class="chat-header">
-                <div class="tab-switcher" data-tour-id="claims-tabs">
-                <button class="tab-item" [class.active]="activeChatTab() === 'buyer'" (click)="setTab('buyer')">
-                  Comprador
-                </button>
-                <div class="tab-divider"></div>
-                <button class="tab-item" [class.active]="activeChatTab() === 'ml'" (click)="setTab('ml')">
-                  Mercado Libre
-                  @if (!isMLIntervened()) { <span class="lock">🔒</span> }
-                </button>
-              </div>
-            </div>
-
-            <div class="chat-feed">
-              @if (activeChatTab() === 'buyer') {
-                @if (buyerMessages().length === 0) {
-                  <div class="chat-empty">Inicia la conversación con el comprador.</div>
-                } @else {
-                  @for (msg of buyerMessages(); track msg.date_created) {
-                    <div class="chat-bubble" [class.is-me]="msg.sender_role === 'respondent' || msg.sender_role === 'seller'">
-                      <span>{{ msg.message }}</span>
-                      <em>{{ msg.sender_role === 'respondent' || msg.sender_role === 'seller' ? 'Tú' : 'Otra parte' }} • {{ msg.date_created | date: 'shortTime' }}</em>
-                    </div>
-                  }
-                }
-              } @else if (activeChatTab() === 'ml') {
-                @if (!isMLIntervened()) {
-                  <div class="chat-empty blocked">
-                    <span class="big-icon">🔒</span>
-                    <p>No hay mediación oficial todavía.</p>
-                  </div>
-                } @else if (mlMessages().length === 0) {
-                  <div class="chat-empty">Aún no hay mensajes de Mercado Libre.</div>
-                } @else {
-                  @for (msg of mlMessages(); track msg.date_created) {
-                    <div class="chat-bubble" [class.is-me]="msg.sender_role === 'respondent' || msg.sender_role === 'seller'">
-                      <span>{{ msg.message }}</span>
-                      <em>{{ msg.sender_role === 'respondent' || msg.sender_role === 'seller' ? 'Tú' : 'Otra parte' }} • {{ msg.date_created | date: 'shortTime' }}</em>
-                    </div>
-                  }
-                }
-              }
-            </div>
-
-            <div class="chat-composer" data-tour-id="claims-composer">
-              @if (activeChatTab() === 'buyer') {
-                @if (isMLIntervened()) {
-                   <div class="composer-alert">La mediación cerró temporalmente tu canal directo.</div>
-                } @else if (!c.can_message) {
-                   <div class="composer-alert">El sistema no permite interacciones adicionales.</div>
-                } @else {
-                   <div class="composer-label-row">
-                     <span class="composer-label">Borrador para comprador</span>
-                     <div class="composer-actions">
-                       @if (messageText().trim() || composerOverflowing()) {
-                         <button
-                           type="button"
-                           class="composer-size-btn"
-                           (click)="toggleComposerExpanded()"
-                         >
-                           {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
-                         </button>
-                       }
-                       <button
-                         type="button"
-                         class="ai-enhance-btn"
-                         [class.is-enhancing]="draftingMessage()"
-                         [disabled]="draftingMessage() || sending()"
-                         (click)="generateDraft()"
-                         title="Sugerir mensaje con IA"
-                       >
-                         <span class="ai-btn-bg"></span>
-                         <span class="ai-btn-content">
-                           @if (draftingMessage()) {
-                             <span class="ai-spinner"></span>
-                             <span>Redactando...</span>
-                           } @else {
-                             <span class="ai-icon">AI</span>
-                             <span>Sugerir con IA</span>
-                           }
-                         </span>
-                       </button>
-                     </div>
-                   </div>
-                   <textarea
-                     #composerTextarea
-                     class="composer-textarea"
-                     [class.is-overflowing]="composerOverflowing()"
-                     rows="6"
-                     placeholder="Escribe al comprador..."
-                     [ngModel]="messageText()"
-                     (ngModelChange)="updateMessageText($event)"
-                   ></textarea>
-                   @if (composerOverflowing()) {
-                     <div class="composer-overflow-hint">
-                       <span>
-                         {{ composerExpanded()
-                           ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
-                           : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar "Expandir" para leerlo mejor.' }}
-                       </span>
-                     </div>
-                   }
-                   @if (draftError()) {
-                     <div class="draft-error">{{ draftError() }}</div>
-                   }
-                   <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
-                }
-              } @else if (activeChatTab() === 'ml') {
-                @if (!isMLIntervened()) {
-                   <!-- Blocked completely -->
-                } @else if (!c.can_message) {
-                   <div class="composer-alert">El ticket está cerrado o suspendido.</div>
-                } @else {
-                   <div class="composer-label-row">
-                     <span class="composer-label">Borrador para Mercado Libre</span>
-                     <div class="composer-actions">
-                       @if (messageText().trim() || composerOverflowing()) {
-                         <button
-                           type="button"
-                           class="composer-size-btn"
-                           (click)="toggleComposerExpanded()"
-                         >
-                           {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
-                         </button>
-                       }
-                       <button
-                         type="button"
-                         class="ai-enhance-btn"
-                         [class.is-enhancing]="draftingMessage()"
-                         [disabled]="draftingMessage() || sending()"
-                         (click)="generateDraft()"
-                         title="Sugerir mensaje con IA"
-                       >
-                         <span class="ai-btn-bg"></span>
-                         <span class="ai-btn-content">
-                           @if (draftingMessage()) {
-                             <span class="ai-spinner"></span>
-                             <span>Redactando...</span>
-                           } @else {
-                             <span class="ai-icon">AI</span>
-                             <span>Sugerir con IA</span>
-                           }
-                         </span>
-                       </button>
-                     </div>
-                   </div>
-                   <textarea
-                     #composerTextarea
-                     class="composer-textarea"
-                     [class.is-overflowing]="composerOverflowing()"
-                     rows="6"
-                     placeholder="Mensaje para el mediador..."
-                     [ngModel]="messageText()"
-                     (ngModelChange)="updateMessageText($event)"
-                   ></textarea>
-                   @if (composerOverflowing()) {
-                     <div class="composer-overflow-hint">
-                       <span>
-                         {{ composerExpanded()
-                           ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
-                           : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar "Expandir" para leerlo mejor.' }}
-                       </span>
-                     </div>
-                   }
-                   @if (draftError()) {
-                     <div class="draft-error">{{ draftError() }}</div>
-                   }
-                   <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
-                }
-              }
-            </div>
+        <div class="detail-header">
+          <button type="button" class="mobile-back-btn" (click)="closeDetail.emit()">← Volver a la lista</button>
+          <div class="header-tags">
+            <span class="badge" [class.closed]="c.status === 'closed'">{{ translateStatus(c.status) }}</span>
+            <span class="id-tag">#{{ c.id }}</span>
+          </div>
+          <h1 class="claim-title">{{ c.reason_detail?.name || c.reason_id || 'Indeterminado' }}</h1>
+          <div class="meta-pills">
+            <span class="meta-pill" [class.feature-ml]="isMLClaim(c.type)" [class.feature-buyer]="!isMLClaim(c.type)">
+              <span class="dot"></span> {{ isMLClaim(c.type) ? 'Mercado Libre' : 'Solo Comprador' }}
+            </span>
+            <span class="meta-pill">Etapa: {{ translateStage(c.stage) }}</span>
+            <span class="meta-pill">Flujo: {{ translateType(c.type) }}</span>
           </div>
         </div>
 
+        <div class="premium-layout-grid">
+          <div class="data-col">
+            @if (error()) {
+              <div class="detail-banner error">{{ error() }}</div>
+            }
+
+            <section class="premium-card">
+              <h3>Informacion General</h3>
+              <div class="kv-grid">
+                <div class="kv-item"><label>Estado Actual</label><span>{{ translateStatus(c.status) }}</span></div>
+                <div class="kv-item"><label>Motivo API</label><span><pre>{{ c.reason_id || '-' }}</pre></span></div>
+                <div class="kv-item"><label>Etiquetado</label><span>{{ translateStage(c.stage) }}</span></div>
+              </div>
+              @if (c.reason_detail?.detail) {
+                <div class="detail-text">{{ c.reason_detail?.detail }}</div>
+              }
+            </section>
+
+            <section class="premium-card">
+              <h3>Participantes</h3>
+              <div class="avatar-list">
+                @for (player of c.players; track player.role) {
+                  <div class="avatar-row">
+                    <div class="avatar-circle">
+                      {{ roleLabel(player.role).charAt(0) }}
+                    </div>
+                    <div class="avatar-data">
+                      <span class="name">{{ roleLabel(player.role) }}</span>
+                      <span class="sub">{{ player.type || 'N/a' }} {{ player.user_id ? '· ' + player.user_id : '' }}</span>
+                    </div>
+                    <span class="badge gray">{{ player.available_actions.length }} reqs.</span>
+                  </div>
+                }
+              </div>
+            </section>
+
+            @if (c.reputation_impact) {
+              <div class="alert-banner" [class.danger]="c.reputation_impact.affects_reputation !== 'not_affected'">
+                <span class="alert-icon">!</span>
+                <div class="alert-content">
+                  <strong>Impacto Reputacional</strong>
+                  <span>{{ c.reputation_impact.affects_reputation }}</span>
+                </div>
+              </div>
+            }
+
+            @if (c.available_actions.length > 0) {
+              <section class="premium-card actions-card">
+                <h3>Debes Resolver</h3>
+                <div class="action-items">
+                  @for (action of c.available_actions; track action.action) {
+                    <span class="action-dot">{{ roleLabel(action.player_role) }}: {{ action.action }}</span>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+
+          <div class="chat-col">
+            <div class="premium-chat-container">
+              <div class="chat-header">
+                <div class="tab-switcher" data-tour-id="claims-tabs">
+                  <button class="tab-item" [class.active]="activeChatTab() === 'buyer'" (click)="setTab('buyer')">
+                    Comprador
+                  </button>
+                  <div class="tab-divider"></div>
+                  <button class="tab-item" [class.active]="activeChatTab() === 'ml'" (click)="setTab('ml')">
+                    Mercado Libre
+                    @if (!isMLIntervened()) {
+                      <span class="lock">Bloqueado</span>
+                    }
+                  </button>
+                </div>
+              </div>
+
+              <div class="chat-feed">
+                @if (activeChatTab() === 'buyer') {
+                  @if (buyerMessages().length === 0) {
+                    <div class="chat-empty">Inicia la conversacion con el comprador.</div>
+                  } @else {
+                    @for (msg of buyerMessages(); track msg.date_created) {
+                      <div class="chat-bubble" [class.is-me]="msg.sender_role === 'respondent' || msg.sender_role === 'seller'">
+                        <span>{{ msg.message }}</span>
+                        <em>{{ msg.sender_role === 'respondent' || msg.sender_role === 'seller' ? 'Tu' : 'Otra parte' }} · {{ msg.date_created | date: 'shortTime' }}</em>
+                      </div>
+                    }
+                  }
+                } @else if (activeChatTab() === 'ml') {
+                  @if (!isMLIntervened()) {
+                    <div class="chat-empty blocked">
+                      <span class="big-icon">Bloqueado</span>
+                      <p>No hay mediacion oficial todavia.</p>
+                    </div>
+                  } @else if (mlMessages().length === 0) {
+                    <div class="chat-empty">Aun no hay mensajes de Mercado Libre.</div>
+                  } @else {
+                    @for (msg of mlMessages(); track msg.date_created) {
+                      <div class="chat-bubble" [class.is-me]="msg.sender_role === 'respondent' || msg.sender_role === 'seller'">
+                        <span>{{ msg.message }}</span>
+                        <em>{{ msg.sender_role === 'respondent' || msg.sender_role === 'seller' ? 'Tu' : 'Otra parte' }} · {{ msg.date_created | date: 'shortTime' }}</em>
+                      </div>
+                    }
+                  }
+                }
+              </div>
+
+              <div class="chat-composer" data-tour-id="claims-composer">
+                @if (nextPendingMessage()) {
+                  <div class="follow-up-banner">
+                    <span>{{ nextPendingMessage() }}</span>
+                    @if (hasNextPending()) {
+                      <button type="button" class="button-secondary" (click)="jumpToNextPending.emit()">
+                        Ir al siguiente pendiente
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (activeChatTab() === 'buyer') {
+                  @if (isMLIntervened()) {
+                    <div class="composer-alert">La mediacion cerro temporalmente tu canal directo.</div>
+                  } @else if (!c.can_message) {
+                    <div class="composer-alert">El sistema no permite interacciones adicionales.</div>
+                  } @else {
+                    <div class="composer-label-row">
+                      <div class="composer-label-stack">
+                        <span class="composer-label">Borrador para comprador</span>
+                        @if (messageText().trim()) {
+                          <span class="draft-status">Borrador guardado</span>
+                        }
+                      </div>
+                      <div class="composer-actions">
+                        @if (messageText().trim() || composerOverflowing()) {
+                          <button type="button" class="composer-size-btn" (click)="toggleComposerExpanded()">
+                            {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="ai-enhance-btn"
+                          [class.is-enhancing]="draftingMessage()"
+                          [disabled]="draftingMessage() || sending()"
+                          (click)="generateDraft()"
+                          title="Sugerir mensaje con IA"
+                        >
+                          <span class="ai-btn-bg"></span>
+                          <span class="ai-btn-content">
+                            @if (draftingMessage()) {
+                              <span class="ai-spinner"></span>
+                              <span>Redactando...</span>
+                            } @else {
+                              <span class="ai-icon">AI</span>
+                              <span>Sugerir con IA</span>
+                            }
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      #composerTextarea
+                      class="composer-textarea"
+                      [class.is-overflowing]="composerOverflowing()"
+                      rows="6"
+                      placeholder="Escribe al comprador..."
+                      [ngModel]="messageText()"
+                      (ngModelChange)="updateMessageText($event)"
+                    ></textarea>
+                    <div class="composer-shortcut">Ctrl/Cmd + Enter para enviar</div>
+                    @if (composerOverflowing()) {
+                      <div class="composer-overflow-hint">
+                        <span>
+                          {{ composerExpanded()
+                            ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
+                            : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar Expandir para leerlo mejor.' }}
+                        </span>
+                      </div>
+                    }
+                    @if (draftError()) {
+                      <div class="draft-error">{{ draftError() }}</div>
+                    }
+                    <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
+                  }
+                } @else if (activeChatTab() === 'ml') {
+                  @if (!isMLIntervened()) {
+                    <!-- locked state -->
+                  } @else if (!c.can_message) {
+                    <div class="composer-alert">El ticket esta cerrado o suspendido.</div>
+                  } @else {
+                    <div class="composer-label-row">
+                      <div class="composer-label-stack">
+                        <span class="composer-label">Borrador para Mercado Libre</span>
+                        @if (messageText().trim()) {
+                          <span class="draft-status">Borrador guardado</span>
+                        }
+                      </div>
+                      <div class="composer-actions">
+                        @if (messageText().trim() || composerOverflowing()) {
+                          <button type="button" class="composer-size-btn" (click)="toggleComposerExpanded()">
+                            {{ composerExpanded() ? 'Compactar' : 'Expandir' }}
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          class="ai-enhance-btn"
+                          [class.is-enhancing]="draftingMessage()"
+                          [disabled]="draftingMessage() || sending()"
+                          (click)="generateDraft()"
+                          title="Sugerir mensaje con IA"
+                        >
+                          <span class="ai-btn-bg"></span>
+                          <span class="ai-btn-content">
+                            @if (draftingMessage()) {
+                              <span class="ai-spinner"></span>
+                              <span>Redactando...</span>
+                            } @else {
+                              <span class="ai-icon">AI</span>
+                              <span>Sugerir con IA</span>
+                            }
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                    <textarea
+                      #composerTextarea
+                      class="composer-textarea"
+                      [class.is-overflowing]="composerOverflowing()"
+                      rows="6"
+                      placeholder="Mensaje para el mediador..."
+                      [ngModel]="messageText()"
+                      (ngModelChange)="updateMessageText($event)"
+                    ></textarea>
+                    <div class="composer-shortcut">Ctrl/Cmd + Enter para enviar</div>
+                    @if (composerOverflowing()) {
+                      <div class="composer-overflow-hint">
+                        <span>
+                          {{ composerExpanded()
+                            ? 'Hay mas texto debajo. Puedes seguir bajando dentro del campo para revisar el final.'
+                            : 'Hay mas texto debajo. Puedes hacer scroll dentro del campo o usar Expandir para leerlo mejor.' }}
+                        </span>
+                      </div>
+                    }
+                    @if (draftError()) {
+                      <div class="draft-error">{{ draftError() }}</div>
+                    }
+                    <button class="send-action" [disabled]="!messageText().trim() || sending()" (click)="submitMessage()">Enviar</button>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     }
   }

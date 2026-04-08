@@ -8,6 +8,33 @@
   overflow: hidden;
 }
 
+.detail-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.detail-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg-secondary) 84%, transparent);
+  backdrop-filter: blur(6px);
+
+  span {
+    padding: 0.8rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -118,6 +145,20 @@
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+.detail-banner {
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-main);
+}
+
+.detail-banner.error {
+  border-color: color-mix(in srgb, var(--error) 32%, var(--border-color));
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 .premium-card {
@@ -372,6 +413,19 @@
   background: var(--bg-primary);
 }
 
+.follow-up-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-light) 75%, var(--bg-primary));
+  color: var(--text-main);
+  margin-bottom: 1rem;
+}
+
 .composer-alert {
   font-size: 0.9rem;
   color: var(--text-muted);
@@ -390,10 +444,22 @@
   margin-bottom: 0.9rem;
 }
 
+.composer-label-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
 .composer-label {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-main);
+}
+
+.draft-status {
+  font-size: 0.8rem;
+  color: var(--success);
+  font-weight: 600;
 }
 
 .composer-actions {
@@ -457,6 +523,12 @@
   font-size: 0.84rem;
 }
 
+.composer-shortcut {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .draft-error {
   font-size: 0.85rem;
   color: var(--error);
@@ -484,5 +556,13 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+}
+
+@media (max-width: 960px) {
+  .follow-up-banner,
+  .composer-label-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

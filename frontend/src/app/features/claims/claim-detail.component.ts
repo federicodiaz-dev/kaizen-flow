@@ -1,12 +1,27 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, DestroyRef, ElementRef, effect, input, output, signal, computed, inject, viewChild } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { AiTypewriterService } from '../../core/services/ai-typewriter.service';
 import { ClaimDetail } from '../../core/models/claims.models';
 import { AccountContextService } from '../../core/services/account-context.service';
+import { AiTypewriterService } from '../../core/services/ai-typewriter.service';
+import { WorkspaceStateService } from '../../core/services/workspace-state.service';
 import { ReplyAssistantApiService } from '../reply-assistant/reply-assistant-api.service';
+
+type ClaimChatTab = 'buyer' | 'ml';
 
 @Component({
   selector: 'app-claim-detail',
@@ -18,41 +33,47 @@ import { ReplyAssistantApiService } from '../reply-assistant/reply-assistant-api
 export class ClaimDetailComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly accountContext = inject(AccountContextService);
+  private readonly workspaceState = inject(WorkspaceStateService);
   private readonly replyAssistantApi = inject(ReplyAssistantApiService);
   private readonly typewriter = inject(AiTypewriterService);
   private readonly composerTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('composerTextarea');
   private readonly animationKey = 'claim-detail-message';
+  private readonly storageKey = 'claims-detail';
+  private lastClearDraftToken = 0;
 
   readonly claim = input<ClaimDetail | null>(null);
   readonly loading = input(false);
   readonly error = input<string | null>(null);
   readonly sending = input(false);
+  readonly nextPendingMessage = input<string | null>(null);
+  readonly hasNextPending = input(false);
+  readonly clearDraftToken = input(0);
 
   readonly sendMessage = output<{ message: string; receiverRole?: string }>();
+  readonly jumpToNextPending = output<void>();
+  readonly closeDetail = output<void>();
 
   readonly messageText = signal('');
-  readonly receiverRoleOptions = signal<string[]>([]);
   readonly draftingMessage = signal(false);
   readonly draftError = signal<string | null>(null);
   readonly composerOverflowing = signal(false);
   readonly composerExpanded = signal(false);
-  
-  readonly activeChatTab = signal<'buyer' | 'ml'>('buyer');
+  readonly activeChatTab = signal<ClaimChatTab>('buyer');
 
   readonly buyerMessages = computed(() => {
     const claim = this.claim();
     if (!claim) return [];
     return claim.messages
-      .filter(m => m.sender_role !== 'mediator' && m.receiver_role !== 'mediator')
-      .sort((a, b) => new Date(a.date_created || 0).getTime() - new Date(b.date_created || 0).getTime());
+      .filter((message) => message.sender_role !== 'mediator' && message.receiver_role !== 'mediator')
+      .sort((left, right) => this.resolveDate(left.date_created) - this.resolveDate(right.date_created));
   });
 
   readonly mlMessages = computed(() => {
     const claim = this.claim();
     if (!claim) return [];
     return claim.messages
-      .filter(m => m.sender_role === 'mediator' || m.receiver_role === 'mediator')
-      .sort((a, b) => new Date(a.date_created || 0).getTime() - new Date(b.date_created || 0).getTime());
+      .filter((message) => message.sender_role === 'mediator' || message.receiver_role === 'mediator')
+      .sort((left, right) => this.resolveDate(left.date_created) - this.resolveDate(right.date_created));
   });
 
   readonly isMLIntervened = computed(() => {
@@ -66,32 +87,98 @@ export class ClaimDetailComponent {
 
     effect(() => {
       const currentClaim = this.claim();
+      const account = this.accountContext.selectedAccount();
+      const clearDraftToken = this.clearDraftToken();
+
       this.typewriter.cancel(this.animationKey);
-      this.messageText.set('');
       this.draftError.set(null);
-      this.composerExpanded.set(false);
-      this.composerOverflowing.set(false);
-      const roles = currentClaim?.allowed_receiver_roles ?? [];
-      this.receiverRoleOptions.set(roles);
-      
-      if (this.isMLIntervened()) {
-        this.activeChatTab.set('ml');
-      } else {
+
+      if (!currentClaim) {
+        this.messageText.set('');
+        this.composerExpanded.set(false);
+        this.composerOverflowing.set(false);
         this.activeChatTab.set('buyer');
+        queueMicrotask(() => this.resizeComposer());
+        return;
       }
 
-      queueMicrotask(() => this.resizeComposer());
+      if (account && clearDraftToken !== this.lastClearDraftToken) {
+        this.workspaceState.removeDraft(
+          this.storageKey,
+          account,
+          this.draftKey(currentClaim.id, this.activeChatTab())
+        );
+        this.lastClearDraftToken = clearDraftToken;
+      }
+
+      const defaultTab = this.defaultTabForClaim(currentClaim);
+      const restoredTab = account
+        ? this.workspaceState.loadUiState<{ activeChatTab: ClaimChatTab }>(
+            this.tabStorageKey(currentClaim.id),
+            account,
+            { activeChatTab: defaultTab }
+          ).activeChatTab
+        : defaultTab;
+
+      this.activeChatTab.set(restoredTab);
+      this.loadDraftForTab(currentClaim, account, restoredTab);
+    }, { allowSignalWrites: true });
+
+    effect(() => {
+      const currentClaim = this.claim();
+      const account = this.accountContext.selectedAccount();
+      const activeTab = this.activeChatTab();
+      if (!currentClaim) {
+        return;
+      }
+
+      if (account) {
+        this.workspaceState.saveUiState(this.tabStorageKey(currentClaim.id), account, {
+          activeChatTab: activeTab,
+        });
+      }
+
+      this.loadDraftForTab(currentClaim, account, activeTab);
+    }, { allowSignalWrites: true });
+
+    effect(() => {
+      const currentClaim = this.claim();
+      const account = this.accountContext.selectedAccount();
+      const activeTab = this.activeChatTab();
+      const text = this.messageText();
+      const expanded = this.composerExpanded();
+      if (!currentClaim || !account) {
+        return;
+      }
+
+      if (text.trim()) {
+        this.workspaceState.saveDraft(this.storageKey, account, this.draftKey(currentClaim.id, activeTab), {
+          text,
+          expanded,
+        });
+      } else {
+        this.workspaceState.removeDraft(this.storageKey, account, this.draftKey(currentClaim.id, activeTab));
+      }
     }, { allowSignalWrites: true });
   }
 
-  setTab(tab: 'buyer' | 'ml') {
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardShortcut(event: KeyboardEvent): void {
+    const textarea = this.composerTextarea()?.nativeElement;
+    if (!textarea || document.activeElement !== textarea) {
+      return;
+    }
+
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      event.preventDefault();
+      this.submitMessage();
+    }
+  }
+
+  setTab(tab: ClaimChatTab): void {
     this.typewriter.cancel(this.animationKey);
     this.activeChatTab.set(tab);
-    this.messageText.set('');
     this.draftError.set(null);
-    this.composerExpanded.set(false);
-    this.composerOverflowing.set(false);
-    queueMicrotask(() => this.resizeComposer());
   }
 
   submitMessage(): void {
@@ -147,37 +234,43 @@ export class ClaimDetailComponent {
 
   roleLabel(role: string | null | undefined): string {
     if (!role) return 'Desconocido';
-    const r = role.toLowerCase().trim();
-    if (r === 'complainant' || r === 'buyer') return 'Comprador';
-    if (r === 'respondent' || r === 'seller') return 'Vendedor';
-    if (r === 'mediator' || r === 'internal') return 'Mercado Libre';
+    const normalized = role.toLowerCase().trim();
+    if (normalized === 'complainant' || normalized === 'buyer') return 'Comprador';
+    if (normalized === 'respondent' || normalized === 'seller') return 'Vendedor';
+    if (normalized === 'mediator' || normalized === 'internal') return 'Mercado Libre';
     return role;
   }
 
-  translateType(val: string | null | undefined): string {
-    if (!val) return 'Desconocido';
-    const key = val.toLowerCase().trim();
-    const map: Record<string, string> = { mediations: 'Mediación con ML', claims: 'Reclamo de Comprador', disputes: 'Disputa', return: 'Devolución', cancel: 'Cancelación' };
-    return map[key] || val;
+  translateType(value: string | null | undefined): string {
+    if (!value) return 'Desconocido';
+    const key = value.toLowerCase().trim();
+    const map: Record<string, string> = {
+      mediations: 'Mediacion con ML',
+      claims: 'Reclamo de Comprador',
+      disputes: 'Disputa',
+      return: 'Devolucion',
+      cancel: 'Cancelacion'
+    };
+    return map[key] || value;
   }
 
-  translateStage(val: string | null | undefined): string {
-    if (!val) return 'N/D';
-    const key = val.toLowerCase().trim();
-    const map: Record<string, string> = { dispute: 'En Disputa', mediation: 'En Mediación', claim: 'En Reclamo' };
-    return map[key] || val;
+  translateStage(value: string | null | undefined): string {
+    if (!value) return 'N/D';
+    const key = value.toLowerCase().trim();
+    const map: Record<string, string> = { dispute: 'En Disputa', mediation: 'En Mediacion', claim: 'En Reclamo' };
+    return map[key] || value;
   }
 
-  translateStatus(val: string | null | undefined): string {
-    if (!val) return 'N/D';
-    const key = val.toLowerCase().trim();
+  translateStatus(value: string | null | undefined): string {
+    if (!value) return 'N/D';
+    const key = value.toLowerCase().trim();
     const map: Record<string, string> = { opened: 'Abierto', closed: 'Cerrado', pending: 'Pendiente' };
-    return map[key] || val;
+    return map[key] || value;
   }
 
-  isMLClaim(val: string | null | undefined): boolean {
-    if (!val) return false;
-    const key = val.toLowerCase().trim();
+  isMLClaim(value: string | null | undefined): boolean {
+    if (!value) return false;
+    const key = value.toLowerCase().trim();
     return key === 'mediations' || key === 'disputes';
   }
 
@@ -229,5 +322,37 @@ export class ClaimDetailComponent {
     textarea.style.height = `${nextHeight}px`;
     textarea.style.overflowY = hasOverflow ? 'auto' : 'hidden';
     this.composerOverflowing.set(hasOverflow);
+  }
+
+  private resolveDate(value: string | null): number {
+    return value ? new Date(value).getTime() : 0;
+  }
+
+  private defaultTabForClaim(claim: ClaimDetail): ClaimChatTab {
+    return this.isMLClaim(claim.type) || claim.stage !== 'claim' ? 'ml' : 'buyer';
+  }
+
+  private loadDraftForTab(claim: ClaimDetail, account: string | null, tab: ClaimChatTab): void {
+    const draft = account
+      ? this.workspaceState.loadDraft<{ text: string; expanded: boolean }>(
+          this.storageKey,
+          account,
+          this.draftKey(claim.id, tab),
+          { text: '', expanded: false }
+        )
+      : { text: '', expanded: false };
+
+    this.messageText.set(draft.text || '');
+    this.composerExpanded.set(Boolean(draft.expanded));
+    this.composerOverflowing.set(false);
+    queueMicrotask(() => this.resizeComposer());
+  }
+
+  private draftKey(claimId: number, tab: ClaimChatTab): string {
+    return `claim:${claimId}:${tab}`;
+  }
+
+  private tabStorageKey(claimId: number): string {
+    return `claims-tab:${claimId}`;
   }
 }

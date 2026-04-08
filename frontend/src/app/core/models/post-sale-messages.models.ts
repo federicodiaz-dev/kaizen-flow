@@ -86,13 +86,13 @@ export interface PostSaleConversationSummary {
   shipping_id: number | null;
   total_amount: number | null;
   currency_id: string | null;
+  claim_ids: number[];
 }
 
 export interface PostSaleConversationDetail extends PostSaleConversationSummary {
   seller_user_id: number | null;
   messages: PostSaleMessage[];
   orders: PostSaleOrderRef[];
-  claim_ids: number[];
 }
 
 export interface PostSaleConversationListResponse {

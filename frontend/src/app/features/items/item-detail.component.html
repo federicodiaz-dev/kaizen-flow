@@ -1,165 +1,176 @@
 <div class="detail-wrapper animate-fade-in" data-tour-id="items-detail-panel">
-  @if (loading()) {
+  @if (loading() && !item()) {
     <div class="empty-state">
-      <div class="pulse">Buscando configuración del producto...</div>
+      <div class="pulse">Buscando configuracion del producto...</div>
     </div>
-  } @else if (error()) {
+  } @else if (error() && !item()) {
     <div class="empty-state text-error">{{ error() }}</div>
   } @else if (!item()) {
     <div class="empty-state">
       <div class="empty-icon"></div>
-      <p>Selecciona un producto para visualizar o editar sus configuraciones públicas.</p>
+      <p>Selecciona un producto para visualizar o editar sus configuraciones publicas.</p>
     </div>
   } @else {
     @if (item(); as c) {
-      <div class="detail-header">
-        <div class="header-tags">
-          <span class="badge" [class.paused]="c.status === 'paused'">
-            {{ c.status || 'N/D' }}
-          </span>
-          <span class="id-tag">#{{ c.id }}</span>
-        </div>
-        
-        <div class="product-layout">
-          <div class="product-visual">
-            @if (resolvePrimaryImage(c); as heroImage) {
-              <img [src]="heroImage" [alt]="c.title" />
-            } @else {
-              <div class="thumb-placeholder">{{ c.title.slice(0, 1) }}</div>
-            }
+      <div class="detail-shell">
+        @if (loading()) {
+          <div class="detail-overlay">
+            <span>Actualizando producto...</span>
           </div>
-          
-          <div class="product-copy">
-            <h2 class="claim-title">{{ c.title }}</h2>
-            <div class="metric-strip">
-              <div class="metric-box">
-                <label>Precio</label>
-                <strong>{{ c.price | currency: c.currency_id || 'ARS' }}</strong>
-              </div>
-              <div class="metric-box">
-                <label>Stock Disp.</label>
-                <strong>{{ c.available_quantity ?? 'N/D' }}</strong>
-              </div>
-              <div class="metric-box">
-                <label>Vendidos</label>
-                <strong>{{ c.sold_quantity ?? 'N/D' }}</strong>
-              </div>
-            </div>
+        }
 
-            <div class="actions-strip">
-              @if (c.permalink) {
-                <a [href]="c.permalink" target="_blank" class="link-btn">
-                  <span class="dot"></span> Ver en ML ↗
-                </a>
-              }
-            </div>
+        <div class="detail-header">
+          <button type="button" class="mobile-back-btn" (click)="closeDetail.emit()">← Volver a la lista</button>
+          <div class="header-tags">
+            <span class="badge" [class.paused]="c.status === 'paused'">
+              {{ c.status || 'N/D' }}
+            </span>
+            <span class="id-tag">#{{ c.id }}</span>
           </div>
-        </div>
-      </div>
 
-      <div class="premium-layout-grid-single">
-        <section class="premium-card">
-          <h3>Detalles de la Publicación</h3>
-          
-          <div class="kv-grid">
-            <div class="kv-item"><label>Seller ID</label><span>{{ c.seller_id || 'N/D' }}</span></div>
-            <div class="kv-item"><label>Condición</label><span><pre>{{ c.condition || 'N/D' }}</pre></span></div>
-            <div class="kv-item"><label>Variaciones</label><span>{{ c.variations.length }} var.</span></div>
-            <div class="kv-item"><label>Última Act.</label><span>{{ c.last_updated | date: 'medium' }}</span></div>
-          </div>
-        </section>
-
-        <section class="premium-card" data-tour-id="items-edit-panel">
-          <h3>Edición Rápida</h3>
-          <div class="edit-form">
-            
-            <div class="form-group primary-field">
-              <span>Título de la Publicación</span>
-              <input
-                type="text"
-                class="input-text title-input"
-                [ngModel]="form().title"
-                (ngModelChange)="updateField('title', $event)"
-                [disabled]="(c.sold_quantity || 0) > 0"
-              />
-              @if ((c.sold_quantity || 0) > 0) {
-                <span class="hint-text">No se puede editar: La publicación ya registra ventas.</span>
+          <div class="product-layout">
+            <div class="product-visual">
+              @if (resolvePrimaryImage(c); as heroImage) {
+                <img [src]="heroImage" [alt]="c.title" />
+              } @else {
+                <div class="thumb-placeholder">{{ c.title.slice(0, 1) }}</div>
               }
             </div>
 
-            <div class="form-group desc-field mt-action" data-tour-id="items-description-field">
-              <div class="desc-label-row">
-                <span>Descripción del Producto</span>
-                <button
-                  type="button"
-                  class="ai-enhance-btn"
-                  [class.is-enhancing]="enhancingDescription()"
-                  [disabled]="enhancingDescription()"
-                  (click)="enhanceDescription()"
-                  title="Mejorar descripción con Inteligencia Artificial"
-                >
-                  <span class="ai-btn-bg"></span>
-                  <span class="ai-btn-content">
-                    @if (enhancingDescription()) {
-                      <span class="ai-spinner"></span>
-                      <span>Mejorando...</span>
-                    } @else {
-                      <span class="ai-icon">✦</span>
-                      <span>Mejorar con IA</span>
-                    }
-                  </span>
+            <div class="product-copy">
+              <h2 class="claim-title">{{ c.title }}</h2>
+              <div class="metric-strip">
+                <div class="metric-box">
+                  <label>Precio</label>
+                  <strong>{{ c.price | currency: c.currency_id || 'ARS' }}</strong>
+                </div>
+                <div class="metric-box">
+                  <label>Stock Disp.</label>
+                  <strong>{{ c.available_quantity ?? 'N/D' }}</strong>
+                </div>
+                <div class="metric-box">
+                  <label>Vendidos</label>
+                  <strong>{{ c.sold_quantity ?? 'N/D' }}</strong>
+                </div>
+              </div>
+
+              <div class="actions-strip">
+                @if (c.permalink) {
+                  <a [href]="c.permalink" target="_blank" class="link-btn">
+                    <span class="dot"></span> Ver en ML ↗
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="premium-layout-grid-single">
+          @if (error()) {
+            <div class="detail-banner error">{{ error() }}</div>
+          }
+
+          <section class="premium-card">
+            <h3>Detalles de la Publicacion</h3>
+
+            <div class="kv-grid">
+              <div class="kv-item"><label>Seller ID</label><span>{{ c.seller_id || 'N/D' }}</span></div>
+              <div class="kv-item"><label>Condicion</label><span><pre>{{ c.condition || 'N/D' }}</pre></span></div>
+              <div class="kv-item"><label>Variaciones</label><span>{{ c.variations.length }} var.</span></div>
+              <div class="kv-item"><label>Ultima Act.</label><span>{{ c.last_updated | date: 'medium' }}</span></div>
+            </div>
+          </section>
+
+          <section class="premium-card" data-tour-id="items-edit-panel">
+            <h3>Edicion Rapida</h3>
+            <div class="edit-form">
+              <div class="form-group primary-field">
+                <span>Titulo de la Publicacion</span>
+                <input
+                  type="text"
+                  class="input-text title-input"
+                  [ngModel]="form().title"
+                  (ngModelChange)="updateField('title', $event)"
+                  [disabled]="(c.sold_quantity || 0) > 0"
+                />
+                @if ((c.sold_quantity || 0) > 0) {
+                  <span class="hint-text">No se puede editar: La publicacion ya registra ventas.</span>
+                }
+              </div>
+
+              <div class="form-group desc-field mt-action" data-tour-id="items-description-field">
+                <div class="desc-label-row">
+                  <span>Descripcion del Producto</span>
+                  <button
+                    type="button"
+                    class="ai-enhance-btn"
+                    [class.is-enhancing]="enhancingDescription()"
+                    [disabled]="enhancingDescription()"
+                    (click)="enhanceDescription()"
+                    title="Mejorar descripcion con Inteligencia Artificial"
+                  >
+                    <span class="ai-btn-bg"></span>
+                    <span class="ai-btn-content">
+                      @if (enhancingDescription()) {
+                        <span class="ai-spinner"></span>
+                        <span>Mejorando...</span>
+                      } @else {
+                        <span class="ai-icon">✦</span>
+                        <span>Mejorar con IA</span>
+                      }
+                    </span>
+                  </button>
+                </div>
+                <textarea
+                  class="input-text desc-textarea"
+                  rows="8"
+                  placeholder="Escribe la descripcion publica del producto aqui..."
+                  [ngModel]="form().description"
+                  (ngModelChange)="updateDescription($event)"
+                ></textarea>
+              </div>
+
+              <div class="form-row mt-action">
+                <div class="form-group">
+                  <span>Precio ({{ c.currency_id || 'ARS' }})</span>
+                  <input
+                    type="number"
+                    class="input-text"
+                    min="0"
+                    [ngModel]="form().price"
+                    (ngModelChange)="updateField('price', parseNullableNumber($event))"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <span>Stock Disponible</span>
+                  <input
+                    type="number"
+                    class="input-text"
+                    min="0"
+                    [ngModel]="form().available_quantity"
+                    (ngModelChange)="updateField('available_quantity', parseNullableNumber($event))"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <span>Estado actual</span>
+                  <select class="input-text" [ngModel]="form().status" (ngModelChange)="updateField('status', $event)">
+                    <option value="active">Activo</option>
+                    <option value="paused">Pausado</option>
+                    <option value="closed">Cerrado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-actions mt-action">
+                <button class="button-primary submit-edge" type="button" [disabled]="saving() || !hasPendingChanges()" (click)="submit()">
+                  {{ saving() ? 'Guardando en ML...' : 'Preservar Modificaciones' }}
                 </button>
               </div>
-              <textarea
-                class="input-text desc-textarea"
-                rows="8"
-                placeholder="Escribe la descripción pública del producto aquí..."
-                [ngModel]="form().description"
-                (ngModelChange)="updateDescription($event)"
-              ></textarea>
             </div>
-
-            <div class="form-row mt-action">
-              <div class="form-group">
-                <span>Precio ({{ c.currency_id || 'ARS' }})</span>
-                <input
-                  type="number"
-                  class="input-text"
-                  min="0"
-                  [ngModel]="form().price"
-                  (ngModelChange)="updateField('price', parseNullableNumber($event))"
-                />
-              </div>
-
-              <div class="form-group">
-                <span>Stock Disponible</span>
-                <input
-                  type="number"
-                  class="input-text"
-                  min="0"
-                  [ngModel]="form().available_quantity"
-                  (ngModelChange)="updateField('available_quantity', parseNullableNumber($event))"
-                />
-              </div>
-
-              <div class="form-group">
-                <span>Estado actual</span>
-                <select class="input-text" [ngModel]="form().status" (ngModelChange)="updateField('status', $event)">
-                  <option value="active">Activo</option>
-                  <option value="paused">Pausado</option>
-                  <option value="closed">Cerrado</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-actions mt-action">
-              <button class="button-primary submit-edge" type="button" [disabled]="saving() || !hasPendingChanges()" (click)="submit()">
-                {{ saving() ? 'Guardando en ML...' : 'Preservar Modificaciones' }}
-              </button>
-            </div>
-            
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     }
   }
