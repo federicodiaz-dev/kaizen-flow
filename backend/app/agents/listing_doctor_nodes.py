@@ -22,6 +22,7 @@ from app.agents.listing_doctor_prompts import (
     STRATEGY_SYNTHESIS_PROMPT,
 )
 from app.agents.listing_doctor_state import ListingDoctorState
+from app.core.ai_usage_reporting import llm_run_config
 from app.core.exceptions import AppError, MercadoLibreAPIError
 from app.schemas.copywriter import CopywriterGenerateRequest, DescriptionEnhanceRequest
 from app.schemas.listing_doctor import (
@@ -659,7 +660,11 @@ async def _invoke_structured(
             [
                 SystemMessage(content=system_prompt),
                 HumanMessage(content=json.dumps(human_payload, ensure_ascii=False)),
-            ]
+            ],
+            config=llm_run_config(
+                "listing_doctor.structured_output",
+                extra_metadata={"schema": schema.__name__},
+            ),
         )
         parsed = response if isinstance(response, schema) else schema.model_validate(response)
         await _trace_event(

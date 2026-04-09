@@ -33,6 +33,7 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
   private readonly api = inject(AgentsApiService);
   private readonly typewriter = inject(AiTypewriterService);
   readonly accountContext = inject(AccountContextService);
+  private readonly compactViewportQuery = window.matchMedia('(max-width: 900px)');
 
   @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
 
@@ -46,6 +47,7 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
   readonly errorMessage = signal<string | null>(null);
   readonly showSidebar = signal(true);
   readonly assistantTyping = signal(false);
+  readonly isMobileViewport = signal(false);
 
   private shouldScrollToBottom = false;
   private readonly assistantAnimationPrefix = 'agents-assistant-message';
@@ -87,6 +89,17 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
 
   ngOnInit(): void {
     this.destroyRef.onDestroy(() => this.typewriter.cancelPrefix(this.assistantAnimationPrefix));
+    this.syncViewportState(this.compactViewportQuery.matches);
+
+    const handleViewportChange = (event: MediaQueryListEvent): void => {
+      this.syncViewportState(event.matches);
+    };
+
+    this.compactViewportQuery.addEventListener('change', handleViewportChange);
+    this.destroyRef.onDestroy(() =>
+      this.compactViewportQuery.removeEventListener('change', handleViewportChange)
+    );
+
     this.loadThreads();
   }
 
@@ -143,6 +156,9 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
     this.api.getThread(threadId).subscribe({
       next: (detail) => {
         this.activeMessages.set(detail.messages);
+        if (this.isMobileViewport()) {
+          this.showSidebar.set(false);
+        }
         this.shouldScrollToBottom = true;
       },
       error: () => this.errorMessage.set('Error al cargar el hilo.'),
@@ -342,6 +358,11 @@ export class AgentsPageComponent implements OnInit, AfterViewChecked {
 
   toggleSidebar(): void {
     this.showSidebar.update((v) => !v);
+  }
+
+  private syncViewportState(matchesMobile: boolean): void {
+    this.isMobileViewport.set(matchesMobile);
+    this.showSidebar.set(!matchesMobile);
   }
 
   private renderAssistantResponse(threadId: string, response: AgentMessageResponse): void {

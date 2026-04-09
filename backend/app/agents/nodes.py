@@ -6,6 +6,7 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
+from app.core.ai_usage_reporting import llm_run_config
 from app.agents.memory import JsonAgentMemoryStore
 from app.agents.prompts import ACCOUNT_AGENT_PROMPT, INTENT_ANALYST_PROMPT, MARKET_AGENT_PROMPT, SMART_CLARIFICATION_PROMPT
 from app.agents.state import BusinessAssistantState, SpecializedAgentState
@@ -154,7 +155,10 @@ def build_intent_analyst_node(router_llm, worker_llm=None):
         """Attempt structured output, then raw JSON parse, return None if all fail."""
         # Attempt 1: structured output
         try:
-            decision = await llm_to_use.ainvoke(messages)
+            decision = await llm_to_use.ainvoke(
+                messages,
+                config=llm_run_config("agents.intent_routing.structured"),
+            )
             return (
                 decision
                 if isinstance(decision, AgentIntentMetadata)
@@ -165,7 +169,10 @@ def build_intent_analyst_node(router_llm, worker_llm=None):
 
         # Attempt 2: raw invocation + JSON extraction
         try:
-            raw_response = await raw_llm.ainvoke(messages)
+            raw_response = await raw_llm.ainvoke(
+                messages,
+                config=llm_run_config("agents.intent_routing.raw_fallback"),
+            )
             payload = _extract_json_payload(_stringify_message_content(raw_response.content))
             if payload:
                 return AgentIntentMetadata.model_validate(payload)
@@ -298,7 +305,10 @@ def build_clarification_node(clarification_llm=None):
                         )
                     ),
                 ]
-                response = await clarification_llm.ainvoke(messages)
+                response = await clarification_llm.ainvoke(
+                    messages,
+                    config=llm_run_config("agents.clarification"),
+                )
                 text = _stringify_message_content(response.content).strip()
                 if text:
                     return {"final_response": text}
@@ -346,7 +356,10 @@ def build_tool_reasoner_node(bound_model, llm, *, specialist: str):
     async def tool_reasoner(state: SpecializedAgentState) -> dict[str, Any]:
         messages = state.get("messages", [])
         try:
-            response = await bound_model.ainvoke(messages)
+            response = await bound_model.ainvoke(
+                messages,
+                config=llm_run_config(f"agents.{specialist}.tool_reasoner"),
+            )
             return {"messages": [response]}
         except Exception as exc:
             if not _is_tool_use_failed_error(exc):
@@ -368,7 +381,10 @@ def build_tool_reasoner_node(bound_model, llm, *, specialist: str):
 
             recovery_messages = _append_recovery_instruction(messages, specialist=specialist)
             try:
-                recovery_response = await llm.ainvoke(recovery_messages)
+                recovery_response = await llm.ainvoke(
+                    recovery_messages,
+                    config=llm_run_config(f"agents.{specialist}.tool_reasoner_recovery"),
+                )
                 return {"messages": [recovery_response]}
             except Exception:
                 logger.warning(

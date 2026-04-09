@@ -1,5 +1,5 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -20,8 +20,10 @@ export class App {
   readonly accountContext = inject(AccountContextService);
   readonly auth = inject(AuthService);
   readonly onboardingTour = inject(OnboardingTourService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
+  private readonly compactNavQuery = window.matchMedia('(max-width: 820px)');
 
   readonly currentUrl = signal(this.router.url);
   readonly currentAccountLabel = computed(
@@ -49,6 +51,7 @@ export class App {
   });
 
   readonly isDarkMode = signal(false);
+  readonly isCompactNav = signal(this.compactNavQuery.matches);
   readonly isMobileMenuOpen = signal(false);
 
   constructor() {
@@ -56,6 +59,15 @@ export class App {
 
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.isDarkMode.set(prefersDark);
+    this.syncCompactNav(this.compactNavQuery.matches);
+
+    const handleCompactNavChange = (event: MediaQueryListEvent): void => {
+      this.syncCompactNav(event.matches);
+    };
+    this.compactNavQuery.addEventListener('change', handleCompactNavChange);
+    this.destroyRef.onDestroy(() =>
+      this.compactNavQuery.removeEventListener('change', handleCompactNavChange)
+    );
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
@@ -71,6 +83,11 @@ export class App {
       } else {
         this.document.documentElement.setAttribute('data-theme', 'light');
       }
+    });
+
+    effect(() => {
+      const menuOpen = this.isCompactNav() && this.isMobileMenuOpen();
+      this.document.body.style.overflow = menuOpen ? 'hidden' : '';
     });
 
     effect(() => {
@@ -123,6 +140,20 @@ export class App {
   }
 
   toggleMobileMenu(): void {
+    if (!this.isCompactNav()) {
+      return;
+    }
     this.isMobileMenuOpen.update(v => !v);
+  }
+
+  closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
+  }
+
+  private syncCompactNav(matchesCompact: boolean): void {
+    this.isCompactNav.set(matchesCompact);
+    if (!matchesCompact) {
+      this.isMobileMenuOpen.set(false);
+    }
   }
 }

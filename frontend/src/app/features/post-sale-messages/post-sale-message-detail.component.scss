@@ -565,4 +565,61 @@
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .detail-header {
+    padding: 1rem;
+  }
+
+  .premium-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .data-col {
+    padding: 1rem;
+    gap: 1.25rem;
+  }
+
+  .chat-col {
+    border-left: 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .premium-chat-container {
+    position: static;
+    min-height: 0;
+    height: auto;
+  }
+
+  .chat-header,
+  .chat-composer {
+    padding: 1rem;
+  }
+
+  .chat-feed {
+    padding: 1rem;
+    max-height: 24rem;
+  }
+
+  .chat-bubble {
+    max-width: 100%;
+  }
+
+  .order-card__top,
+  .order-card__meta,
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .conversation-title {
+    font-size: 1.35rem;
+  }
+
+  .header-tags,
+  .meta-pills {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

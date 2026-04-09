@@ -13,7 +13,7 @@
 
 .detail-section {
   position: sticky;
-  top: 2rem;
+  top: calc(var(--top-nav-height) + 1rem);
 }
 
 @media (max-width: 960px) {
@@ -22,5 +22,11 @@
   }
   .detail-section {
     position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .feature-layout {
+    gap: 0.85rem;
   }
 }

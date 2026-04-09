@@ -48,6 +48,15 @@ def _to_int(value: Any | None, default: int) -> int:
         return default
 
 
+def _to_optional_int(value: Any | None) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def _to_list(value: Any | None) -> list[str]:
     if value in (None, ""):
         return []
@@ -129,6 +138,10 @@ class AgentSettings:
     default_site_id: str
     history_window: int
     memory_dir: Path
+    token_report_enabled: bool
+    token_report_dir: Path
+    token_budget_tokens: int | None
+    token_budget_window: Literal["daily", "monthly", "all_time"]
     mcp: MCPConnectionSettings
 
     def validate_runtime(self) -> None:
@@ -151,6 +164,15 @@ def get_agent_settings() -> AgentSettings:
     memory_dir = Path(raw_memory_dir)
     if not memory_dir.is_absolute():
         memory_dir = ROOT_DIR / memory_dir
+
+    raw_token_report_dir = str(_first(merged_values, "AI_TOKEN_REPORT_DIR") or "backend/data/ai_usage_reports")
+    token_report_dir = Path(raw_token_report_dir)
+    if not token_report_dir.is_absolute():
+        token_report_dir = ROOT_DIR / token_report_dir
+
+    token_budget_window = str(_first(merged_values, "AI_TOKEN_REPORT_BUDGET_WINDOW") or "monthly").strip().lower()
+    if token_budget_window not in {"daily", "monthly", "all_time"}:
+        token_budget_window = "monthly"
 
     mcp_transport = str(_first(merged_values, "AI_MCP_TRANSPORT") or "http").strip().lower()
     if mcp_transport not in {"http", "stdio"}:
@@ -186,6 +208,10 @@ def get_agent_settings() -> AgentSettings:
         default_site_id=str(_first(merged_values, "AI_DEFAULT_SITE_ID") or "MLA").strip().upper(),
         history_window=_to_int(_first(merged_values, "AI_HISTORY_WINDOW"), 8),
         memory_dir=memory_dir,
+        token_report_enabled=_to_bool(_first(merged_values, "AI_TOKEN_REPORT_ENABLED"), default=True),
+        token_report_dir=token_report_dir,
+        token_budget_tokens=_to_optional_int(_first(merged_values, "AI_TOKEN_REPORT_BUDGET_TOKENS")),
+        token_budget_window=token_budget_window,
         mcp=MCPConnectionSettings(
             enabled=mcp_enabled,
             server_name=str(_first(merged_values, "AI_MCP_SERVER_NAME") or "mercadolibre").strip(),

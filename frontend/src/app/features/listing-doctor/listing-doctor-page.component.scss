@@ -1,7 +1,7 @@
 .listing-doctor-page {
   display: grid;
   gap: 1.25rem;
-  padding: 1.25rem;
+  padding: 0.5rem 0;
 }
 
 .toast-error {
@@ -687,11 +687,42 @@
 
 @media (max-width: 760px) {
   .listing-doctor-page {
+    padding: 0;
+    gap: 1rem;
+  }
+
+  .page-header,
+  .access-warning,
+  .empty-state,
+  .analysis-theater,
+  .coverage-shell,
+  .ai-suggestions,
+  .summary-panel {
     padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  .page-header h1 {
+    font-size: clamp(1.6rem, 8vw, 2rem);
+  }
+
+  .result-nav-shell {
+    padding: 0.9rem;
+    border-radius: 1.25rem;
+  }
+
+  .result-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.65rem;
+    padding-bottom: 0.35rem;
+    scroll-snap-type: x proximity;
   }
 
   .tab-btn {
+    flex: 0 0 15.5rem;
     padding: 0.9rem;
+    scroll-snap-align: start;
   }
 
   .ai-card-header,
@@ -712,8 +743,60 @@
     max-height: 88vh;
   }
 
+  .picker-header,
+  .picker-toolbar {
+    padding: 1rem;
+  }
+
   .picker-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .picker-list {
+    padding: 0.85rem;
+  }
+
+  .picker-item {
+    grid-template-columns: 60px 1fr;
+    gap: 0.75rem;
+    padding: 0.8rem;
+  }
+
+  .picker-thumb {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 520px) {
+  .tab-btn {
+    flex-basis: calc(100vw - 3rem);
+  }
+
+  .picker-backdrop {
+    padding: 0;
+    align-items: end;
+  }
+
+  .picker-panel {
+    width: 100%;
+    max-height: min(92vh, 100dvh);
+    border-radius: 1.5rem 1.5rem 0 0;
+  }
+
+  .picker-item {
+    grid-template-columns: 1fr;
+  }
+
+  .picker-thumb {
+    width: 100%;
+    height: 160px;
+  }
+
+  .picker-top,
+  .picker-meta {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

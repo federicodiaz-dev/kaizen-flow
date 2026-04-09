@@ -153,3 +153,24 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+@media (max-width: 540px) {
+  .hero-score,
+  .summary-card,
+  .diagnosis-card {
+    padding: 1rem;
+  }
+
+  .score-cards,
+  .kv-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .score-orb {
+    min-height: 150px;
+  }
+
+  .score-orb strong {
+    font-size: 2.45rem;
+  }
+}

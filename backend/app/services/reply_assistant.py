@@ -7,6 +7,7 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.agents.config import AgentSettings, get_agent_settings
+from app.core.ai_usage_reporting import create_chat_groq, llm_run_config
 from app.core.exceptions import AppError, BadRequestError
 from app.schemas.claims import ClaimDetail
 from app.schemas.items import ItemDetail
@@ -74,13 +75,12 @@ class ReplyAssistantService:
         if self._llm is not None:
             return self._llm
 
-        from langchain_groq import ChatGroq
-
         self._settings.validate_runtime()
-        self._llm = ChatGroq(
-            api_key=self._settings.groq_api_key,
+        self._llm = create_chat_groq(
+            self._settings,
             model=self._settings.groq_model,
             temperature=0.2,
+            feature="reply_assistant",
             max_retries=2,
         )
         return self._llm
@@ -99,7 +99,11 @@ class ReplyAssistantService:
 
         item_detail = await self._load_item_context(account_key, question)
         prompt = self._build_question_prompt(question=question, item_detail=item_detail, payload=payload)
-        draft = await self._invoke_plain_text(prompt, fallback=self._fallback_question_draft(question, item_detail))
+        draft = await self._invoke_plain_text(
+            prompt,
+            fallback=self._fallback_question_draft(question, item_detail),
+            operation="reply_assistant.question_draft",
+        )
         return QuestionDraftResponse(draft_answer=draft)
 
     async def suggest_claim_message(
@@ -119,6 +123,7 @@ class ReplyAssistantService:
         draft = await self._invoke_plain_text(
             prompt,
             fallback=self._fallback_claim_draft(claim, receiver_role),
+            operation="reply_assistant.claim_draft",
         )
         return ClaimDraftResponse(draft_message=draft)
 
@@ -147,6 +152,7 @@ class ReplyAssistantService:
         draft = await self._invoke_plain_text(
             prompt,
             fallback=self._fallback_post_sale_draft(conversation, item_detail),
+            operation="reply_assistant.post_sale_draft",
         )
         return PostSaleDraftResponse(draft_message=draft)
 
@@ -391,10 +397,11 @@ class ReplyAssistantService:
         messages: list[SystemMessage | HumanMessage],
         *,
         fallback: str,
+        operation: str,
     ) -> str:
         llm = self._get_llm()
         try:
-            response = await llm.ainvoke(messages)
+            response = await llm.ainvoke(messages, config=llm_run_config(operation))
             content = response.content if isinstance(response.content, str) else str(response.content)
             cleaned = self._clean_plain_text(content)
             return cleaned or fallback

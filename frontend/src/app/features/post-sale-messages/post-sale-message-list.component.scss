@@ -185,3 +185,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 720px) {
+  .list-container {
+    max-height: none;
+  }
+
+  .list-content {
+    overflow-y: visible;
+    padding: 0.85rem 0.75rem;
+  }
+
+  .list-item {
+    padding: 1rem;
+    gap: 0.7rem;
+  }
+
+  .item-top,
+  .item-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+}

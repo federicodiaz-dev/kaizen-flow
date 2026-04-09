@@ -308,4 +308,39 @@
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .detail-header,
+  .detail-body {
+    padding: 1rem;
+  }
+
+  .detail-body {
+    gap: 1.25rem;
+  }
+
+  .empty-state {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .question-text {
+    font-size: 1.15rem;
+  }
+
+  .data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reply-form .form-actions,
+  .reply-form .button-primary,
+  .reply-form .ai-enhance-btn {
+    width: 100%;
+  }
+
+  .reply-form .form-actions {
+    justify-content: stretch;
+  }
+
+  .reply-shortcut {
+    margin-top: 0;
+  }
 }

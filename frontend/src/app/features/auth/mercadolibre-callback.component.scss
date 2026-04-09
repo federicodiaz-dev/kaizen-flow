@@ -62,3 +62,30 @@ h1 {
   font-weight: 700;
   cursor: pointer;
 }
+
+@media (max-width: 640px) {
+  .oauth-callback-page {
+    align-items: start;
+    padding: 0.85rem;
+  }
+
+  .callback-card {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    border-radius: 22px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+  }
+
+  .message {
+    line-height: 1.55;
+    margin: 0.85rem 0 1.1rem;
+  }
+
+  .continue-btn {
+    width: 100%;
+    min-height: 50px;
+  }
+}

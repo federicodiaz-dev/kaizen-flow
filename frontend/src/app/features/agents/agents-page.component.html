@@ -7,6 +7,10 @@
     </div>
   }
 
+  @if (showSidebar()) {
+    <button type="button" class="rail-backdrop" (click)="toggleSidebar()" aria-label="Cerrar historial"></button>
+  }
+
   <aside class="threads-rail" [class.collapsed]="!showSidebar()" data-tour-id="agents-history">
     <div class="rail-header">
       <div>

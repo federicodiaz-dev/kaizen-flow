@@ -5,6 +5,7 @@ import re
 
 from app.agents.config import AgentSettings, get_agent_settings
 from app.agents.prompts import DESCRIPTION_ENHANCER_PROMPT, LISTING_COPYWRITER_PROMPT
+from app.core.ai_usage_reporting import create_chat_groq, llm_run_config
 from app.schemas.copywriter import (
     CopywriterGenerateRequest,
     CopywriterGenerateResponse,
@@ -26,13 +27,12 @@ class CopywriterService:
         if self._llm is not None:
             return self._llm
 
-        from langchain_groq import ChatGroq
-
         self._settings.validate_runtime()
-        self._llm = ChatGroq(
-            api_key=self._settings.groq_api_key,
+        self._llm = create_chat_groq(
+            self._settings,
             model=self._settings.groq_model,
             temperature=0.7,
+            feature="copywriter",
             max_retries=2,
         )
         return self._llm
@@ -56,7 +56,10 @@ class CopywriterService:
             HumanMessage(content=user_data),
         ]
 
-        response = await llm.ainvoke(messages)
+        response = await llm.ainvoke(
+            messages,
+            config=llm_run_config("copywriter.generate_listing"),
+        )
         raw_text = response.content if isinstance(response.content, str) else str(response.content)
 
         titles, description = self._parse_generate_output(raw_text)
@@ -95,7 +98,10 @@ class CopywriterService:
             HumanMessage(content="\n".join(context_parts)),
         ]
 
-        response = await llm.ainvoke(messages)
+        response = await llm.ainvoke(
+            messages,
+            config=llm_run_config("copywriter.enhance_description"),
+        )
         raw_text = response.content if isinstance(response.content, str) else str(response.content)
 
         return DescriptionEnhanceResponse(enhanced_description=raw_text.strip())

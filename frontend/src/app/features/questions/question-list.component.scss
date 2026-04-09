@@ -167,3 +167,38 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 720px) {
+  .list-container {
+    max-height: none;
+  }
+
+  .list-content {
+    overflow-y: visible;
+    padding: 0.75rem;
+  }
+
+  .list-item {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .item-top,
+  .item-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+
+  .item-title {
+    font-size: 1rem;
+  }
+
+  .truncate {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}

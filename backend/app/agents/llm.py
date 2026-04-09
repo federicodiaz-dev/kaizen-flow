@@ -1,28 +1,24 @@
 from __future__ import annotations
 
 from app.agents.config import AgentSettings
+from app.core.ai_usage_reporting import create_chat_groq
 
 
 def build_chat_models(settings: AgentSettings) -> tuple[object, object]:
-    try:
-        from langchain_groq import ChatGroq
-    except ImportError as exc:  # pragma: no cover
-        raise RuntimeError(
-            "Missing AI dependencies. Install the updated backend requirements to enable the assistant.",
-        ) from exc
-
     settings.validate_runtime()
 
-    router_llm = ChatGroq(
-        api_key=settings.groq_api_key,
+    router_llm = create_chat_groq(
+        settings,
         model=settings.groq_router_model,
         temperature=settings.router_temperature,
+        feature="agents.router",
         max_retries=2,
     )
-    worker_llm = ChatGroq(
-        api_key=settings.groq_api_key,
+    worker_llm = create_chat_groq(
+        settings,
         model=settings.groq_model,
         temperature=settings.temperature,
+        feature="agents.worker",
         max_retries=2,
     )
     return router_llm, worker_llm

@@ -215,3 +215,18 @@
     justify-self: start;
   }
 }
+
+@media (max-width: 540px) {
+  .progress-shell {
+    padding: 1rem;
+  }
+
+  .focus-card {
+    grid-template-columns: 1fr;
+  }
+
+  .focus-badge {
+    min-width: 48px;
+    min-height: 48px;
+  }
+}

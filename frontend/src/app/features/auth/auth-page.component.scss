@@ -225,9 +225,143 @@
 
   .auth-grid {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 
   .card-header {
     flex-direction: column;
+  }
+
+  .auth-card {
+    order: 1;
+  }
+
+  .auth-copy {
+    order: 2;
+    padding: 0.35rem 0.15rem 0;
+  }
+
+  .auth-copy h1 {
+    max-width: none;
+    font-size: clamp(1.85rem, 8vw, 2.6rem);
+  }
+
+  .intro-copy {
+    max-width: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .auth-page {
+    padding: 1rem 0.9rem;
+    min-height: 100dvh;
+  }
+
+  .auth-grid {
+    gap: 1rem;
+  }
+
+  .auth-card {
+    padding: 1rem;
+    border-radius: 22px;
+  }
+
+  .card-header {
+    margin-bottom: 1rem;
+    gap: 1rem;
+  }
+
+  .mode-switch {
+    width: 100%;
+
+    a {
+      flex: 1;
+      text-align: center;
+    }
+  }
+
+  .auth-copy {
+    display: grid;
+    gap: 0.75rem;
+    padding-top: 0;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    margin-bottom: 0.35rem;
+  }
+
+  .eyebrow {
+    margin-bottom: 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .auth-copy h1 {
+    font-size: clamp(1.55rem, 7vw, 2rem);
+    line-height: 1.1;
+  }
+
+  .intro-copy {
+    margin-top: 0;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .benefits-card {
+    margin-top: 0;
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.3rem;
+    scroll-snap-type: x proximity;
+  }
+
+  .benefit-item {
+    min-width: min(17rem, 85vw);
+    flex: 0 0 auto;
+    padding: 0.8rem 0.9rem;
+    scroll-snap-align: start;
+
+    strong {
+      margin-bottom: 0.25rem;
+      font-size: 0.88rem;
+    }
+
+    span {
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+  }
+
+  .form-stack {
+    gap: 0.9rem;
+  }
+
+  .form-field span,
+  .form-footnote {
+    font-size: 0.84rem;
+  }
+
+  .input-text,
+  .submit-btn {
+    min-height: 50px;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 0.75rem;
+  }
+
+  .auth-card {
+    padding: 0.9rem;
+  }
+
+  .benefit-item {
+    min-width: calc(100vw - 1.5rem);
   }
 }
