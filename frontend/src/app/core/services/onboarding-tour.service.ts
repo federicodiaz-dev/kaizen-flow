@@ -193,7 +193,7 @@ export class OnboardingTourService {
       () => {
         const pendingTour = this.pendingTour();
         const isFirstVisit = this.auth.user()?.is_first_visit ?? false;
-        const hasActiveAccess = this.accountContext.hasActiveAccess();
+        const hasActiveAccess = this.auth.hasActiveSubscription();
         const accountCount = this.accountContext.accountCount();
         const currentPath = this.currentPath();
         const isAuthScreen = currentPath.startsWith('/auth/');

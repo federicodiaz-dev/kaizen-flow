@@ -35,6 +35,11 @@ class BadRequestError(AppError):
         super().__init__(message=message, status_code=400, code="bad_request", details=details)
 
 
+class ConflictError(AppError):
+    def __init__(self, message: str, details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=409, code="conflict_error", details=details)
+
+
 class AuthenticationError(AppError):
     def __init__(self, message: str = "Authentication required.", details: Any | None = None) -> None:
         super().__init__(message=message, status_code=401, code="authentication_error", details=details)
@@ -45,13 +50,19 @@ class AuthorizationError(AppError):
         super().__init__(message=message, status_code=403, code="authorization_error", details=details)
 
 
-class AccountInactiveError(AppError):
-    def __init__(
-        self,
-        message: str = "La cuenta está vinculada, pero su membresía está inactiva.",
-        details: Any | None = None,
-    ) -> None:
-        super().__init__(message=message, status_code=403, code="account_inactive", details=details)
+class SubscriptionInactiveError(AppError):
+    def __init__(self, message: str = "La membresia del workspace no esta activa.", details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=403, code="subscription_inactive", details=details)
+
+
+class CSRFError(AppError):
+    def __init__(self, message: str = "CSRF token invalido.", details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=403, code="csrf_error", details=details)
+
+
+class RateLimitError(AppError):
+    def __init__(self, message: str = "Too many requests.", details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=429, code="rate_limit_error", details=details)
 
 
 class MercadoLibreAPIError(AppError):

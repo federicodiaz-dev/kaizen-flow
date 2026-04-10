@@ -967,6 +967,183 @@
   }
   .wa-float:hover .wa-tooltip { opacity: 1; transform: translateX(0); }
 
+  .checkout-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+    display: none;
+  }
+  .checkout-modal.open { display: block; }
+  .checkout-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(3, 7, 18, 0.82);
+    backdrop-filter: blur(18px);
+  }
+  .checkout-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(560px, calc(100% - 32px));
+    margin: 6vh auto 0;
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background:
+      radial-gradient(circle at top right, rgba(59,130,246,0.12), transparent 40%),
+      linear-gradient(180deg, rgba(9,9,11,0.98), rgba(24,24,27,0.98));
+    box-shadow: 0 30px 90px rgba(2, 6, 23, 0.45);
+    padding: 28px;
+  }
+  .checkout-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    font-size: 1.3rem;
+    cursor: pointer;
+  }
+  .checkout-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(59,130,246,0.28);
+    background: rgba(59,130,246,0.12);
+    color: var(--accent2);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .checkout-title {
+    font-size: clamp(1.7rem, 3vw, 2.3rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    margin-bottom: 10px;
+  }
+  .checkout-copy {
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .checkout-plan {
+    display: grid;
+    gap: 6px;
+    padding: 18px;
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 18px;
+    background: rgba(59,130,246,0.08);
+    margin-bottom: 18px;
+  }
+  .checkout-plan span {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .checkout-plan strong {
+    font-size: 1.15rem;
+  }
+  .checkout-plan small {
+    color: var(--accent2);
+    font-size: 0.92rem;
+  }
+  .checkout-switch {
+    display: inline-flex;
+    padding: 4px;
+    gap: 4px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    margin-bottom: 18px;
+  }
+  .checkout-switch button {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 10px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .checkout-switch button.active {
+    color: var(--text);
+    background: rgba(59,130,246,0.16);
+  }
+  .checkout-form {
+    display: grid;
+    gap: 14px;
+  }
+  .checkout-field {
+    display: grid;
+    gap: 7px;
+  }
+  .checkout-field span {
+    color: var(--text);
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+  .checkout-field input {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(9,9,11,0.9);
+    color: var(--text);
+    padding: 14px 16px;
+    font-size: 0.98rem;
+    outline: none;
+  }
+  .checkout-field input:focus {
+    border-color: rgba(96,165,250,0.9);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+  }
+  .checkout-field.is-hidden { display: none; }
+  .checkout-banner {
+    display: none;
+    padding: 13px 14px;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .checkout-banner[data-tone="error"] {
+    display: block;
+    border: 1px solid rgba(239,68,68,0.3);
+    background: rgba(239,68,68,0.1);
+    color: #fca5a5;
+  }
+  .checkout-banner[data-tone="success"] {
+    display: block;
+    border: 1px solid rgba(16,185,129,0.3);
+    background: rgba(16,185,129,0.11);
+    color: #86efac;
+  }
+  .checkout-submit {
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    padding: 15px 18px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 18px 40px rgba(37,99,235,0.22);
+  }
+  .checkout-submit[disabled] {
+    cursor: progress;
+    opacity: 0.7;
+    box-shadow: none;
+  }
+  .checkout-note {
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+
   /* ── FOOTER ── */
   footer {
     border-top: 1px solid var(--border);
@@ -1020,6 +1197,7 @@
     .stat-item:last-child { border-bottom: none; }
     .custom-band { flex-direction: column; text-align: center; }
     .nav-links { display: none; }
+    .checkout-modal__panel { margin-top: 4vh; padding: 22px; }
   }
 
   /* Animated gradient text shimmer on hover */
@@ -1400,7 +1578,7 @@
           <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Quick wins automáticos</span></div>
           <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Copywriter ilimitado</span></div>
         </div>
-        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Starter%20de%20Kaizen%20Flow" target="_blank" class="plan-cta ghost">Empezar con Starter</a>
+        <button type="button" class="plan-cta ghost" data-plan-code="starter" data-plan-name="Starter">Empezar con Starter</button>
       </div>
 
       <!-- GROWTH (RECOMMENDED) -->
@@ -1423,7 +1601,7 @@
           <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Análisis de precio y oportunidades</span></div>
           <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Multi-cuenta</span></div>
         </div>
-        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Growth%20de%20Kaizen%20Flow" target="_blank" class="plan-cta primary">Probar Growth →</a>
+        <button type="button" class="plan-cta primary" data-plan-code="growth" data-plan-name="Growth">Probar Growth →</button>
       </div>
 
       <!-- SCALE -->
@@ -1446,7 +1624,7 @@
           <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Onboarding personalizado 1:1</span></div>
           <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>API de integraciones (próximamente)</span></div>
         </div>
-        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Scale%20de%20Kaizen%20Flow" target="_blank" class="plan-cta ghost" style="border-color: rgba(245,158,11,0.4); color: var(--gold-light);">Escalar con Scale →</a>
+        <button type="button" class="plan-cta ghost" data-plan-code="scale" data-plan-name="Scale" style="border-color: rgba(245,158,11,0.4); color: var(--gold-light);">Escalar con Scale →</button>
       </div>
     </div>
 
@@ -1510,6 +1688,52 @@
     </div>
   </div>
 </section>
+
+<div class="checkout-modal" id="checkoutModal" aria-hidden="true">
+  <div class="checkout-modal__backdrop" data-close-checkout></div>
+  <div class="checkout-modal__panel">
+    <button type="button" class="checkout-close" id="checkoutClose" aria-label="Cerrar">×</button>
+    <div class="checkout-eyebrow">Alta segura</div>
+    <h3 class="checkout-title">Activa tu plan en segundos</h3>
+    <p class="checkout-copy">La cuenta que crees aqui sera la misma que usaras dentro del programa para mantener todo sincronizado.</p>
+
+    <div class="checkout-plan">
+      <span>Plan seleccionado</span>
+      <strong id="checkoutPlanName">Growth</strong>
+      <small id="checkoutPlanPrice">US$79/mes</small>
+    </div>
+
+    <div class="checkout-switch" id="checkoutModeSwitch">
+      <button type="button" data-auth-mode="register" class="active">Crear cuenta</button>
+      <button type="button" data-auth-mode="login">Ya tengo cuenta</button>
+    </div>
+
+    <form class="checkout-form" id="checkoutForm">
+      <label class="checkout-field">
+        <span>Email</span>
+        <input type="email" id="checkoutEmail" placeholder="tu@email.com" autocomplete="email" required>
+      </label>
+
+      <label class="checkout-field">
+        <span>Contrasena</span>
+        <input type="password" id="checkoutPassword" placeholder="Minimo 8 caracteres" autocomplete="current-password" required>
+      </label>
+
+      <label class="checkout-field" id="checkoutConfirmField">
+        <span>Confirmar contrasena</span>
+        <input type="password" id="checkoutConfirmPassword" placeholder="Repite tu contrasena" autocomplete="new-password">
+      </label>
+
+      <div class="checkout-banner" id="checkoutBanner"></div>
+
+      <button type="submit" class="checkout-submit" id="checkoutSubmit">Crear cuenta y activar plan</button>
+
+      <p class="checkout-note" id="checkoutNote">
+        No se procesa un cobro real en esta fase. Al hacer clic en pagar, la membresia del workspace se activa de inmediato.
+      </p>
+    </form>
+  </div>
+</div>
 
 <!-- FOOTER -->
 <footer>
@@ -1623,6 +1847,237 @@
     });
   }, { threshold: 0.5 });
   if (ldVisual) scoreObserver.observe(ldVisual);
+
+  const checkoutState = {
+    mode: 'register',
+    selectedPlanCode: null,
+    appUrl: '',
+    plans: new Map(),
+  };
+
+  const checkoutModal = document.getElementById('checkoutModal');
+  const checkoutClose = document.getElementById('checkoutClose');
+  const checkoutForm = document.getElementById('checkoutForm');
+  const checkoutModeSwitch = document.getElementById('checkoutModeSwitch');
+  const checkoutPlanName = document.getElementById('checkoutPlanName');
+  const checkoutPlanPrice = document.getElementById('checkoutPlanPrice');
+  const checkoutBanner = document.getElementById('checkoutBanner');
+  const checkoutSubmit = document.getElementById('checkoutSubmit');
+  const checkoutEmail = document.getElementById('checkoutEmail');
+  const checkoutPassword = document.getElementById('checkoutPassword');
+  const checkoutConfirmPassword = document.getElementById('checkoutConfirmPassword');
+  const checkoutConfirmField = document.getElementById('checkoutConfirmField');
+
+  function readCookie(name) {
+    const prefix = `${encodeURIComponent(name)}=`;
+    const match = document.cookie
+      .split(';')
+      .map(part => part.trim())
+      .find(part => part.startsWith(prefix));
+    return match ? decodeURIComponent(match.slice(prefix.length)) : null;
+  }
+
+  async function apiFetch(path, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = new Headers(options.headers || {});
+    const csrfToken = readCookie('kaizen_csrf');
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && csrfToken) {
+      headers.set('X-CSRF-Token', csrfToken);
+    }
+    return fetch(path, {
+      credentials: 'include',
+      ...options,
+      headers,
+    });
+  }
+
+  function resolveRandomKey() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+    return `kf-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function setCheckoutBanner(message = '', tone = 'error') {
+    checkoutBanner.textContent = message;
+    if (!message) {
+      checkoutBanner.removeAttribute('data-tone');
+      return;
+    }
+    checkoutBanner.setAttribute('data-tone', tone);
+  }
+
+  function setCheckoutMode(mode) {
+    checkoutState.mode = mode === 'login' ? 'login' : 'register';
+    checkoutModeSwitch.querySelectorAll('[data-auth-mode]').forEach(button => {
+      button.classList.toggle('active', button.dataset.authMode === checkoutState.mode);
+    });
+    checkoutConfirmField.classList.toggle('is-hidden', checkoutState.mode !== 'register');
+    checkoutSubmit.textContent = checkoutState.mode === 'register'
+      ? 'Crear cuenta y activar plan'
+      : 'Ingresar y activar plan';
+    checkoutPassword.setAttribute('autocomplete', checkoutState.mode === 'register' ? 'new-password' : 'current-password');
+    setCheckoutBanner('');
+  }
+
+  function currentPlan() {
+    return checkoutState.plans.get(checkoutState.selectedPlanCode) || null;
+  }
+
+  function syncSelectedPlan(planCode, fallbackName) {
+    checkoutState.selectedPlanCode = planCode;
+    const plan = currentPlan();
+    checkoutPlanName.textContent = plan ? plan.name : fallbackName || 'Plan';
+    checkoutPlanPrice.textContent = plan ? plan.price_label : 'Activacion inmediata';
+  }
+
+  function openCheckout(planCode, fallbackName) {
+    syncSelectedPlan(planCode, fallbackName);
+    setCheckoutMode('register');
+    checkoutForm.reset();
+    checkoutModal.classList.add('open');
+    checkoutModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => checkoutEmail.focus(), 60);
+  }
+
+  function closeCheckout() {
+    checkoutModal.classList.remove('open');
+    checkoutModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setCheckoutBanner('');
+  }
+
+  async function loadPlans() {
+    try {
+      const response = await apiFetch('/api/public/plans');
+      if (!response.ok) {
+        throw new Error(`public plans ${response.status}`);
+      }
+      const payload = await response.json();
+      checkoutState.appUrl = payload.app_url || '';
+      (payload.items || []).forEach(plan => {
+        checkoutState.plans.set(plan.code, plan);
+      });
+      if (checkoutState.selectedPlanCode) {
+        syncSelectedPlan(checkoutState.selectedPlanCode, checkoutPlanName.textContent);
+      }
+    } catch (error) {
+      console.error('No se pudo cargar el catalogo publico de planes.', error);
+    }
+  }
+
+  document.querySelectorAll('[data-plan-code]').forEach(button => {
+    button.addEventListener('click', () => {
+      openCheckout(button.dataset.planCode, button.dataset.planName);
+    });
+  });
+
+  checkoutClose.addEventListener('click', closeCheckout);
+  checkoutModal.querySelectorAll('[data-close-checkout]').forEach(element => {
+    element.addEventListener('click', closeCheckout);
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && checkoutModal.classList.contains('open')) {
+      closeCheckout();
+    }
+  });
+
+  checkoutModeSwitch.querySelectorAll('[data-auth-mode]').forEach(button => {
+    button.addEventListener('click', () => setCheckoutMode(button.dataset.authMode));
+  });
+
+  checkoutForm.addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const email = checkoutEmail.value.trim();
+    const password = checkoutPassword.value;
+    const confirmPassword = checkoutConfirmPassword.value;
+
+    if (!checkoutState.selectedPlanCode) {
+      setCheckoutBanner('Selecciona un plan antes de continuar.');
+      return;
+    }
+    if (!email || !password) {
+      setCheckoutBanner('Completa tu email y contrasena.');
+      return;
+    }
+    if (checkoutState.mode === 'register' && password !== confirmPassword) {
+      setCheckoutBanner('Las contrasenas no coinciden.');
+      return;
+    }
+
+    checkoutSubmit.disabled = true;
+    setCheckoutBanner('');
+    const originalButtonText = checkoutSubmit.textContent;
+    checkoutSubmit.textContent = checkoutState.mode === 'register' ? 'Creando cuenta...' : 'Ingresando...';
+
+    try {
+      const authPath = checkoutState.mode === 'register' ? '/api/auth/register' : '/api/auth/login';
+      const authPayload = checkoutState.mode === 'register'
+        ? {
+            email,
+            password,
+            workspace_name: (currentPlan() && `${currentPlan().name} Workspace`) || null,
+          }
+        : { email, password };
+
+      const authResponse = await apiFetch(authPath, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authPayload),
+      });
+
+      const authBody = await authResponse.json().catch(() => null);
+      if (!authResponse.ok) {
+        const message = (authBody && authBody.message) || 'No se pudo iniciar el flujo de acceso.';
+        if (checkoutState.mode === 'register' && authResponse.status === 400 && message.toLowerCase().includes('ya existe')) {
+          setCheckoutMode('login');
+          checkoutEmail.value = email;
+          setCheckoutBanner('Ese email ya tiene una cuenta. Inicia sesion con el mismo usuario para activar el plan.');
+        } else {
+          setCheckoutBanner(message);
+        }
+        return;
+      }
+
+      checkoutSubmit.textContent = 'Activando plan...';
+      const billingResponse = await apiFetch('/api/billing/checkout/simulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': resolveRandomKey(),
+        },
+        body: JSON.stringify({ plan_code: checkoutState.selectedPlanCode }),
+      });
+
+      const billingBody = await billingResponse.json().catch(() => null);
+      if (!billingResponse.ok) {
+        const message = (billingBody && billingBody.message) || 'No se pudo activar la membresia.';
+        setCheckoutBanner(message);
+        return;
+      }
+
+      setCheckoutBanner('Plan activado. Te estamos redirigiendo al panel privado...', 'success');
+      checkoutSubmit.textContent = 'Redirigiendo...';
+      const targetBase = (checkoutState.appUrl || '').replace(/\/$/, '');
+      const destination = targetBase ? `${targetBase}/questions` : '/questions';
+      setTimeout(() => {
+        window.location.assign(destination);
+      }, 700);
+    } catch (error) {
+      console.error('No se pudo completar el checkout simulado.', error);
+      setCheckoutBanner('Ocurrio un error inesperado. Vuelve a intentarlo.');
+    } finally {
+      if (!checkoutBanner.getAttribute('data-tone') || checkoutBanner.getAttribute('data-tone') !== 'success') {
+        checkoutSubmit.disabled = false;
+        checkoutSubmit.textContent = originalButtonText;
+      }
+    }
+  });
+
+  loadPlans();
 </script>
 </body>
 </html>

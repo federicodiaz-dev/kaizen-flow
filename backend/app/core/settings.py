@@ -13,6 +13,13 @@ from .env_parser import parse_env_file
 ROOT_DIR = Path(__file__).resolve().parents[3]
 ENV_PATH = ROOT_DIR / ".env"
 
+DEFAULT_LOCAL_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 
 def _first(values: dict[str, Any], *keys: str) -> Any | None:
     for key in keys:
@@ -22,18 +29,37 @@ def _first(values: dict[str, Any], *keys: str) -> Any | None:
     return None
 
 
-def _to_int(value: Any | None) -> int | None:
+def _to_int(value: Any | None, default: int) -> int:
     if value in (None, ""):
-        return None
+        return default
     try:
         return int(str(value))
     except (TypeError, ValueError):
-        return None
+        return default
+
+
+def _to_bool(value: Any | None, default: bool = False) -> bool:
+    if value in (None, ""):
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _normalize_same_site(value: Any | None, default: str = "lax") -> str:
+    normalized = str(value or default).strip().lower()
+    if normalized not in {"lax", "strict", "none"}:
+        return default
+    return normalized
+
+
+def _split_csv(value: Any | None) -> list[str]:
+    if value in (None, ""):
+        return []
+    return [item.strip() for item in str(value).split(",") if item.strip()]
 
 
 def _slugify(text: str) -> str:
-    normalized = re.sub(r"[^a-zA-Z0-9]+", "_", text).strip("_").lower()
-    return normalized or "legacy"
+    normalized = re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
+    return normalized or "workspace"
 
 
 @dataclass(slots=True)
@@ -44,7 +70,7 @@ class AccountCredentials:
     refresh_token: str | None = None
     scope: str | None = None
     user_id: int | None = None
-    source: str = "env"
+    source: str = "oauth"
     is_active: bool = True
 
 
@@ -59,100 +85,55 @@ class Settings:
     client_secret: str
     redirect_uri: str | None
     frontend_origin: str
-    database_path: Path
+    landing_origin: str
+    public_app_url: str
+    cors_allowed_origins: list[str]
+    trusted_hosts: list[str]
+    database_url: str
+    legacy_database_path: Path
     session_cookie_name: str
     session_cookie_secure: bool
+    session_cookie_same_site: str
+    session_cookie_domain: str | None
     session_ttl_hours: int
-    default_account: str
-    accounts: dict[str, AccountCredentials]
-
-
-def _load_prefixed_account(values: dict[str, Any], account_key: str, label: str) -> AccountCredentials | None:
-    prefix = f"ML_{account_key.upper()}"
-    access_token = _first(values, f"{prefix}_ACCESS_TOKEN", f"{prefix}_TOKEN")
-    if not access_token:
-        return None
-
-    return AccountCredentials(
-        key=account_key,
-        label=label,
-        access_token=str(access_token),
-        refresh_token=_first(values, f"{prefix}_REFRESH_TOKEN"),
-        scope=_first(values, f"{prefix}_SCOPE"),
-        user_id=_to_int(_first(values, f"{prefix}_USER_ID")),
-        source="env_prefixed",
-    )
-
-
-def _load_legacy_account(values: dict[str, Any]) -> AccountCredentials | None:
-    access_token = _first(values, "ML_ACCESS_TOKEN", "ACCESS_TOKEN", "access_token")
-    if not access_token:
-        return None
-
-    return AccountCredentials(
-        key="seller",
-        label="Seller",
-        access_token=str(access_token),
-        refresh_token=_first(values, "ML_REFRESH_TOKEN", "REFRESH_TOKEN", "refresh_token"),
-        scope=_first(values, "ML_SCOPE", "SCOPE", "scope"),
-        user_id=_to_int(_first(values, "ML_USER_ID", "USER_ID", "user_id")),
-        source="env_legacy",
-    )
-
-
-def _load_json_accounts(json_blocks: list[dict[str, Any]], accounts: dict[str, AccountCredentials]) -> None:
-    seen_tokens = {account.access_token for account in accounts.values()}
-    seen_users = {account.user_id for account in accounts.values() if account.user_id is not None}
-
-    for index, block in enumerate(json_blocks, start=1):
-        access_token = block.get("access_token")
-        if not access_token or access_token in seen_tokens:
-            continue
-
-        user_id = _to_int(block.get("user_id"))
-        if user_id is not None and user_id in seen_users:
-            continue
-
-        suggested_name = block.get("account_type") or block.get("label") or block.get("name") or f"legacy_{index}"
-        key = _slugify(str(suggested_name))
-        while key in accounts:
-            key = f"{key}_{index}"
-
-        accounts[key] = AccountCredentials(
-            key=key,
-            label=str(block.get("label") or block.get("name") or f"Legacy {index}"),
-            access_token=str(access_token),
-            refresh_token=str(block["refresh_token"]) if block.get("refresh_token") else None,
-            scope=str(block["scope"]) if block.get("scope") else None,
-            user_id=user_id,
-            source=f"env_json:{index}",
-        )
-        seen_tokens.add(str(access_token))
-        if user_id is not None:
-            seen_users.add(user_id)
+    csrf_cookie_name: str
+    csrf_cookie_secure: bool
+    csrf_cookie_same_site: str
+    csrf_cookie_domain: str | None
+    encryption_key: str
+    password_pepper: str | None
+    auth_rate_limit_requests: int
+    auth_rate_limit_window_seconds: int
+    checkout_rate_limit_requests: int
+    checkout_rate_limit_window_seconds: int
+    security_headers_enabled: bool
+    serve_landing_from_backend: bool
+    default_plan_code: str
 
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    env_file_values, json_blocks = parse_env_file(ENV_PATH)
+    env_file_values, _ = parse_env_file(ENV_PATH)
     merged_values: dict[str, Any] = {**env_file_values, **os.environ}
 
-    accounts: dict[str, AccountCredentials] = {}
-    for key, label in (("seller", "Seller"), ("personal", "Personal"), ("buyer", "Buyer")):
-        account = _load_prefixed_account(merged_values, key, label)
-        if account:
-            accounts[key] = account
+    frontend_origin = str(_first(merged_values, "FRONTEND_ORIGIN") or "http://localhost:4200").rstrip("/")
+    landing_origin = str(_first(merged_values, "LANDING_ORIGIN") or frontend_origin).rstrip("/")
+    public_app_url = str(_first(merged_values, "PUBLIC_APP_URL") or frontend_origin).rstrip("/")
 
-    legacy_account = _load_legacy_account(merged_values)
-    if legacy_account and "seller" not in accounts:
-        accounts["seller"] = legacy_account
-
-    _load_json_accounts(json_blocks, accounts)
-
-    default_account = str(
-        _first(merged_values, "ML_DEFAULT_ACCOUNT")
-        or ("seller" if "seller" in accounts else next(iter(accounts), "seller"))
+    database_url = str(_first(merged_values, "APP_DATABASE_URL", "DATABASE_URL", "POSTGRES_URL") or "").strip()
+    legacy_db_raw = str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")
+    legacy_database_path = (
+        Path(legacy_db_raw).resolve() if Path(legacy_db_raw).is_absolute() else (ROOT_DIR / legacy_db_raw).resolve()
     )
+
+    configured_origins = _split_csv(_first(merged_values, "CORS_ALLOWED_ORIGINS"))
+    cors_allowed_origins = []
+    for origin in [landing_origin, frontend_origin, *configured_origins, *DEFAULT_LOCAL_ORIGINS]:
+        normalized = origin.rstrip("/")
+        if normalized and normalized not in cors_allowed_origins:
+            cors_allowed_origins.append(normalized)
+
+    trusted_hosts = _split_csv(_first(merged_values, "TRUSTED_HOSTS"))
 
     return Settings(
         app_name="Kaizen Flow API",
@@ -165,13 +146,41 @@ def get_settings() -> Settings:
         app_id=str(_first(merged_values, "ML_APP_ID") or ""),
         client_secret=str(_first(merged_values, "ML_CLIENT_SECRET") or ""),
         redirect_uri=str(_first(merged_values, "ML_REDIRECT_URI")) if _first(merged_values, "ML_REDIRECT_URI") else None,
-        frontend_origin=str(_first(merged_values, "FRONTEND_ORIGIN") or "http://localhost:4200"),
-        database_path=Path(str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")).resolve()
-        if Path(str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")).is_absolute()
-        else ROOT_DIR / str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3"),
+        frontend_origin=frontend_origin,
+        landing_origin=landing_origin,
+        public_app_url=public_app_url,
+        cors_allowed_origins=cors_allowed_origins,
+        trusted_hosts=trusted_hosts,
+        database_url=database_url,
+        legacy_database_path=legacy_database_path,
         session_cookie_name=str(_first(merged_values, "SESSION_COOKIE_NAME") or "kaizen_session"),
-        session_cookie_secure=str(_first(merged_values, "SESSION_COOKIE_SECURE") or "").strip().lower() in {"1", "true", "yes", "on"},
-        session_ttl_hours=_to_int(_first(merged_values, "SESSION_TTL_HOURS")) or (24 * 14),
-        default_account=default_account,
-        accounts=accounts,
+        session_cookie_secure=_to_bool(_first(merged_values, "SESSION_COOKIE_SECURE"), default=False),
+        session_cookie_same_site=_normalize_same_site(_first(merged_values, "SESSION_COOKIE_SAME_SITE"), default="lax"),
+        session_cookie_domain=str(_first(merged_values, "SESSION_COOKIE_DOMAIN")).strip()
+        if _first(merged_values, "SESSION_COOKIE_DOMAIN")
+        else None,
+        session_ttl_hours=_to_int(_first(merged_values, "SESSION_TTL_HOURS"), default=24 * 14),
+        csrf_cookie_name=str(_first(merged_values, "CSRF_COOKIE_NAME") or "kaizen_csrf"),
+        csrf_cookie_secure=_to_bool(_first(merged_values, "CSRF_COOKIE_SECURE"), default=False),
+        csrf_cookie_same_site=_normalize_same_site(_first(merged_values, "CSRF_COOKIE_SAME_SITE"), default="lax"),
+        csrf_cookie_domain=str(_first(merged_values, "CSRF_COOKIE_DOMAIN")).strip()
+        if _first(merged_values, "CSRF_COOKIE_DOMAIN")
+        else None,
+        encryption_key=str(_first(merged_values, "APP_ENCRYPTION_KEY") or "").strip(),
+        password_pepper=str(_first(merged_values, "PASSWORD_PEPPER")).strip()
+        if _first(merged_values, "PASSWORD_PEPPER")
+        else None,
+        auth_rate_limit_requests=_to_int(_first(merged_values, "AUTH_RATE_LIMIT_REQUESTS"), default=8),
+        auth_rate_limit_window_seconds=_to_int(_first(merged_values, "AUTH_RATE_LIMIT_WINDOW_SECONDS"), default=60),
+        checkout_rate_limit_requests=_to_int(_first(merged_values, "CHECKOUT_RATE_LIMIT_REQUESTS"), default=12),
+        checkout_rate_limit_window_seconds=_to_int(
+            _first(merged_values, "CHECKOUT_RATE_LIMIT_WINDOW_SECONDS"),
+            default=300,
+        ),
+        security_headers_enabled=_to_bool(_first(merged_values, "SECURITY_HEADERS_ENABLED"), default=True),
+        serve_landing_from_backend=_to_bool(_first(merged_values, "SERVE_LANDING_FROM_BACKEND"), default=True),
+        default_plan_code=str(_first(merged_values, "DEFAULT_PLAN_CODE") or "growth"),
     )
+
+
+__all__ = ["AccountCredentials", "ENV_PATH", "ROOT_DIR", "Settings", "_slugify", "get_settings"]

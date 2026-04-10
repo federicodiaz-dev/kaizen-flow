@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, finalize, firstValueFrom, map, of, tap } from 'rxjs';
 
-import { SessionResponse, UserProfile } from '../models/auth.models';
+import { SessionResponse, SubscriptionProfile, UserProfile, WorkspaceProfile } from '../models/auth.models';
 
 
 @Injectable({ providedIn: 'root' })
@@ -12,10 +12,15 @@ export class AuthService {
   private readonly router = inject(Router);
 
   readonly user = signal<UserProfile | null>(null);
+  readonly workspace = signal<WorkspaceProfile | null>(null);
+  readonly subscription = signal<SubscriptionProfile | null>(null);
   readonly initialized = signal(false);
   readonly initializing = signal(false);
   readonly submitting = signal(false);
   readonly isAuthenticated = computed(() => this.user() !== null);
+  readonly hasActiveSubscription = computed(() => this.subscription()?.is_active ?? false);
+  readonly currentPlanCode = computed(() => this.subscription()?.plan_code ?? null);
+  readonly currentPlanName = computed(() => this.subscription()?.plan_name ?? null);
 
   private bootstrapPromise: Promise<void> | null = null;
 
@@ -30,12 +35,12 @@ export class AuthService {
     this.initializing.set(true);
     this.bootstrapPromise = firstValueFrom(
       this.http.get<SessionResponse>('/api/auth/me').pipe(
-        tap((response) => this.user.set(response.user)),
+        tap((response) => this.applySession(response)),
         catchError((error: unknown) => {
           if (!(error instanceof HttpErrorResponse) || error.status !== 401) {
-            console.error('No se pudo restaurar la sesión.', error);
+            console.error('No se pudo restaurar la sesion.', error);
           }
-          this.user.set(null);
+          this.clearSession();
           return of(null);
         }),
         finalize(() => {
@@ -49,14 +54,18 @@ export class AuthService {
     return this.bootstrapPromise;
   }
 
-  register(email: string, password: string) {
+  register(email: string, password: string, workspaceName?: string) {
     this.submitting.set(true);
-    return this.http.post<SessionResponse>('/api/auth/register', { email, password }).pipe(
-      map((response) => response.user),
-      tap((user) => {
-        this.user.set(user);
+    return this.http.post<SessionResponse>('/api/auth/register', {
+      email,
+      password,
+      workspace_name: workspaceName?.trim() || null,
+    }).pipe(
+      tap((response) => {
+        this.applySession(response);
         this.initialized.set(true);
       }),
+      map((response) => response.user),
       finalize(() => this.submitting.set(false)),
     );
   }
@@ -64,11 +73,11 @@ export class AuthService {
   login(email: string, password: string) {
     this.submitting.set(true);
     return this.http.post<SessionResponse>('/api/auth/login', { email, password }).pipe(
-      map((response) => response.user),
-      tap((user) => {
-        this.user.set(user);
+      tap((response) => {
+        this.applySession(response);
         this.initialized.set(true);
       }),
+      map((response) => response.user),
       finalize(() => this.submitting.set(false)),
     );
   }
@@ -81,13 +90,15 @@ export class AuthService {
 
   clearSession(): void {
     this.user.set(null);
+    this.workspace.set(null);
+    this.subscription.set(null);
     this.initialized.set(true);
   }
 
   completeOnboarding() {
     return this.http.post<SessionResponse>('/api/auth/onboarding/complete', {}).pipe(
+      tap((response) => this.applySession(response)),
       map((response) => response.user),
-      tap((user) => this.user.set(user)),
     );
   }
 
@@ -110,5 +121,11 @@ export class AuthService {
     const query = params.toString();
     const url = query ? `/api/auth/mercadolibre/connect?${query}` : '/api/auth/mercadolibre/connect';
     window.location.assign(url);
+  }
+
+  private applySession(response: SessionResponse): void {
+    this.user.set(response.user);
+    this.workspace.set(response.workspace);
+    this.subscription.set(response.subscription);
   }
 }

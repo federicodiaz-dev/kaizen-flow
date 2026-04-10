@@ -16,9 +16,11 @@ from app.adapters.questions import QuestionsAdapter
 from app.clients.mercadolibre import MercadoLibreClient
 from app.core.account_store import AccountStore
 from app.core.database import Database
-from app.core.exceptions import AuthenticationError
+from app.core.exceptions import AuthenticationError, CSRFError, SubscriptionInactiveError
+from app.core.rate_limit import rate_limiter
+from app.core.security import safe_compare
 from app.core.settings import Settings, get_settings as load_core_settings
-from app.schemas.auth import UserProfile
+from app.services.billing import BillingService
 from app.services.accounts import AccountsService
 from app.services.auth import AuthService, AuthenticatedUser
 from app.services.claims import ClaimsService
@@ -27,6 +29,7 @@ from app.services.items import ItemsService
 from app.services.listing_doctor import ListingDoctorService
 from app.services.market_insights import MarketInsightsService
 from app.services.post_sale_messages import PostSaleMessagesService
+from app.services.public_catalog import PublicCatalogService
 from app.services.questions import QuestionsService
 
 
@@ -42,7 +45,7 @@ def get_database(request: Request) -> Database:
     database = getattr(request.app.state, "database", None)
     if database is None:
         settings = get_settings(request)
-        database = Database(settings.database_path)
+        database = Database(settings.database_url)
         database.initialize()
         request.app.state.database = database
     return database
@@ -86,12 +89,15 @@ def get_current_user(
 
 def get_account_store(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
     database: Annotated[Database, Depends(get_database)],
 ) -> AccountStore:
     return AccountStore(
         database=database,
         user_id=current_user.id,
+        workspace_id=current_user.workspace_id,
         default_account=current_user.default_account,
+        encryption_key=settings.encryption_key,
     )
 
 
@@ -107,6 +113,19 @@ def get_accounts_service(
     account_store: Annotated[AccountStore, Depends(get_account_store)],
 ) -> AccountsService:
     return AccountsService(account_store=account_store)
+
+
+def get_public_catalog_service(
+    settings: Annotated[Settings, Depends(get_settings)],
+    database: Annotated[Database, Depends(get_database)],
+) -> PublicCatalogService:
+    return PublicCatalogService(database=database, settings=settings)
+
+
+def get_billing_service(
+    database: Annotated[Database, Depends(get_database)],
+) -> BillingService:
+    return BillingService(database=database)
 
 
 def get_questions_service(
@@ -165,6 +184,63 @@ def resolve_account(
     x_kaizen_account: str | None = Header(default=None, alias="X-Kaizen-Account"),
 ) -> str:
     return account_store.resolve_active_account_key(account or x_kaizen_account)
+
+
+def get_client_ip(request: Request) -> str | None:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else None
+
+
+def require_csrf(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+    x_csrf_token: str | None = Header(default=None, alias="X-CSRF-Token"),
+) -> None:
+    if request.method.upper() in {"GET", "HEAD", "OPTIONS"}:
+        return
+    cookie_token = request.cookies.get(settings.csrf_cookie_name)
+    if not safe_compare(cookie_token, x_csrf_token):
+        raise CSRFError()
+
+
+def require_active_subscription(
+    current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+) -> AuthenticatedUser:
+    if not current_user.has_active_subscription:
+        raise SubscriptionInactiveError(
+            details={
+                "workspace_id": current_user.workspace_id,
+                "subscription_status": current_user.subscription_status,
+                "plan_code": current_user.subscription_plan_code,
+            },
+        )
+    return current_user
+
+
+def enforce_auth_rate_limit(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> None:
+    rate_limiter.enforce(
+        bucket="auth",
+        key=f"{get_client_ip(request) or 'anonymous'}:{request.url.path}",
+        limit=settings.auth_rate_limit_requests,
+        window_seconds=settings.auth_rate_limit_window_seconds,
+    )
+
+
+def enforce_checkout_rate_limit(
+    request: Request,
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> None:
+    rate_limiter.enforce(
+        bucket="checkout",
+        key=f"{get_client_ip(request) or 'anonymous'}:{request.url.path}",
+        limit=settings.checkout_rate_limit_requests,
+        window_seconds=settings.checkout_rate_limit_window_seconds,
+    )
 
 
 def get_agents_service(

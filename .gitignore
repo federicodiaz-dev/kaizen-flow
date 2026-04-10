@@ -213,3 +213,18 @@ __marimo__/
 backend/data/market_insights/user_*/logs/
 backend/data/market_insights/user_*/runs/
 backend/data/market_insights
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

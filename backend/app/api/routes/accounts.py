@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies import get_accounts_service
+from app.api.dependencies import get_accounts_service, require_csrf
 from app.schemas.accounts import AccountsResponse, DefaultAccountResponse
 from app.schemas.auth import DefaultAccountRequest
 from app.services.accounts import AccountsService
@@ -20,7 +20,7 @@ def list_accounts(
     return service.list_accounts()
 
 
-@router.patch("/accounts/default", response_model=DefaultAccountResponse)
+@router.patch("/accounts/default", response_model=DefaultAccountResponse, dependencies=[Depends(require_csrf)])
 def set_default_account(
     payload: DefaultAccountRequest,
     service: Annotated[AccountsService, Depends(get_accounts_service)],

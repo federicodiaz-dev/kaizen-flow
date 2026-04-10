@@ -192,15 +192,14 @@
             <p>{{ inactiveGateMessage() }}</p>
 
             <div class="membership-gate__meta">
-              <span>Cuenta</span>
-              <strong>{{ currentAccountLabel() }}</strong>
+              <span>Workspace</span>
+              <strong>{{ currentWorkspaceName() }}</strong>
             </div>
 
-            @if (accountContext.activeAccountCount() > 0) {
-              <button type="button" class="membership-gate__action" (click)="useFirstActiveAccount()">
-                Ir a una cuenta activa
-              </button>
-            }
+            <div class="membership-gate__meta">
+              <span>Plan</span>
+              <strong>{{ currentPlanName() }}</strong>
+            </div>
           </div>
         </section>
       } @else {

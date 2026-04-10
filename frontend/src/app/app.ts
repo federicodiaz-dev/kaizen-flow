@@ -31,20 +31,21 @@ export class App {
   );
   readonly currentAccountIsActive = computed(() => this.accountContext.currentAccount()?.is_active ?? false);
   readonly showInactiveGate = computed(
-    () =>
-      this.accountContext.accountCount() > 0 &&
-      this.accountContext.currentAccount() !== null &&
-      !this.accountContext.hasActiveAccess()
+    () => this.auth.isAuthenticated() && !this.auth.hasActiveSubscription() && !this.isAuthScreen()
   );
   readonly inactiveGateTitle = computed(() =>
-    this.accountContext.activeAccountCount() > 0 ? 'Esta cuenta está inactiva' : 'Tu membresía está inactiva'
+    this.auth.subscription()?.status === 'inactive' ? 'Tu membresia aun no esta activa' : 'Acceso restringido'
   );
-  readonly inactiveGateMessage = computed(() =>
-    this.accountContext.activeAccountCount() > 0
-      ? 'La cuenta seleccionada está creada, pero no tiene una membresía activa. Elegí una cuenta activa o habilitá el acceso para continuar.'
-      : 'La cuenta quedó vinculada correctamente, pero su membresía todavía no está activa. Cuando acredites el pago y la actives en la base de datos, el panel se habilitará.'
-  );
-  readonly currentUserEmail = computed(() => this.auth.user()?.email ?? 'Sin sesión');
+  readonly inactiveGateMessage = computed(() => {
+    const planName = this.auth.currentPlanName();
+    if (planName) {
+      return `Tu workspace existe y tu plan actual es ${planName}, pero la suscripcion no esta habilitada para operar todavia. Reactivala para volver a usar el panel.`;
+    }
+    return 'Tu cuenta se creo correctamente, pero el workspace todavia no tiene una suscripcion activa. Activa un plan desde la landing para habilitar el panel.';
+  });
+  readonly currentUserEmail = computed(() => this.auth.user()?.email ?? 'Sin sesion');
+  readonly currentWorkspaceName = computed(() => this.auth.workspace()?.name ?? 'Workspace');
+  readonly currentPlanName = computed(() => this.auth.currentPlanName() ?? 'Sin plan');
   readonly isAuthScreen = computed(() => {
     const url = this.currentUrl();
     return url.startsWith('/login') || url.startsWith('/register') || url.startsWith('/auth/');
@@ -102,10 +103,10 @@ export class App {
     effect(() => {
       const isFirstVisit = this.auth.user()?.is_first_visit ?? false;
       const accountCount = this.accountContext.accountCount();
-      const hasActiveAccess = this.accountContext.hasActiveAccess();
+      const hasActiveSubscription = this.auth.hasActiveSubscription();
       const isAuthScreen = this.isAuthScreen();
 
-      if (isFirstVisit && accountCount > 0 && hasActiveAccess && !isAuthScreen) {
+      if (isFirstVisit && accountCount > 0 && hasActiveSubscription && !isAuthScreen) {
         untracked(() => this.onboardingTour.requestWelcomeTour());
       }
     });
@@ -119,10 +120,6 @@ export class App {
     this.auth.connectMercadoLibre();
   }
 
-  useFirstActiveAccount(): void {
-    this.accountContext.selectFirstActiveAccount();
-  }
-
   logout(): void {
     this.auth.logout().subscribe({
       next: () => {
@@ -134,7 +131,7 @@ export class App {
       },
     });
   }
-  
+
   toggleTheme(): void {
     this.isDarkMode.update(v => !v);
   }

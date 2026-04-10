@@ -13,7 +13,7 @@ TRUSTED_HOSTS=localhost,127.0.0.1
 
 APP_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/kaizen_flow
 APP_DB_PATH=backend/data/kaizen_flow.sqlite3
-APP_ENCRYPTION_KEY=ik_93b5584577ac948e720d6331e73d5bf1
+APP_ENCRYPTION_KEY=
 PASSWORD_PEPPER=
 DEFAULT_PLAN_CODE=growth
 

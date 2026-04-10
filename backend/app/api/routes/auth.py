@@ -5,7 +5,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, Response
 from fastapi.responses import RedirectResponse
 
-from app.api.dependencies import get_auth_service, get_current_user, get_settings
+from app.api.dependencies import (
+    enforce_auth_rate_limit,
+    get_auth_service,
+    get_current_user,
+    get_settings,
+    require_csrf,
+)
 from app.schemas.auth import LoginRequest, RegisterRequest, SessionResponse
 from app.services.auth import AuthService, AuthenticatedUser
 
@@ -20,29 +26,40 @@ def _set_session_cookie(
     cookie_name: str,
     secure: bool,
     max_age_seconds: int,
+    same_site: str,
+    domain: str | None,
 ) -> None:
     response.set_cookie(
         key=cookie_name,
         value=session_token,
         httponly=True,
-        samesite="lax",
+        samesite=same_site,
         secure=secure,
         max_age=max_age_seconds,
         path="/",
+        domain=domain,
     )
 
 
-def _clear_session_cookie(response: Response, *, cookie_name: str, secure: bool) -> None:
+def _clear_session_cookie(
+    response: Response,
+    *,
+    cookie_name: str,
+    secure: bool,
+    same_site: str,
+    domain: str | None,
+) -> None:
     response.delete_cookie(
         key=cookie_name,
         httponly=True,
-        samesite="lax",
+        samesite=same_site,
         secure=secure,
         path="/",
+        domain=domain,
     )
 
 
-@router.post("/register", response_model=SessionResponse)
+@router.post("/register", response_model=SessionResponse, dependencies=[Depends(require_csrf), Depends(enforce_auth_rate_limit)])
 def register(
     payload: RegisterRequest,
     request: Request,
@@ -53,8 +70,10 @@ def register(
     user, session_token = service.register_user(
         email=payload.email,
         password=payload.password,
+        workspace_name=payload.workspace_name,
         user_agent=request.headers.get("user-agent"),
         ip_address=request.client.host if request.client else None,
+        replaced_session_token=request.cookies.get(settings.session_cookie_name),
     )
     _set_session_cookie(
         response,
@@ -62,11 +81,13 @@ def register(
         cookie_name=settings.session_cookie_name,
         secure=settings.session_cookie_secure,
         max_age_seconds=settings.session_ttl_hours * 60 * 60,
+        same_site=settings.session_cookie_same_site,
+        domain=settings.session_cookie_domain,
     )
-    return SessionResponse(user=user.to_profile())
+    return user.to_session_response(csrf_token=request.cookies.get(settings.csrf_cookie_name))
 
 
-@router.post("/login", response_model=SessionResponse)
+@router.post("/login", response_model=SessionResponse, dependencies=[Depends(require_csrf), Depends(enforce_auth_rate_limit)])
 def login(
     payload: LoginRequest,
     request: Request,
@@ -79,6 +100,7 @@ def login(
         password=payload.password,
         user_agent=request.headers.get("user-agent"),
         ip_address=request.client.host if request.client else None,
+        replaced_session_token=request.cookies.get(settings.session_cookie_name),
     )
     _set_session_cookie(
         response,
@@ -86,40 +108,52 @@ def login(
         cookie_name=settings.session_cookie_name,
         secure=settings.session_cookie_secure,
         max_age_seconds=settings.session_ttl_hours * 60 * 60,
+        same_site=settings.session_cookie_same_site,
+        domain=settings.session_cookie_domain,
     )
-    return SessionResponse(user=user.to_profile())
+    return user.to_session_response(csrf_token=request.cookies.get(settings.csrf_cookie_name))
 
 
-@router.post("/logout", status_code=204)
+@router.post("/logout", status_code=204, dependencies=[Depends(require_csrf)])
 def logout(
     request: Request,
     response: Response,
     service: Annotated[AuthService, Depends(get_auth_service)],
     settings=Depends(get_settings),
 ) -> Response:
-    service.logout(request.cookies.get(settings.session_cookie_name))
+    service.logout(
+        request.cookies.get(settings.session_cookie_name),
+        user_agent=request.headers.get("user-agent"),
+        ip_address=request.client.host if request.client else None,
+    )
     _clear_session_cookie(
         response,
         cookie_name=settings.session_cookie_name,
         secure=settings.session_cookie_secure,
+        same_site=settings.session_cookie_same_site,
+        domain=settings.session_cookie_domain,
     )
     return response
 
 
 @router.get("/me", response_model=SessionResponse)
 def get_me(
+    request: Request,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+    settings=Depends(get_settings),
 ) -> SessionResponse:
-    return SessionResponse(user=current_user.to_profile())
+    return current_user.to_session_response(csrf_token=request.cookies.get(settings.csrf_cookie_name))
 
 
-@router.post("/onboarding/complete", response_model=SessionResponse)
+@router.post("/onboarding/complete", response_model=SessionResponse, dependencies=[Depends(require_csrf)])
 def complete_onboarding(
+    request: Request,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     service: Annotated[AuthService, Depends(get_auth_service)],
+    settings=Depends(get_settings),
 ) -> SessionResponse:
     user = service.complete_onboarding(current_user.id)
-    return SessionResponse(user=user.to_profile())
+    return user.to_session_response(csrf_token=request.cookies.get(settings.csrf_cookie_name))
 
 
 @router.get("/mercadolibre/connect")
@@ -131,6 +165,7 @@ def begin_mercadolibre_connect(
 ) -> RedirectResponse:
     authorization_url = service.build_mercadolibre_authorization_url(
         user_id=current_user.id,
+        workspace_id=current_user.workspace_id,
         requested_account_key=account_key,
         requested_label=label,
     )
