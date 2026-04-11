@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
+import { PlanCatalogService } from '../../core/services/plan-catalog.service';
 
 
 @Component({
@@ -18,10 +19,14 @@ export class AuthPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
+  readonly planCatalog = inject(PlanCatalogService);
 
+  readonly identifier = signal('');
   readonly email = signal('');
+  readonly username = signal('');
   readonly password = signal('');
   readonly confirmPassword = signal('');
+  readonly selectedPlanCode = signal('');
   readonly errorMessage = signal<string | null>(null);
 
   readonly mode = computed<'login' | 'register'>(() => {
@@ -29,32 +34,59 @@ export class AuthPageComponent {
     return rawMode === 'register' ? 'register' : 'login';
   });
   readonly pageTitle = computed(() =>
-    this.mode() === 'register' ? 'Crear cuenta segura' : 'Ingresar a Kaizen Flow'
+    this.mode() === 'register' ? 'Crea tu workspace profesional' : 'Ingresa a Kaizen Flow'
   );
   readonly pageSubtitle = computed(() =>
     this.mode() === 'register'
-      ? 'Registrate para conectar tus cuentas de Mercado Libre y aislar tus datos.'
-      : 'Accedé a tu workspace privado y seguí operando cada cuenta con aislamiento total.'
+      ? 'Registra tu equipo, elige un plan y deja listo el acceso para conectar Mercado Libre y operar en serio.'
+      : 'Accede con tu email o username para retomar tu operacion y seguir trabajando con el plan que ya contrataste.'
   );
+  readonly recommendedPlanCode = computed(() => {
+    const recommended = this.planCatalog.plans().find((plan) => plan.code === 'growth');
+    return recommended?.code ?? this.planCatalog.plans()[0]?.code ?? '';
+  });
 
-  submit(): void {
-    const email = this.email().trim();
-    const password = this.password();
+  constructor() {
+    this.planCatalog.ensureLoaded();
 
-    this.errorMessage.set(null);
-
-    if (!email || !password) {
-      this.errorMessage.set('Completá tu email y contraseña.');
-      return;
-    }
-
-    if (this.mode() === 'register') {
-      if (password !== this.confirmPassword()) {
-        this.errorMessage.set('Las contraseñas no coinciden.');
+    effect(() => {
+      const currentSelection = this.selectedPlanCode();
+      if (currentSelection) {
         return;
       }
 
-      this.auth.register(email, password).subscribe({
+      const recommended = this.recommendedPlanCode();
+      if (recommended) {
+        this.selectedPlanCode.set(recommended);
+      }
+    });
+  }
+
+  submit(): void {
+    this.errorMessage.set(null);
+
+    if (this.mode() === 'register') {
+      const email = this.email().trim();
+      const username = this.username().trim();
+      const password = this.password();
+      const selectedPlanCode = this.selectedPlanCode();
+
+      if (!email || !username || !password) {
+        this.errorMessage.set('Completa email, username y contrasena.');
+        return;
+      }
+
+      if (!selectedPlanCode) {
+        this.errorMessage.set('Selecciona el plan que quieres activar.');
+        return;
+      }
+
+      if (password !== this.confirmPassword()) {
+        this.errorMessage.set('Las contrasenas no coinciden.');
+        return;
+      }
+
+      this.auth.register(email, username, password, selectedPlanCode).subscribe({
         next: () => {
           void this.router.navigate(['/questions']);
         },
@@ -63,7 +95,14 @@ export class AuthPageComponent {
       return;
     }
 
-    this.auth.login(email, password).subscribe({
+    const identifier = this.identifier().trim();
+    const password = this.password();
+    if (!identifier || !password) {
+      this.errorMessage.set('Completa tu email o username y la contrasena.');
+      return;
+    }
+
+    this.auth.login(identifier, password).subscribe({
       next: () => {
         void this.router.navigate(['/questions']);
       },
@@ -85,9 +124,9 @@ export class AuthPageComponent {
             : null;
         const nestedMessage =
           details && 'message' in details && typeof details.message === 'string' ? details.message : null;
-        return message || nestedMessage || 'No se pudo completar la operación.';
+        return message || nestedMessage || 'No se pudo completar la operacion.';
       }
     }
-    return 'No se pudo completar la operación.';
+    return 'No se pudo completar la operacion.';
   }
 }

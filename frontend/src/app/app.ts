@@ -45,6 +45,11 @@ export class App {
       : 'La cuenta quedó vinculada correctamente, pero su membresía todavía no está activa. Cuando acredites el pago y la actives en la base de datos, el panel se habilitará.'
   );
   readonly currentUserEmail = computed(() => this.auth.user()?.email ?? 'Sin sesión');
+  readonly currentPlanName = computed(() => this.auth.user()?.current_plan?.name ?? 'Sin plan');
+  readonly currentPlanCode = computed(() => this.auth.user()?.current_plan?.code ?? 'none');
+  readonly currentPlanHeadline = computed(
+    () => this.auth.user()?.current_plan?.headline ?? 'Todavía no hay un plan asignado para esta sesión.'
+  );
   readonly isAuthScreen = computed(() => {
     const url = this.currentUrl();
     return url.startsWith('/login') || url.startsWith('/register') || url.startsWith('/auth/');

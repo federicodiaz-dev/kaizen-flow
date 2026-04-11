@@ -25,13 +25,13 @@
             <a routerLink="/questions" routerLinkActive="active" data-tour-id="nav-questions">
               <span class="nav-copy">Preguntas</span>
             </a>
-            <a routerLink="/claims" routerLinkActive="active">
+            <a routerLink="/claims" routerLinkActive="active" data-tour-id="nav-claims">
               <span class="nav-copy">Reclamos</span>
             </a>
             <a routerLink="/post-sale" routerLinkActive="active">
               <span class="nav-copy">Post venta</span>
             </a>
-            <a routerLink="/items" routerLinkActive="active">
+            <a routerLink="/items" routerLinkActive="active" data-tour-id="nav-items">
               <span class="nav-copy">Productos</span>
             </a>
           </div>
@@ -40,10 +40,10 @@
             <a routerLink="/agents" routerLinkActive="active" data-tour-id="nav-agents">
               <span class="nav-copy ai-text">Agente</span>
             </a>
-            <a routerLink="/copywriter" routerLinkActive="active">
+            <a routerLink="/copywriter" routerLinkActive="active" data-tour-id="nav-copywriter">
               <span class="nav-copy ai-text">Copywriter</span>
             </a>
-            <a routerLink="/market-insights" routerLinkActive="active">
+            <a routerLink="/market-insights" routerLinkActive="active" data-tour-id="nav-market-insights">
               <span class="nav-copy ai-text">Insights</span>
             </a>
             <a routerLink="/listing-doctor" routerLinkActive="active">
@@ -53,6 +53,11 @@
         </nav>
 
         <div class="nav-actions desktop-actions">
+          <div class="plan-pill" [attr.data-plan]="currentPlanCode()" [title]="currentPlanHeadline()" data-tour-id="plan-pill">
+            <span class="plan-pill__label">Plan</span>
+            <strong>{{ currentPlanName() }}</strong>
+          </div>
+
           <div class="account-dropdown-wrapper">
             @if (accountContext.loading()) {
               <div class="account-status">Cargando...</div>
@@ -107,6 +112,7 @@
             <span class="mobile-nav-summary__label">Cuenta activa</span>
             <strong>{{ currentAccountLabel() }}</strong>
             <span class="mobile-nav-summary__meta">{{ currentUserEmail() }}</span>
+            <span class="mobile-nav-summary__plan">Plan {{ currentPlanName() }}</span>
           </div>
 
           <nav class="mobile-nav-links">
@@ -115,13 +121,13 @@
               <a routerLink="/questions" routerLinkActive="active" data-tour-id="nav-questions">
                 <span class="nav-copy">Preguntas</span>
               </a>
-              <a routerLink="/claims" routerLinkActive="active">
+              <a routerLink="/claims" routerLinkActive="active" data-tour-id="nav-claims">
                 <span class="nav-copy">Reclamos</span>
               </a>
               <a routerLink="/post-sale" routerLinkActive="active">
                 <span class="nav-copy">Post venta</span>
               </a>
-              <a routerLink="/items" routerLinkActive="active">
+              <a routerLink="/items" routerLinkActive="active" data-tour-id="nav-items">
                 <span class="nav-copy">Productos</span>
               </a>
             </div>
@@ -131,10 +137,10 @@
               <a routerLink="/agents" routerLinkActive="active" data-tour-id="nav-agents">
                 <span class="nav-copy ai-text">Agente</span>
               </a>
-              <a routerLink="/copywriter" routerLinkActive="active">
+              <a routerLink="/copywriter" routerLinkActive="active" data-tour-id="nav-copywriter">
                 <span class="nav-copy ai-text">Copywriter</span>
               </a>
-              <a routerLink="/market-insights" routerLinkActive="active">
+              <a routerLink="/market-insights" routerLinkActive="active" data-tour-id="nav-market-insights">
                 <span class="nav-copy ai-text">Insights</span>
               </a>
               <a routerLink="/listing-doctor" routerLinkActive="active">

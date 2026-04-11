@@ -26,7 +26,10 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.database = Database(settings.database_path)
     app.state.database.initialize()
-    app.state.http_client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
+    app.state.http_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(30.0),
+        verify=settings.outbound_http_verify_ssl,
+    )
     app.state.auth_service = AuthService(
         database=app.state.database,
         settings=settings,
@@ -48,7 +51,7 @@ app = FastAPI(title="Kaizen Flow API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[get_settings().frontend_origin, "http://127.0.0.1:4200"],
+    allow_origins=list(get_settings().frontend_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

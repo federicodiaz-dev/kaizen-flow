@@ -10,16 +10,16 @@
 
       <div class="benefits-card">
         <div class="benefit-item">
-          <strong>OAuth real con Mercado Libre</strong>
-          <span>El usuario vincula su cuenta y el backend guarda `access_token` y `refresh_token` por workspace.</span>
+          <strong>Una sola identidad para las dos UIs</strong>
+          <span>El mismo usuario, plan y sesion viven en el backend y se reflejan tanto en la landing como en el panel principal.</span>
         </div>
         <div class="benefit-item">
-          <strong>Aislamiento por usuario</strong>
-          <span>Cuentas, hilos del agente y datos operativos quedan separados en el backend para cada login.</span>
+          <strong>Plan persistido desde el primer alta</strong>
+          <span>Cada registro crea la cuenta en la base y deja guardado el plan elegido para habilitar reglas y experiencias futuras.</span>
         </div>
         <div class="benefit-item">
-          <strong>Sesión protegida</strong>
-          <span>Las llamadas al API usan cookie segura de sesión y no exponen credenciales al frontend.</span>
+          <strong>Acceso profesional y trazable</strong>
+          <span>El login acepta email o username, mientras que la sesion mantiene el plan actual listo para consumirse desde cualquier pantalla.</span>
         </div>
       </div>
     </div>
@@ -28,7 +28,7 @@
       <div class="card-header">
         <div>
           <p class="eyebrow">{{ mode() === 'register' ? 'Nuevo workspace' : 'Acceso seguro' }}</p>
-          <h2>{{ mode() === 'register' ? 'Registrate' : 'Iniciá sesión' }}</h2>
+          <h2>{{ mode() === 'register' ? 'Crea tu cuenta' : 'Inicia sesion' }}</h2>
         </div>
         <div class="mode-switch">
           <a routerLink="/login" [class.active]="mode() === 'login'">Ingresar</a>
@@ -36,20 +36,44 @@
         </div>
       </div>
 
-      <div class="form-stack">
-        <label class="form-field">
-          <span>Email</span>
-          <input
-            type="email"
-            class="input-text"
-            placeholder="tu@email.com"
-            [ngModel]="email()"
-            (ngModelChange)="email.set($event)"
-          />
-        </label>
+      <form class="form-stack" (ngSubmit)="submit()">
+        @if (mode() === 'login') {
+          <label class="form-field">
+            <span>Email o username</span>
+            <input
+              type="text"
+              class="input-text"
+              placeholder="tu@email.com o tu_usuario"
+              [ngModel]="identifier()"
+              (ngModelChange)="identifier.set($event)"
+            />
+          </label>
+        } @else {
+          <label class="form-field">
+            <span>Email</span>
+            <input
+              type="email"
+              class="input-text"
+              placeholder="tu@email.com"
+              [ngModel]="email()"
+              (ngModelChange)="email.set($event)"
+            />
+          </label>
+
+          <label class="form-field">
+            <span>Username</span>
+            <input
+              type="text"
+              class="input-text"
+              placeholder="tu_usuario"
+              [ngModel]="username()"
+              (ngModelChange)="username.set($event)"
+            />
+          </label>
+        }
 
         <label class="form-field">
-          <span>Contraseña</span>
+          <span>Contrasena</span>
           <input
             type="password"
             class="input-text"
@@ -61,15 +85,61 @@
 
         @if (mode() === 'register') {
           <label class="form-field">
-            <span>Confirmar contraseña</span>
+            <span>Confirmar contrasena</span>
             <input
               type="password"
               class="input-text"
-              placeholder="Repetí la contraseña"
+              placeholder="Repite la contrasena"
               [ngModel]="confirmPassword()"
               (ngModelChange)="confirmPassword.set($event)"
             />
           </label>
+
+          <div class="plan-picker">
+            <div class="plan-picker__header">
+              <div>
+                <span class="plan-picker__eyebrow">Plan inicial</span>
+                <h3>Elige el plan que vamos a guardar en tu cuenta</h3>
+              </div>
+              @if (planCatalog.loading()) {
+                <span class="plan-picker__meta">Cargando planes...</span>
+              } @else {
+                <span class="plan-picker__meta">Puedes cambiarlo despues desde el sistema</span>
+              }
+            </div>
+
+            @if (planCatalog.errorMessage()) {
+              <div class="error-banner">{{ planCatalog.errorMessage() }}</div>
+            } @else {
+              <div class="plan-picker__grid">
+                @for (plan of planCatalog.plans(); track plan.code) {
+                  <button
+                    type="button"
+                    class="plan-option"
+                    [class.selected]="selectedPlanCode() === plan.code"
+                    [class.recommended]="plan.code === recommendedPlanCode()"
+                    (click)="selectedPlanCode.set(plan.code)"
+                  >
+                    <div class="plan-option__topline">
+                      <span class="plan-option__name">{{ plan.name }}</span>
+                      @if (plan.code === recommendedPlanCode()) {
+                        <span class="plan-option__badge">Recomendado</span>
+                      }
+                    </div>
+                    <div class="plan-option__price">
+                      {{ plan.currency }} {{ plan.price_monthly }}
+                      <span>/ mes</span>
+                    </div>
+                    <p class="plan-option__headline">{{ plan.headline }}</p>
+                    <div class="plan-option__limits">
+                      <span>{{ plan.max_accounts }} cuenta{{ plan.max_accounts > 1 ? 's' : '' }}</span>
+                      <span>{{ plan.reply_assistant_limit === null ? 'Reply ilimitado' : 'Reply ' + plan.reply_assistant_limit }}</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+          </div>
         }
 
         @if (errorMessage()) {
@@ -77,20 +147,19 @@
         }
 
         <button
-          type="button"
+          type="submit"
           class="submit-btn"
           [disabled]="auth.submitting()"
-          (click)="submit()"
         >
-          {{ auth.submitting() ? 'Procesando...' : mode() === 'register' ? 'Crear cuenta' : 'Entrar' }}
+          {{ auth.submitting() ? 'Procesando...' : mode() === 'register' ? 'Crear cuenta y activar plan' : 'Entrar' }}
         </button>
 
         <p class="form-footnote">
           {{ mode() === 'register'
-            ? 'Después del alta podrás conectar una o varias cuentas de Mercado Libre desde el panel.'
-            : 'Si todavía no tenés usuario, podés crear uno en segundos y después vincular Mercado Libre.' }}
+            ? 'Al registrarte dejamos creado tu usuario, tu username y tu plan inicial en la base compartida del producto.'
+            : 'Usa el mismo acceso para la landing y para el panel principal.' }}
         </p>
-      </div>
+      </form>
     </div>
   </div>
 </section>

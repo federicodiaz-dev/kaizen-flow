@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 PASSWORD_ITERATIONS = 600_000
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+USERNAME_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{1,38}[a-z0-9])?$")
 
 
 def utc_now() -> datetime:
@@ -50,6 +51,18 @@ def hash_token(token: str) -> str:
 
 def is_valid_email(email: str) -> bool:
     return bool(EMAIL_PATTERN.fullmatch(email.strip()))
+
+
+def normalize_username(username: str) -> str:
+    lowered = username.strip().lower().replace(" ", "_")
+    normalized = re.sub(r"[^a-z0-9._-]+", "", lowered)
+    normalized = re.sub(r"[._-]{2,}", "_", normalized).strip("._-")
+    return normalized[:40]
+
+
+def is_valid_username(username: str) -> bool:
+    normalized = normalize_username(username)
+    return bool(USERNAME_PATTERN.fullmatch(normalized))
 
 
 def generate_pkce_pair() -> tuple[str, str]:

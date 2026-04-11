@@ -1,11 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kaizen Flow — Copiloto IA para Mercado Libre</title>
+<meta name="kaizen-api-base-url" content="http://localhost:8000">
+<meta name="kaizen-app-base-url" content="http://localhost:4200">
+<title>Kaizen Flow â€” Copiloto IA para Mercado Libre</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./access-hub.css">
 <style>
   :root {
     --bg: #09090b;
@@ -38,7 +41,7 @@
     line-height: 1.6;
   }
 
-  /* ── NOISE OVERLAY ── */
+  /* â”€â”€ NOISE OVERLAY â”€â”€ */
   body::before {
     content: '';
     position: fixed;
@@ -49,7 +52,7 @@
     z-index: 9999;
   }
 
-  /* ── CURSOR GLOW ── */
+  /* â”€â”€ CURSOR GLOW â”€â”€ */
   .cursor-glow {
     position: fixed;
     width: 400px; height: 400px;
@@ -61,7 +64,7 @@
     z-index: 0;
   }
 
-  /* ── NAV ── */
+  /* â”€â”€ NAV â”€â”€ */
   nav {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -118,7 +121,7 @@
     transform: translateY(-1px);
   }
 
-  /* ── HERO ── */
+  /* â”€â”€ HERO â”€â”€ */
   .hero {
     min-height: 100vh;
     display: flex;
@@ -281,7 +284,7 @@
   }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent2); transform: translateY(-2px); }
 
-  /* ── STATS BAR ── */
+  /* â”€â”€ STATS BAR â”€â”€ */
   .stats-bar {
     padding: 0 32px 80px;
     position: relative;
@@ -318,7 +321,7 @@
   }
   .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
 
-  /* ── SECTION BASE ── */
+  /* â”€â”€ SECTION BASE â”€â”€ */
   section { padding: 100px 32px; }
   .container { max-width: 1200px; margin: 0 auto; }
 
@@ -347,7 +350,7 @@
     font-weight: 300;
   }
 
-  /* ── PAIN SECTION ── */
+  /* â”€â”€ PAIN SECTION â”€â”€ */
   .pain { background: var(--bg2); }
   .pain-grid {
     display: grid;
@@ -437,7 +440,7 @@
   .pain-meta-name { font-weight: 600; color: var(--text); }
   .pain-meta-desc { color: var(--muted); }
 
-  /* ── FEATURES ── */
+  /* â”€â”€ FEATURES â”€â”€ */
   .features-header { text-align: center; margin-bottom: 64px; }
   .features-header .section-sub { margin: 0 auto; }
 
@@ -507,7 +510,7 @@
     font-weight: 500;
   }
 
-  /* ── LISTING DOCTOR ── */
+  /* â”€â”€ LISTING DOCTOR â”€â”€ */
   .listing-doctor { background: var(--bg2); overflow: hidden; }
   .ld-grid {
     display: grid;
@@ -645,7 +648,7 @@
   }
   .ld-action-banner strong { display: block; font-weight: 600; margin-bottom: 2px; }
 
-  /* ── HOW IT WORKS ── */
+  /* â”€â”€ HOW IT WORKS â”€â”€ */
   .how-works { text-align: center; }
   .steps-row {
     display: flex;
@@ -706,7 +709,7 @@
   }
   .step-item p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; max-width: 180px; margin: 0 auto; }
 
-  /* ── PRICING ── */
+  /* â”€â”€ PRICING â”€â”€ */
   .pricing { background: var(--bg2); }
   .pricing-header { text-align: center; margin-bottom: 60px; }
 
@@ -852,7 +855,7 @@
   .custom-band p { font-size: 0.88rem; color: var(--muted); }
   .custom-band strong { color: var(--text); font-weight: 600; }
 
-  /* ── FAQ ── */
+  /* â”€â”€ FAQ â”€â”€ */
   .faq-grid {
     max-width: 800px;
     margin: 60px auto 0;
@@ -903,7 +906,7 @@
   }
   .faq-item.open .faq-a { max-height: 300px; padding: 0 24px 20px; }
 
-  /* ── FINAL CTA ── */
+  /* â”€â”€ FINAL CTA â”€â”€ */
   .final-cta {
     text-align: center;
     padding: 120px 32px;
@@ -922,7 +925,7 @@
   .final-cta h2 { position: relative; margin-bottom: 20px; }
   .final-cta .section-sub { margin: 0 auto 40px; position: relative; }
 
-  /* ── WHATSAPP ── */
+  /* â”€â”€ WHATSAPP â”€â”€ */
   .wa-float {
     position: fixed;
     bottom: 28px;
@@ -967,7 +970,7 @@
   }
   .wa-float:hover .wa-tooltip { opacity: 1; transform: translateX(0); }
 
-  /* ── FOOTER ── */
+  /* â”€â”€ FOOTER â”€â”€ */
   footer {
     border-top: 1px solid var(--border);
     padding: 40px 32px;
@@ -987,7 +990,7 @@
     display: block;
   }
 
-  /* ── ANIMATIONS ── */
+  /* â”€â”€ ANIMATIONS â”€â”€ */
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1007,7 +1010,7 @@
   .reveal-delay-3 { transition-delay: 0.3s; }
   .reveal-delay-4 { transition-delay: 0.4s; }
 
-  /* ── RESPONSIVE ── */
+  /* â”€â”€ RESPONSIVE â”€â”€ */
   @media (max-width: 900px) {
     .pain-grid, .ld-grid, .features-grid { grid-template-columns: 1fr; }
     .feature-card.featured { grid-column: span 1; }
@@ -1056,11 +1059,11 @@
 <div class="cursor-glow" id="cursorGlow"></div>
 
 <!-- WhatsApp Float -->
-<a href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20saber%20más%20sobre%20Kaizen%20Flow" target="_blank" class="wa-float" aria-label="Contactar por WhatsApp">
+<a href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20saber%20mÃ¡s%20sobre%20Kaizen%20Flow" target="_blank" class="wa-float" aria-label="Contactar por WhatsApp">
   <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
   </svg>
-  <span class="wa-tooltip">💬 Hablar por WhatsApp</span>
+  <span class="wa-tooltip">ðŸ’¬ Hablar por WhatsApp</span>
 </a>
 
 <!-- NAV -->
@@ -1070,10 +1073,11 @@
     <ul class="nav-links">
       <li><a href="#features">Producto</a></li>
       <li><a href="#listing-doctor">Listing Doctor</a></li>
+      <li><a href="#access">Acceso</a></li>
       <li><a href="#pricing">Precios</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
-    <a href="#pricing" class="nav-cta">Ver planes →</a>
+    <a href="#access" class="nav-cta">Crear cuenta →</a>
   </div>
 </nav>
 
@@ -1086,22 +1090,22 @@
   <div class="hero-content">
     <div class="badge">
       <span class="badge-dot"></span>
-      IA nativa para Mercado Libre · Ya disponible
+      IA nativa para Mercado Libre Â· Ya disponible
     </div>
     <h1>
-      Escala tu operación.<br>
+      Escala tu operaciÃ³n.<br>
       <span class="line-accent" id="typewriter-target"></span><span class="cursor-blink" id="typewriter-cursor"></span>
     </h1>
     <p class="hero-sub">
-      Plataforma enterprise para Mercado Libre. La Inteligencia Artificial resuelve y automatiza tus reclamos, diagnostica el mercado y optimiza tu catálogo al instante.
+      Plataforma enterprise para Mercado Libre. La Inteligencia Artificial resuelve y automatiza tus reclamos, diagnostica el mercado y optimiza tu catÃ¡logo al instante.
     </p>
     <div class="hero-btns">
-      <a href="#pricing" class="btn-primary">
+      <a href="#access" class="btn-primary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         Empezar ahora
       </a>
       <a href="#listing-doctor" class="btn-ghost">
-        Ver Listing Doctor →
+        Ver Listing Doctor â†’
       </a>
     </div>
   </div>
@@ -1134,49 +1138,49 @@
   <div class="container">
     <div class="pain-grid">
       <div>
-        <span class="section-tag reveal">El Desafío Operativo</span>
+        <span class="section-tag reveal">El DesafÃ­o Operativo</span>
         <h2 class="reveal reveal-delay-1">A mayor volumen,<br>mayor riesgo reputacional</h2>
-        <p class="section-sub reveal reveal-delay-2">Operar cuentas pesadas en Mercado Libre implica riesgos. Reclamos sin gestionar, métricas desatendidas y falta de respuestas instantáneas destruyen tus márgenes y posicionamiento.</p>
+        <p class="section-sub reveal reveal-delay-2">Operar cuentas pesadas en Mercado Libre implica riesgos. Reclamos sin gestionar, mÃ©tricas desatendidas y falta de respuestas instantÃ¡neas destruyen tus mÃ¡rgenes y posicionamiento.</p>
         <div class="pain-items" style="margin-top:36px;">
           <div class="pain-item reveal reveal-delay-1">
-            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">⚠️</div>
+            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">âš ï¸</div>
             <div class="pain-text">
-              <h4>Reclamos que golpean reputación</h4>
-              <p>Demorar en dar respuesta a reclamos o devoluciones escala rápido a mediaciones, destruyendo la exposición de toda tu cuenta.</p>
+              <h4>Reclamos que golpean reputaciÃ³n</h4>
+              <p>Demorar en dar respuesta a reclamos o devoluciones escala rÃ¡pido a mediaciones, destruyendo la exposiciÃ³n de toda tu cuenta.</p>
             </div>
           </div>
           <div class="pain-item reveal reveal-delay-2">
-            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">🤖</div>
+            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">ðŸ¤–</div>
             <div class="pain-text">
               <h4>Soporte manual ineficiente</h4>
-              <p>El soporte manual no escala para preguntas frecuentes. Incrementa tus costos, pierde intención de compra y reduce la agilidad comercial.</p>
+              <p>El soporte manual no escala para preguntas frecuentes. Incrementa tus costos, pierde intenciÃ³n de compra y reduce la agilidad comercial.</p>
             </div>
           </div>
           <div class="pain-item reveal reveal-delay-3">
-            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">📊</div>
+            <div class="pain-icon" style="background: rgba(37,99,235,0.15)">ðŸ“Š</div>
             <div class="pain-text">
               <h4>Precios fuera de mercado</h4>
-              <p>Operar sin monitoreo automático significa que la competencia absorbe tu demanda sin que te des cuenta. Tus publicaciones quedan rezagadas.</p>
+              <p>Operar sin monitoreo automÃ¡tico significa que la competencia absorbe tu demanda sin que te des cuenta. Tus publicaciones quedan rezagadas.</p>
             </div>
           </div>
         </div>
       </div>
       <div class="pain-visual reveal reveal-delay-2">
         <p class="pain-quote">
-          "La implementación de IA nos permitió automatizar la gestión de reclamos. Liberamos al equipo para dedicarnos 100% al catálogo."
+          "La implementaciÃ³n de IA nos permitiÃ³ automatizar la gestiÃ³n de reclamos. Liberamos al equipo para dedicarnos 100% al catÃ¡logo."
         </p>
         <div class="pain-meta">
           <div class="pain-avatar" style="background: #2563eb;">DO</div>
           <div class="pain-meta-text">
-            <div class="pain-meta-name">Dirección de Operaciones</div>
-            <div class="pain-meta-desc">Operador Enterprise · Mercado Libre Platinum</div>
+            <div class="pain-meta-name">DirecciÃ³n de Operaciones</div>
+            <div class="pain-meta-desc">Operador Enterprise Â· Mercado Libre Platinum</div>
           </div>
         </div>
         <div style="margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border);">
           <div style="font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Soluciones integradas:</div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px;">
             <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">IA para Reclamos</span>
-            <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">Automatización</span>
+            <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">AutomatizaciÃ³n</span>
             <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">Soporte Copilot</span>
             <span style="background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); color: #60a5fa; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 500;">Benchmark Integrado</span>
           </div>
@@ -1191,15 +1195,15 @@
   <div class="container">
     <div class="features-header">
       <span class="section-tag reveal">La suite completa</span>
-      <h2 class="reveal reveal-delay-1">Todo lo que necesitás.<br>En un solo lugar.</h2>
-      <p class="section-sub reveal reveal-delay-2">Kaizen Flow no es un panel más. Es un copiloto que entiende tu operación, te advierte antes de que haya problemas y te da criterio para cada decisión.</p>
+      <h2 class="reveal reveal-delay-1">Todo lo que necesitÃ¡s.<br>En un solo lugar.</h2>
+      <p class="section-sub reveal reveal-delay-2">Kaizen Flow no es un panel mÃ¡s. Es un copiloto que entiende tu operaciÃ³n, te advierte antes de que haya problemas y te da criterio para cada decisiÃ³n.</p>
     </div>
 
     <div class="features-grid">
       <div class="feature-card featured reveal">
-        <div class="feat-icon blue">🛡️</div>
-        <h3>Resolución IA de Reclamos</h3>
-        <p>Los reclamos exigen rapidez y precisión. Nuestra Inteligencia Artificial agrupa, comprende y resuelve reclamos o disputas siguiendo estrictamente tus políticas de devolución, frenando el riesgo de mediaciones y protegiendo tu cuenta.</p>
+        <div class="feat-icon blue">ðŸ›¡ï¸</div>
+        <h3>ResoluciÃ³n IA de Reclamos</h3>
+        <p>Los reclamos exigen rapidez y precisiÃ³n. Nuestra Inteligencia Artificial agrupa, comprende y resuelve reclamos o disputas siguiendo estrictamente tus polÃ­ticas de devoluciÃ³n, frenando el riesgo de mediaciones y protegiendo tu cuenta.</p>
         <div class="feat-chips">
           <span class="feat-chip">Soporte Inteligente</span>
           <span class="feat-chip">Anti-Mediaciones</span>
@@ -1208,38 +1212,38 @@
         </div>
       </div>
       <div class="feature-card reveal reveal-delay-1">
-        <div class="feat-icon purple">🤖</div>
+        <div class="feat-icon purple">ðŸ¤–</div>
         <h3>Asistentes con IA</h3>
-        <p>Reply Assistant responde preguntas con contexto real de tu publicación. Copywriter genera títulos y descripciones optimizados para ML.</p>
+        <p>Reply Assistant responde preguntas con contexto real de tu publicaciÃ³n. Copywriter genera tÃ­tulos y descripciones optimizados para ML.</p>
         <div class="feat-chips">
           <span class="feat-chip">Reply AI</span>
           <span class="feat-chip">Copywriter ML</span>
         </div>
       </div>
       <div class="feature-card reveal reveal-delay-2">
-        <div class="feat-icon green">📊</div>
+        <div class="feat-icon green">ðŸ“Š</div>
         <h3>Benchmark Competitivo</h3>
-        <p>Compará tus publicaciones contra competidores reales dentro de ML: precio, atributos, completitud y posicionamiento.</p>
+        <p>ComparÃ¡ tus publicaciones contra competidores reales dentro de ML: precio, atributos, completitud y posicionamiento.</p>
         <div class="feat-chips">
-          <span class="feat-chip">Score por dimensión</span>
-          <span class="feat-chip">Análisis de precio</span>
+          <span class="feat-chip">Score por dimensiÃ³n</span>
+          <span class="feat-chip">AnÃ¡lisis de precio</span>
         </div>
       </div>
       <div class="feature-card reveal reveal-delay-1">
-        <div class="feat-icon gold">⚡</div>
-        <h3>Quick Wins Automáticos</h3>
-        <p>La IA detecta acciones de alto impacto y las prioriza para vos. Siempre sabés qué atender primero para mejorar tus métricas.</p>
+        <div class="feat-icon gold">âš¡</div>
+        <h3>Quick Wins AutomÃ¡ticos</h3>
+        <p>La IA detecta acciones de alto impacto y las prioriza para vos. Siempre sabÃ©s quÃ© atender primero para mejorar tus mÃ©tricas.</p>
         <div class="feat-chips">
           <span class="feat-chip">Impacto esperado</span>
-          <span class="feat-chip">Priorización IA</span>
+          <span class="feat-chip">PriorizaciÃ³n IA</span>
         </div>
       </div>
       <div class="feature-card reveal reveal-delay-2">
-        <div class="feat-icon blue">🔔</div>
+        <div class="feat-icon blue">ðŸ””</div>
         <h3>Sistema de Alertas</h3>
-        <p>Te avisamos antes de que los problemas afecten tu reputación: métricas en riesgo, preguntas sin responder y reclamos próximos a vencer.</p>
+        <p>Te avisamos antes de que los problemas afecten tu reputaciÃ³n: mÃ©tricas en riesgo, preguntas sin responder y reclamos prÃ³ximos a vencer.</p>
         <div class="feat-chips">
-          <span class="feat-chip">Reputación protegida</span>
+          <span class="feat-chip">ReputaciÃ³n protegida</span>
           <span class="feat-chip">Tiempo real</span>
         </div>
       </div>
@@ -1252,17 +1256,17 @@
   <div class="container">
     <div class="ld-grid">
       <div class="ld-content reveal">
-        <div class="ld-tag">⭐ Benchmark IA</div>
-        <h2>Monitoreo Competitivo:<br>el diagnóstico que<br>cambia el mercado</h2>
+        <div class="ld-tag">â­ Benchmark IA</div>
+        <h2>Monitoreo Competitivo:<br>el diagnÃ³stico que<br>cambia el mercado</h2>
         <p style="color: var(--muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 8px;">
-          Descubre brechas de precios, atributos omitidos e ineficiencias. Kaizen Flow compara tu catálogo contra los principales actores de tu categoría y te otorga un plan de acción priorizado por IA para ganar posición en búsquedas.
+          Descubre brechas de precios, atributos omitidos e ineficiencias. Kaizen Flow compara tu catÃ¡logo contra los principales actores de tu categorÃ­a y te otorga un plan de acciÃ³n priorizado por IA para ganar posiciÃ³n en bÃºsquedas.
         </p>
         <div class="ld-steps">
           <div class="ld-step">
             <div class="ld-step-num">1</div>
             <div class="ld-step-text">
-              <h4>Analizamos tu publicación</h4>
-              <p>Título, precio, atributos, descripción, imágenes y completitud.</p>
+              <h4>Analizamos tu publicaciÃ³n</h4>
+              <p>TÃ­tulo, precio, atributos, descripciÃ³n, imÃ¡genes y completitud.</p>
             </div>
           </div>
           <div class="ld-step">
@@ -1275,15 +1279,15 @@
           <div class="ld-step">
             <div class="ld-step-num">3</div>
             <div class="ld-step-text">
-              <h4>Recibís el benchmark completo</h4>
+              <h4>RecibÃ­s el benchmark completo</h4>
               <p>Scores, gaps, fortalezas y acciones priorizadas con impacto esperado.</p>
             </div>
           </div>
           <div class="ld-step">
             <div class="ld-step-num">4</div>
             <div class="ld-step-text">
-              <h4>Ejecutás los cambios con Copywriter</h4>
-              <p>El asistente genera el título y la descripción mejorados al instante.</p>
+              <h4>EjecutÃ¡s los cambios con Copywriter</h4>
+              <p>El asistente genera el tÃ­tulo y la descripciÃ³n mejorados al instante.</p>
             </div>
           </div>
         </div>
@@ -1297,11 +1301,11 @@
             <div class="ld-dot y"></div>
             <div class="ld-dot g"></div>
           </div>
-          <span class="ld-title">Listing Doctor — Análisis en progreso</span>
+          <span class="ld-title">Listing Doctor â€” AnÃ¡lisis en progreso</span>
         </div>
         <div class="ld-body">
           <div class="ld-listing">
-            <div class="ld-listing-title">Auriculares Bluetooth Pro X2 — Negro — Inalámbrico</div>
+            <div class="ld-listing-title">Auriculares Bluetooth Pro X2 â€” Negro â€” InalÃ¡mbrico</div>
             <div class="ld-listing-price">$47.990</div>
           </div>
 
@@ -1309,7 +1313,7 @@
 
           <div class="ld-scores">
             <div class="score-row">
-              <div class="score-label"><span>Título</span><span style="color: #34d399;">82/100</span></div>
+              <div class="score-label"><span>TÃ­tulo</span><span style="color: #34d399;">82/100</span></div>
               <div class="score-bar"><div class="score-fill good" style="width: 82%;"></div></div>
             </div>
             <div class="score-row">
@@ -1321,7 +1325,7 @@
               <div class="score-bar"><div class="score-fill bad" style="width: 38%;"></div></div>
             </div>
             <div class="score-row">
-              <div class="score-label"><span>Descripción</span><span style="color: #fbbf24;">55/100</span></div>
+              <div class="score-label"><span>DescripciÃ³n</span><span style="color: #fbbf24;">55/100</span></div>
               <div class="score-bar"><div class="score-fill mid" style="width: 55%;"></div></div>
             </div>
             <div class="score-row">
@@ -1331,8 +1335,8 @@
           </div>
 
           <div class="ld-action-banner">
-            <strong>🎯 Acción prioritaria detectada</strong>
-            Completá 4 atributos técnicos faltantes: conectividad, autonomía, versión BT y peso. El 78% de los competidores top los tiene completos.
+            <strong>ðŸŽ¯ AcciÃ³n prioritaria detectada</strong>
+            CompletÃ¡ 4 atributos tÃ©cnicos faltantes: conectividad, autonomÃ­a, versiÃ³n BT y peso. El 78% de los competidores top los tiene completos.
           </div>
         </div>
       </div>
@@ -1343,28 +1347,145 @@
 <!-- HOW IT WORKS -->
 <section class="how-works" id="como">
   <div class="container">
-    <span class="section-tag reveal">Así funciona</span>
+    <span class="section-tag reveal">AsÃ­ funciona</span>
     <h2 class="reveal reveal-delay-1">De cero a operando<br>en minutos</h2>
     <div class="steps-row">
       <div class="step-item reveal">
-        <div class="step-circle">🔗</div>
-        <h4>Conectás tu cuenta</h4>
-        <p>OAuth seguro con Mercado Libre. Sin contraseñas, sin riesgos.</p>
+        <div class="step-circle">ðŸ”—</div>
+        <h4>ConectÃ¡s tu cuenta</h4>
+        <p>OAuth seguro con Mercado Libre. Sin contraseÃ±as, sin riesgos.</p>
       </div>
       <div class="step-item reveal reveal-delay-1">
-        <div class="step-circle">🏠</div>
-        <h4>Centralizás la operación</h4>
+        <div class="step-circle">ðŸ </div>
+        <h4>CentralizÃ¡s la operaciÃ³n</h4>
         <p>Preguntas, reclamos y pedidos en un solo espacio.</p>
       </div>
       <div class="step-item reveal reveal-delay-2">
-        <div class="step-circle">🔬</div>
-        <h4>Analizás tus listings</h4>
+        <div class="step-circle">ðŸ”¬</div>
+        <h4>AnalizÃ¡s tus listings</h4>
         <p>Listing Doctor diagnostica y compara contra el mercado real.</p>
       </div>
       <div class="step-item reveal reveal-delay-3">
-        <div class="step-circle">🚀</div>
-        <h4>Ejecutás mejoras</h4>
+        <div class="step-circle">ðŸš€</div>
+        <h4>EjecutÃ¡s mejoras</h4>
         <p>Acciones priorizadas y asistentes IA que aceleran cada cambio.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACCESS HUB -->
+<section class="access-hub" id="access">
+  <div class="container">
+    <div class="access-hub__header reveal">
+      <span class="section-tag">Acceso y activacion</span>
+      <h2>Convierte la landing en la puerta de entrada real al producto</h2>
+      <p class="section-sub">Crea tu cuenta, inicia sesion con email o username y deja guardado tu plan directamente en la misma base del backend principal.</p>
+    </div>
+
+    <div class="access-hub__grid">
+      <aside class="access-status-card reveal reveal-delay-1">
+        <span class="access-status-card__eyebrow">Estado de cuenta</span>
+        <h3 id="access-status-title">Sin sesion activa</h3>
+        <p id="access-status-copy">Selecciona un plan, crea tu cuenta y el backend dejara lista la misma identidad para la otra UI del sistema.</p>
+
+        <div class="access-status-card__meta">
+          <div class="access-meta-row">
+            <span>Usuario</span>
+            <strong id="access-status-user">Pendiente</strong>
+          </div>
+          <div class="access-meta-row">
+            <span>Email</span>
+            <strong id="access-status-email">Pendiente</strong>
+          </div>
+          <div class="access-meta-row">
+            <span>Plan actual</span>
+            <strong id="access-status-plan">Growth</strong>
+          </div>
+        </div>
+
+        <div class="access-plan-summary" id="access-plan-summary">
+          <span class="access-plan-summary__label">Plan listo para activar</span>
+          <strong id="access-selected-plan-name">Growth</strong>
+          <p id="access-selected-plan-copy">Vamos a guardar el plan Growth como referencia inicial para que luego puedas condicionar funcionalidades desde el backend y la otra UI.</p>
+        </div>
+
+        <div class="access-mini-plans" id="access-mini-plans"></div>
+
+        <div class="access-status-card__actions">
+          <a id="access-open-app" class="btn-primary" href="https://app.tudominio.com">
+            Abrir panel principal
+          </a>
+          <button type="button" id="access-logout" class="btn-ghost access-secondary-btn">
+            Cerrar sesion
+          </button>
+        </div>
+      </aside>
+
+      <div class="access-auth-card reveal reveal-delay-2">
+        <div class="access-auth-card__header">
+          <div>
+            <span class="section-tag">Workspace</span>
+            <h3>Alta y login conectados al backend</h3>
+          </div>
+          <div class="access-tabs" role="tablist" aria-label="Modos de acceso">
+            <button type="button" class="access-tab active" data-access-mode="register">Crear cuenta</button>
+            <button type="button" class="access-tab" data-access-mode="login">Iniciar sesion</button>
+          </div>
+        </div>
+
+        <div class="access-feedback" id="access-feedback" hidden></div>
+
+        <form id="access-register-form" class="access-form">
+          <div class="access-form__grid">
+            <label class="access-field">
+              <span>Email</span>
+              <input type="email" name="email" placeholder="tu@email.com" autocomplete="email">
+            </label>
+            <label class="access-field">
+              <span>Username</span>
+              <input type="text" name="username" placeholder="tu_usuario" autocomplete="username">
+            </label>
+          </div>
+
+          <label class="access-field">
+            <span>Contrasena</span>
+            <input type="password" name="password" placeholder="Minimo 8 caracteres" autocomplete="new-password">
+          </label>
+
+          <label class="access-field">
+            <span>Confirmar contrasena</span>
+            <input type="password" name="confirmPassword" placeholder="Repite la contrasena" autocomplete="new-password">
+          </label>
+
+          <div class="access-form__plan-note">
+            <span>Plan preparado</span>
+            <strong id="access-register-plan-name">Growth</strong>
+          </div>
+
+          <button type="submit" class="btn-primary access-submit-btn">Crear cuenta y activar plan</button>
+          <p class="access-footnote">El alta crea el usuario en la misma base compartida del backend y deja persistido el plan inicial para el resto del producto.</p>
+        </form>
+
+        <form id="access-login-form" class="access-form" hidden>
+          <label class="access-field">
+            <span>Email o username</span>
+            <input type="text" name="login" placeholder="tu@email.com o tu_usuario" autocomplete="username">
+          </label>
+
+          <label class="access-field">
+            <span>Contrasena</span>
+            <input type="password" name="password" placeholder="Tu contrasena" autocomplete="current-password">
+          </label>
+
+          <div class="access-form__plan-note">
+            <span>Plan a dejar activo</span>
+            <strong id="access-login-plan-name">Growth</strong>
+          </div>
+
+          <button type="submit" class="btn-primary access-submit-btn">Ingresar y sincronizar plan</button>
+          <p class="access-footnote">Si eliges un plan distinto despues del login, la landing lo guarda tambien en el backend sin necesidad de desplegar otro servicio.</p>
+        </form>
       </div>
     </div>
   </div>
@@ -1375,84 +1496,84 @@
   <div class="container">
     <div class="pricing-header">
       <span class="section-tag reveal">Planes</span>
-      <h2 class="reveal reveal-delay-1">Elegí el plan que tiene sentido<br>para tu operación</h2>
-      <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Sin contratos anuales forzados. Sin comisiones por ventas. Solo una suscripción plana que se paga sola en la primera semana.</p>
+      <h2 class="reveal reveal-delay-1">ElegÃ­ el plan que tiene sentido<br>para tu operaciÃ³n</h2>
+      <p class="section-sub reveal reveal-delay-2" style="margin: 0 auto;">Sin contratos anuales forzados. Sin comisiones por ventas. Solo una suscripciÃ³n plana que se paga sola en la primera semana.</p>
     </div>
 
     <div class="plans-grid">
 
       <!-- STARTER -->
-      <div class="plan-card anchor reveal">
+      <div class="plan-card anchor reveal" data-plan-card="starter">
         <div class="plan-name">Starter</div>
         <div class="plan-price">
           <span class="plan-currency">US$</span>
           <span class="plan-amount" style="background: linear-gradient(135deg, #94a3b8, #64748b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">29</span>
         </div>
-        <div class="plan-period">por mes · cancel anytime</div>
-        <p class="plan-desc">Para sellers que recién empiezan a tomar el control. Cubrí lo básico y eliminá el caos operativo inicial.</p>
+        <div class="plan-period">por mes Â· cancel anytime</div>
+        <p class="plan-desc">Para sellers que reciÃ©n empiezan a tomar el control. CubrÃ­ lo bÃ¡sico y eliminÃ¡ el caos operativo inicial.</p>
         <div class="plan-features">
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Panel de operaciones unificado</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Gestión de preguntas y reclamos</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Alertas básicas de cuenta</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Reply Assistant (hasta 200 msgs/mes)</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Listing Doctor: 5 análisis/mes</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Benchmark competitivo profundo</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Quick wins automáticos</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Copywriter ilimitado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Panel de operaciones unificado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>GestiÃ³n de preguntas y reclamos</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Alertas bÃ¡sicas de cuenta</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Reply Assistant (hasta 200 msgs/mes)</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Listing Doctor: 5 anÃ¡lisis/mes</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">âœ—</span><span style="color: var(--muted);">Benchmark competitivo profundo</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">âœ—</span><span style="color: var(--muted);">Quick wins automÃ¡ticos</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">âœ—</span><span style="color: var(--muted);">Copywriter ilimitado</span></div>
         </div>
-        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Starter%20de%20Kaizen%20Flow" target="_blank" class="plan-cta ghost">Empezar con Starter</a>
+        <button type="button" class="plan-cta ghost js-plan-select" data-plan-code="starter">Seleccionar Starter</button>
       </div>
 
       <!-- GROWTH (RECOMMENDED) -->
-      <div class="plan-card recommended reveal reveal-delay-1">
-        <div class="plan-badge-rec">⚡ Más elegido</div>
+      <div class="plan-card recommended reveal reveal-delay-1" data-plan-card="growth">
+        <div class="plan-badge-rec">âš¡ MÃ¡s elegido</div>
         <div class="plan-name" style="color: var(--accent2);">Growth</div>
         <div class="plan-price">
           <span class="plan-currency">US$</span>
           <span class="plan-amount" style="background: linear-gradient(135deg, #60a5fa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">79</span>
         </div>
-        <div class="plan-period">por mes · cancel anytime</div>
-        <p class="plan-desc">Para el seller que ya vende y quiere vender mejor. Listing Doctor completo, benchmarks profundos y IA sin límites.</p>
+        <div class="plan-period">por mes Â· cancel anytime</div>
+        <p class="plan-desc">Para el seller que ya vende y quiere vender mejor. Listing Doctor completo, benchmarks profundos y IA sin lÃ­mites.</p>
         <div class="plan-features">
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Todo lo del plan Starter</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Listing Doctor ilimitado + benchmark profundo</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Reply Assistant ilimitado</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Copywriter con contexto de mercado</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Quick wins automáticos + priorización IA</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Alertas proactivas de reputación</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Análisis de precio y oportunidades</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon cross">✗</span><span style="color: var(--muted);">Multi-cuenta</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Todo lo del plan Starter</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Listing Doctor ilimitado + benchmark profundo</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Reply Assistant ilimitado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Copywriter con contexto de mercado</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Quick wins automÃ¡ticos + priorizaciÃ³n IA</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Alertas proactivas de reputaciÃ³n</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>AnÃ¡lisis de precio y oportunidades</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon cross">âœ—</span><span style="color: var(--muted);">Multi-cuenta</span></div>
         </div>
-        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Growth%20de%20Kaizen%20Flow" target="_blank" class="plan-cta primary">Probar Growth →</a>
+        <button type="button" class="plan-cta primary js-plan-select" data-plan-code="growth">Activar Growth</button>
       </div>
 
       <!-- SCALE -->
-      <div class="plan-card reveal reveal-delay-2">
+      <div class="plan-card reveal reveal-delay-2" data-plan-card="scale">
         <div class="plan-badge-anchor">Para agencias</div>
         <div class="plan-name" style="color: var(--gold-light);">Scale</div>
         <div class="plan-price">
           <span class="plan-currency">US$</span>
           <span class="plan-amount" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">149</span>
         </div>
-        <div class="plan-period">por mes · cancel anytime</div>
+        <div class="plan-period">por mes Â· cancel anytime</div>
         <p class="plan-desc">Para operadores intensivos, agencias y marcas en serio. Multi-cuenta, reportes avanzados y prioridad de soporte.</p>
         <div class="plan-features">
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Todo lo del plan Growth</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Multi-cuenta (hasta 5 cuentas ML)</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Dashboard de agencia con reportes</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Exportación de datos e informes</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Acceso anticipado a nuevas features</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Soporte prioritario por WhatsApp</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>Onboarding personalizado 1:1</span></div>
-          <div class="plan-feat"><span class="plan-feat-icon check">✓</span><span>API de integraciones (próximamente)</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Todo lo del plan Growth</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Multi-cuenta (hasta 5 cuentas ML)</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Dashboard de agencia con reportes</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>ExportaciÃ³n de datos e informes</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Acceso anticipado a nuevas features</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Soporte prioritario por WhatsApp</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>Onboarding personalizado 1:1</span></div>
+          <div class="plan-feat"><span class="plan-feat-icon check">âœ“</span><span>API de integraciones (prÃ³ximamente)</span></div>
         </div>
-        <a href="https://wa.me/5491100000000?text=Quiero%20el%20plan%20Scale%20de%20Kaizen%20Flow" target="_blank" class="plan-cta ghost" style="border-color: rgba(245,158,11,0.4); color: var(--gold-light);">Escalar con Scale →</a>
+        <button type="button" class="plan-cta ghost js-plan-select" data-plan-code="scale" style="border-color: rgba(245,158,11,0.4); color: var(--gold-light);">Elegir Scale</button>
       </div>
     </div>
 
     <div class="custom-band reveal" style="margin-top: 24px;">
-      <p><strong>¿Agencia con más de 5 cuentas o volumen enterprise?</strong> Tenemos un plan Custom con capacidad a medida, SLA y factura.</p>
-      <a href="https://wa.me/5491100000000?text=Quiero%20saber%20sobre%20el%20plan%20enterprise%20de%20Kaizen%20Flow" target="_blank" class="btn-ghost" style="padding: 10px 24px; font-size: 0.85rem; white-space: nowrap;">Hablar con ventas →</a>
+      <p><strong>Â¿Agencia con mÃ¡s de 5 cuentas o volumen enterprise?</strong> Tenemos un plan Custom con capacidad a medida, SLA y factura.</p>
+      <a href="https://wa.me/5491100000000?text=Quiero%20saber%20sobre%20el%20plan%20enterprise%20de%20Kaizen%20Flow" target="_blank" class="btn-ghost" style="padding: 10px 24px; font-size: 0.85rem; white-space: nowrap;">Hablar con ventas â†’</a>
     </div>
   </div>
 </section>
@@ -1466,28 +1587,28 @@
     </div>
     <div class="faq-grid">
       <div class="faq-item reveal" onclick="toggleFaq(this)">
-        <div class="faq-q">¿Esto es solo un chatbot de IA genérico? <div class="faq-arrow">▼</div></div>
-        <div class="faq-a">No. Kaizen Flow trabaja sobre objetos reales de tu operación: tus publicaciones, tus preguntas, tus reclamos, tu competencia en ML. La IA no vive aislada respondiendo preguntas al aire — tiene contexto de tu negocio y opera sobre datos concretos.</div>
+        <div class="faq-q">Â¿Esto es solo un chatbot de IA genÃ©rico? <div class="faq-arrow">â–¼</div></div>
+        <div class="faq-a">No. Kaizen Flow trabaja sobre objetos reales de tu operaciÃ³n: tus publicaciones, tus preguntas, tus reclamos, tu competencia en ML. La IA no vive aislada respondiendo preguntas al aire â€” tiene contexto de tu negocio y opera sobre datos concretos.</div>
       </div>
       <div class="faq-item reveal reveal-delay-1" onclick="toggleFaq(this)">
-        <div class="faq-q">¿Reemplaza a Mercado Libre? <div class="faq-arrow">▼</div></div>
-        <div class="faq-a">No. Se conecta vía OAuth oficial a tu cuenta de ML y actúa como una capa de trabajo encima: centraliza, analiza y sugiere, pero las publicaciones siguen viviendo en Mercado Libre.</div>
+        <div class="faq-q">Â¿Reemplaza a Mercado Libre? <div class="faq-arrow">â–¼</div></div>
+        <div class="faq-a">No. Se conecta vÃ­a OAuth oficial a tu cuenta de ML y actÃºa como una capa de trabajo encima: centraliza, analiza y sugiere, pero las publicaciones siguen viviendo en Mercado Libre.</div>
       </div>
       <div class="faq-item reveal reveal-delay-2" onclick="toggleFaq(this)">
-        <div class="faq-q">¿Es seguro conectar mi cuenta? <div class="faq-arrow">▼</div></div>
-        <div class="faq-a">Totalmente. Usamos el sistema de autenticación oficial de Mercado Libre (OAuth 2.0). Nunca te pedimos tu contraseña directamente. Podés revocar el acceso desde tu cuenta de ML cuando quieras.</div>
+        <div class="faq-q">Â¿Es seguro conectar mi cuenta? <div class="faq-arrow">â–¼</div></div>
+        <div class="faq-a">Totalmente. Usamos el sistema de autenticaciÃ³n oficial de Mercado Libre (OAuth 2.0). Nunca te pedimos tu contraseÃ±a directamente. PodÃ©s revocar el acceso desde tu cuenta de ML cuando quieras.</div>
       </div>
       <div class="faq-item reveal" onclick="toggleFaq(this)">
-        <div class="faq-q">¿Para quién es Kaizen Flow? <div class="faq-arrow">▼</div></div>
-        <div class="faq-a">Para sellers que ya venden en Mercado Libre y quieren operar con más criterio. No es ideal para quienes recién crean su primera publicación, sino para quienes ya tienen volumen y quieren optimizarlo.</div>
+        <div class="faq-q">Â¿Para quiÃ©n es Kaizen Flow? <div class="faq-arrow">â–¼</div></div>
+        <div class="faq-a">Para sellers que ya venden en Mercado Libre y quieren operar con mÃ¡s criterio. No es ideal para quienes reciÃ©n crean su primera publicaciÃ³n, sino para quienes ya tienen volumen y quieren optimizarlo.</div>
       </div>
       <div class="faq-item reveal reveal-delay-1" onclick="toggleFaq(this)">
-        <div class="faq-q">¿Cómo funciona Listing Doctor exactamente? <div class="faq-arrow">▼</div></div>
-        <div class="faq-a">Tomás una de tus publicaciones, la procesamos con IA y buscamos competidores reales dentro de ML. Analizamos título, precio, atributos, descripción y competitividad. Te devolvemos un score por dimensión, un benchmark y un plan de acción priorizado con impacto esperado.</div>
+        <div class="faq-q">Â¿CÃ³mo funciona Listing Doctor exactamente? <div class="faq-arrow">â–¼</div></div>
+        <div class="faq-a">TomÃ¡s una de tus publicaciones, la procesamos con IA y buscamos competidores reales dentro de ML. Analizamos tÃ­tulo, precio, atributos, descripciÃ³n y competitividad. Te devolvemos un score por dimensiÃ³n, un benchmark y un plan de acciÃ³n priorizado con impacto esperado.</div>
       </div>
       <div class="faq-item reveal reveal-delay-2" onclick="toggleFaq(this)">
-        <div class="faq-q">¿Puedo cancelar cuando quiero? <div class="faq-arrow">▼</div></div>
-        <div class="faq-a">Sí, sin penalidades. Los planes son mensuales y podés cancelar desde el panel en cualquier momento. No hay contratos anuales ni cargos ocultos.</div>
+        <div class="faq-q">Â¿Puedo cancelar cuando quiero? <div class="faq-arrow">â–¼</div></div>
+        <div class="faq-a">SÃ­, sin penalidades. Los planes son mensuales y podÃ©s cancelar desde el panel en cualquier momento. No hay contratos anuales ni cargos ocultos.</div>
       </div>
     </div>
   </div>
@@ -1496,16 +1617,16 @@
 <!-- FINAL CTA -->
 <section class="final-cta">
   <div class="container">
-    <span class="section-tag reveal">Empezá hoy</span>
-    <h2 class="reveal reveal-delay-1">Menos caos. Más criterio.<br>Más ventas.</h2>
-    <p class="section-sub reveal reveal-delay-2">Conectá tu cuenta en menos de 10 minutos y descubrí exactamente qué está frenando tus ventas en Mercado Libre.</p>
+    <span class="section-tag reveal">EmpezÃ¡ hoy</span>
+    <h2 class="reveal reveal-delay-1">Menos caos. MÃ¡s criterio.<br>MÃ¡s ventas.</h2>
+    <p class="section-sub reveal reveal-delay-2">ConectÃ¡ tu cuenta en menos de 10 minutos y descubrÃ­ exactamente quÃ© estÃ¡ frenando tus ventas en Mercado Libre.</p>
     <div class="hero-btns reveal reveal-delay-3">
-      <a href="#pricing" class="btn-primary" style="font-size: 1.05rem; padding: 16px 36px;">
+      <a href="#access" class="btn-primary" style="font-size: 1.05rem; padding: 16px 36px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        Ver planes y empezar
+        Crear cuenta y empezar
       </a>
-      <a href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20saber%20más%20sobre%20Kaizen%20Flow" target="_blank" class="btn-ghost" style="font-size: 1.05rem; padding: 16px 36px;">
-        💬 Hablar con el equipo
+      <a href="https://wa.me/5491100000000?text=Hola%2C%20quiero%20saber%20mÃ¡s%20sobre%20Kaizen%20Flow" target="_blank" class="btn-ghost" style="font-size: 1.05rem; padding: 16px 36px;">
+        ðŸ’¬ Hablar con el equipo
       </a>
     </div>
   </div>
@@ -1515,31 +1636,31 @@
 <footer>
   <span class="footer-logo">Kaizen Flow</span>
   <p>El copiloto con IA para vendedores de Mercado Libre</p>
-  <p style="margin-top: 8px;">© 2024 Kaizen Flow · Todos los derechos reservados</p>
+  <p style="margin-top: 8px;">Â© 2024 Kaizen Flow Â· Todos los derechos reservados</p>
 </footer>
 
 <script>
-  // ── CURSOR GLOW
+  // â”€â”€ CURSOR GLOW
   const glow = document.getElementById('cursorGlow');
   document.addEventListener('mousemove', e => {
     glow.style.left = e.clientX + 'px';
     glow.style.top = e.clientY + 'px';
   });
 
-  // ── NAV SCROLL
+  // â”€â”€ NAV SCROLL
   const navbar = document.getElementById('navbar');
   window.addEventListener('scroll', () => {
     navbar.classList.toggle('scrolled', window.scrollY > 30);
   });
 
-  // ── INTERSECTION OBSERVER (reveal)
+  // â”€â”€ INTERSECTION OBSERVER (reveal)
   const reveals = document.querySelectorAll('.reveal');
   const observer = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
   }, { threshold: 0.12 });
   reveals.forEach(el => observer.observe(el));
 
-  // ── COUNTER ANIMATION
+  // â”€â”€ COUNTER ANIMATION
   function animateCounter(el) {
     const target = parseInt(el.dataset.count);
     const prefix = el.dataset.prefix || '';
@@ -1567,7 +1688,7 @@
   }, { threshold: 0.5 });
   statNums.forEach(el => counterObserver.observe(el));
 
-  // ── TYPEWRITER
+  // â”€â”€ TYPEWRITER
   const phrases = ['Resolviendo reclamos con IA.', 'Impulsada por datos.', 'Automatizando tu soporte.', 'Optimizada con IA.'];
   let pIdx = 0, cIdx = 0, deleting = false;
   const twTarget = document.getElementById('typewriter-target');
@@ -1591,14 +1712,14 @@
   }
   setTimeout(typeWrite, 800);
 
-  // ── FAQ
+  // â”€â”€ FAQ
   function toggleFaq(item) {
     const isOpen = item.classList.contains('open');
     document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
     if (!isOpen) item.classList.add('open');
   }
 
-  // ── Subtle parallax on orbs
+  // â”€â”€ Subtle parallax on orbs
   document.addEventListener('mousemove', e => {
     const mx = (e.clientX / window.innerWidth - 0.5) * 20;
     const my = (e.clientY / window.innerHeight - 0.5) * 20;
@@ -1608,7 +1729,7 @@
     });
   });
 
-  // ── Re-trigger score bar animations when visible
+  // â”€â”€ Re-trigger score bar animations when visible
   const ldVisual = document.querySelector('.ld-visual');
   const scoreObserver = new IntersectionObserver(entries => {
     entries.forEach(e => {
@@ -1624,5 +1745,7 @@
   }, { threshold: 0.5 });
   if (ldVisual) scoreObserver.observe(ldVisual);
 </script>
+<script src="./access-hub.js"></script>
 </body>
 </html>
+

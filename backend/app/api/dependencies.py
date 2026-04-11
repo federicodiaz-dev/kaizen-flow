@@ -51,7 +51,11 @@ def get_database(request: Request) -> Database:
 def get_http_client(request: Request) -> httpx.AsyncClient:
     http_client = getattr(request.app.state, "http_client", None)
     if http_client is None:
-        http_client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
+        settings = get_settings(request)
+        http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(30.0),
+            verify=settings.outbound_http_verify_ssl,
+        )
         request.app.state.http_client = http_client
     return http_client
 

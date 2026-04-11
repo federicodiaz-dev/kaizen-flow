@@ -174,6 +174,7 @@ class AccountStore:
         requested_key: str | None = None,
         source: str = "oauth",
         is_active_for_new: bool = False,
+        is_active_for_existing: bool | None = None,
     ) -> AccountCredentials:
         with self._lock, self._database.connect() as connection:
             now = utc_now_iso()
@@ -191,26 +192,49 @@ class AccountStore:
             resolved_key = existing["account_key"] if existing else self._resolve_unique_account_key(connection, requested_key, nickname, label, ml_user_id)
 
             if existing:
-                connection.execute(
-                    """
-                    UPDATE ml_accounts
-                    SET label = ?, nickname = ?, site_id = ?, access_token = ?, refresh_token = ?, scope = ?, source = ?, ml_user_id = ?, updated_at = ?
-                    WHERE user_id = ? AND account_key = ?
-                    """,
-                    (
-                        label,
-                        nickname,
-                        site_id,
-                        access_token,
-                        refresh_token,
-                        scope,
-                        source,
-                        ml_user_id,
-                        now,
-                        self._user_id,
-                        resolved_key,
-                    ),
-                )
+                if is_active_for_existing is None:
+                    connection.execute(
+                        """
+                        UPDATE ml_accounts
+                        SET label = ?, nickname = ?, site_id = ?, access_token = ?, refresh_token = ?, scope = ?, source = ?, ml_user_id = ?, updated_at = ?
+                        WHERE user_id = ? AND account_key = ?
+                        """,
+                        (
+                            label,
+                            nickname,
+                            site_id,
+                            access_token,
+                            refresh_token,
+                            scope,
+                            source,
+                            ml_user_id,
+                            now,
+                            self._user_id,
+                            resolved_key,
+                        ),
+                    )
+                else:
+                    connection.execute(
+                        """
+                        UPDATE ml_accounts
+                        SET label = ?, nickname = ?, site_id = ?, access_token = ?, refresh_token = ?, scope = ?, source = ?, ml_user_id = ?, is_active = ?, updated_at = ?
+                        WHERE user_id = ? AND account_key = ?
+                        """,
+                        (
+                            label,
+                            nickname,
+                            site_id,
+                            access_token,
+                            refresh_token,
+                            scope,
+                            source,
+                            ml_user_id,
+                            1 if is_active_for_existing else 0,
+                            now,
+                            self._user_id,
+                            resolved_key,
+                        ),
+                    )
             else:
                 connection.execute(
                     """

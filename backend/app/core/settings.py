@@ -31,6 +31,13 @@ def _to_int(value: Any | None) -> int | None:
         return None
 
 
+def _parse_csv(value: Any | None) -> tuple[str, ...]:
+    if value in (None, ""):
+        return ()
+    items = [item.strip() for item in str(value).split(",")]
+    return tuple(item for item in items if item)
+
+
 def _slugify(text: str) -> str:
     normalized = re.sub(r"[^a-zA-Z0-9]+", "_", text).strip("_").lower()
     return normalized or "legacy"
@@ -59,9 +66,13 @@ class Settings:
     client_secret: str
     redirect_uri: str | None
     frontend_origin: str
+    frontend_origins: tuple[str, ...]
+    frontend_callback_origin: str
+    outbound_http_verify_ssl: bool
     database_path: Path
     session_cookie_name: str
     session_cookie_secure: bool
+    session_cookie_samesite: str
     session_ttl_hours: int
     default_account: str
     accounts: dict[str, AccountCredentials]
@@ -153,6 +164,21 @@ def get_settings() -> Settings:
         _first(merged_values, "ML_DEFAULT_ACCOUNT")
         or ("seller" if "seller" in accounts else next(iter(accounts), "seller"))
     )
+    frontend_origin = str(_first(merged_values, "FRONTEND_ORIGIN") or "http://localhost:4200")
+    configured_origins = _parse_csv(_first(merged_values, "FRONTEND_ORIGINS"))
+    frontend_origins = tuple(dict.fromkeys((frontend_origin, *configured_origins, "http://127.0.0.1:4200")))
+    frontend_callback_origin = str(
+        _first(merged_values, "FRONTEND_CALLBACK_ORIGIN") or frontend_origin
+    ).rstrip("/")
+    outbound_http_verify_ssl = (
+        str(_first(merged_values, "OUTBOUND_HTTP_VERIFY_SSL", "HTTP_CLIENT_VERIFY_SSL") or "true")
+        .strip()
+        .lower()
+        in {"1", "true", "yes", "on"}
+    )
+    session_cookie_samesite = str(_first(merged_values, "SESSION_COOKIE_SAMESITE") or "lax").strip().lower()
+    if session_cookie_samesite not in {"lax", "strict", "none"}:
+        session_cookie_samesite = "lax"
 
     return Settings(
         app_name="Kaizen Flow API",
@@ -165,12 +191,16 @@ def get_settings() -> Settings:
         app_id=str(_first(merged_values, "ML_APP_ID") or ""),
         client_secret=str(_first(merged_values, "ML_CLIENT_SECRET") or ""),
         redirect_uri=str(_first(merged_values, "ML_REDIRECT_URI")) if _first(merged_values, "ML_REDIRECT_URI") else None,
-        frontend_origin=str(_first(merged_values, "FRONTEND_ORIGIN") or "http://localhost:4200"),
+        frontend_origin=frontend_origin,
+        frontend_origins=frontend_origins,
+        frontend_callback_origin=frontend_callback_origin,
+        outbound_http_verify_ssl=outbound_http_verify_ssl,
         database_path=Path(str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")).resolve()
         if Path(str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3")).is_absolute()
         else ROOT_DIR / str(_first(merged_values, "APP_DB_PATH") or "backend/data/kaizen_flow.sqlite3"),
         session_cookie_name=str(_first(merged_values, "SESSION_COOKIE_NAME") or "kaizen_session"),
         session_cookie_secure=str(_first(merged_values, "SESSION_COOKIE_SECURE") or "").strip().lower() in {"1", "true", "yes", "on"},
+        session_cookie_samesite=session_cookie_samesite,
         session_ttl_hours=_to_int(_first(merged_values, "SESSION_TTL_HOURS")) or (24 * 14),
         default_account=default_account,
         accounts=accounts,

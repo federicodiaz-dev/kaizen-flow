@@ -49,9 +49,14 @@ export class AuthService {
     return this.bootstrapPromise;
   }
 
-  register(email: string, password: string) {
+  register(email: string, username: string, password: string, selectedPlanCode: string) {
     this.submitting.set(true);
-    return this.http.post<SessionResponse>('/api/auth/register', { email, password }).pipe(
+    return this.http.post<SessionResponse>('/api/auth/register', {
+      email,
+      username,
+      password,
+      selected_plan_code: selectedPlanCode,
+    }).pipe(
       map((response) => response.user),
       tap((user) => {
         this.user.set(user);
@@ -61,9 +66,9 @@ export class AuthService {
     );
   }
 
-  login(email: string, password: string) {
+  login(login: string, password: string) {
     this.submitting.set(true);
-    return this.http.post<SessionResponse>('/api/auth/login', { email, password }).pipe(
+    return this.http.post<SessionResponse>('/api/auth/login', { login, password }).pipe(
       map((response) => response.user),
       tap((user) => {
         this.user.set(user);
@@ -82,6 +87,13 @@ export class AuthService {
   clearSession(): void {
     this.user.set(null);
     this.initialized.set(true);
+  }
+
+  selectPlan(planCode: string) {
+    return this.http.post<SessionResponse>('/api/plans/select', { plan_code: planCode }).pipe(
+      map((response) => response.user),
+      tap((user) => this.user.set(user)),
+    );
   }
 
   completeOnboarding() {

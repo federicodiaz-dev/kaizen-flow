@@ -178,6 +178,33 @@
   flex-wrap: wrap;
 }
 
+.plan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-light) 70%, transparent), transparent 48%),
+    color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  color: var(--text-main);
+  min-height: 36px;
+
+  strong {
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+}
+
+.plan-pill__label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 .account-dropdown-wrapper {
   display: flex;
   align-items: center;
@@ -519,6 +546,19 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .mobile-nav-summary__plan {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 0.35rem;
+    padding: 0.24rem 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent-light) 78%, transparent);
+    color: var(--accent);
+    font-size: 0.74rem;
+    font-weight: 700;
   }
 
   .mobile-nav-links {
