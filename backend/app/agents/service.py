@@ -38,9 +38,9 @@ class BusinessAssistantService:
     def health(self) -> dict[str, Any]:
         return {
             "status": "ok",
-            "llm_provider": "groq",
-            "model": self._agent_settings.groq_model,
-            "router_model": self._agent_settings.groq_router_model,
+            "llm_provider": "google_ai_studio",
+            "model": self._agent_settings.google_model,
+            "router_model": self._agent_settings.google_router_model,
             "mcp_configured": self._agent_settings.mcp.enabled,
             "mcp_available": bool(self.toolbox and self.toolbox.mcp_available),
             "mcp_error": self.toolbox.mcp_error if self.toolbox is not None else None,

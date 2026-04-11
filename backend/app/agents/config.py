@@ -130,9 +130,9 @@ class MCPConnectionSettings:
 
 @dataclass(frozen=True, slots=True)
 class AgentSettings:
-    groq_api_key: str
-    groq_model: str
-    groq_router_model: str
+    google_api_key: str
+    google_model: str
+    google_router_model: str
     temperature: float
     router_temperature: float
     default_site_id: str
@@ -145,8 +145,8 @@ class AgentSettings:
     mcp: MCPConnectionSettings
 
     def validate_runtime(self) -> None:
-        if not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY is required to use the AI assistant.")
+        if not self.google_api_key:
+            raise ValueError("GOOGLE_API_KEY is required to use the AI assistant.")
         if len(self.default_site_id.strip()) < 3:
             raise ValueError("AI_DEFAULT_SITE_ID must be a valid Mercado Libre site id.")
         if self.history_window < 1:
@@ -186,22 +186,32 @@ def get_agent_settings() -> AgentSettings:
     )
 
     return AgentSettings(
-        groq_api_key=str(_first(merged_values, "GROQ_API_KEY") or "").strip(),
-        groq_model=str(
+        google_api_key=str(
             _first(
                 merged_values,
-                "GROQ_MODEL",
-                "AI_GROQ_MODEL",
+                "GOOGLE_API_KEY",
+                "GEMINI_API_KEY",
+                "GOOGLE_AI_STUDIO_API_KEY",
             )
-            or "llama-3.3-70b-versatile"
+            or ""
         ).strip(),
-        groq_router_model=str(
+        google_model=str(
             _first(
                 merged_values,
-                "GROQ_ROUTER_MODEL",
-                "AI_GROQ_ROUTER_MODEL",
+                "GOOGLE_MODEL",
+                "GEMINI_MODEL",
+                "AI_GOOGLE_MODEL",
             )
-            or "openai/gpt-oss-20b"
+            or "gemini-2.5-flash"
+        ).strip(),
+        google_router_model=str(
+            _first(
+                merged_values,
+                "GOOGLE_ROUTER_MODEL",
+                "GEMINI_ROUTER_MODEL",
+                "AI_GOOGLE_ROUTER_MODEL",
+            )
+            or "gemini-2.5-flash-lite"
         ).strip(),
         temperature=_to_float(_first(merged_values, "AI_TEMPERATURE"), 0.1),
         router_temperature=_to_float(_first(merged_values, "AI_ROUTER_TEMPERATURE"), 0.0),

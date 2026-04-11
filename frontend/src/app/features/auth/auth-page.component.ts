@@ -81,6 +81,12 @@ export class AuthPageComponent {
         return;
       }
 
+      const passwordStrengthError = this.getPasswordStrengthError(password);
+      if (passwordStrengthError) {
+        this.errorMessage.set(passwordStrengthError);
+        return;
+      }
+
       if (password !== this.confirmPassword()) {
         this.errorMessage.set('Las contrasenas no coinciden.');
         return;
@@ -128,5 +134,24 @@ export class AuthPageComponent {
       }
     }
     return 'No se pudo completar la operacion.';
+  }
+
+  private getPasswordStrengthError(password: string): string | null {
+    if (password.length < 12) {
+      return 'La contrasena debe tener al menos 12 caracteres.';
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'La contrasena debe incluir al menos una letra minuscula.';
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'La contrasena debe incluir al menos una letra mayuscula.';
+    }
+    if (!/\d/.test(password)) {
+      return 'La contrasena debe incluir al menos un numero.';
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      return 'La contrasena debe incluir al menos un simbolo.';
+    }
+    return null;
   }
 }

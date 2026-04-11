@@ -90,9 +90,9 @@ SESSION_COOKIE_NAME=kaizen_session
 SESSION_COOKIE_SECURE=false
 SESSION_TTL_HOURS=336
 
-GROQ_API_KEY=
-GROQ_MODEL=llama-3.3-70b-versatile
-GROQ_ROUTER_MODEL=openai/gpt-oss-20b
+GOOGLE_API_KEY=
+GOOGLE_MODEL=gemini-2.5-flash
+GOOGLE_ROUTER_MODEL=gemini-2.5-flash-lite
 AI_DEFAULT_SITE_ID=MLA
 AI_HISTORY_WINDOW=8
 AI_MEMORY_DIR=backend/data/agents
@@ -186,7 +186,7 @@ El proxy del frontend apunta a `http://127.0.0.1:8000`.
 
 ## Limites actuales
 
-- los tokens de Mercado Libre se guardan en SQLite en el servidor; para endurecer aun mas produccion, el siguiente paso recomendado es cifrado de tokens en reposo
+- los tokens de Mercado Libre se guardan cifrados en SQLite en el servidor; para endurecer aun mas produccion, el siguiente paso recomendado es mover la clave de cifrado a un secret manager
 - la disponibilidad real de mensajeria en claims sigue dependiendo del estado y de las reglas reales de Mercado Libre
 - el login protege la app y el API, pero no reemplaza buenas practicas de despliegue como HTTPS, rotacion de secretos y backups cifrados de la base
 

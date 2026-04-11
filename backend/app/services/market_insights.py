@@ -17,7 +17,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.agents.config import AgentSettings, get_agent_settings
 from app.adapters.market_research import MarketResearchAdapter
-from app.core.ai_usage_reporting import create_chat_groq, llm_run_config
+from app.core.ai_usage_reporting import create_chat_model, llm_run_config
 from app.core.exceptions import BadRequestError, MercadoLibreAPIError
 from app.schemas.market_insights import MarketInsightsTraceEntry
 
@@ -580,9 +580,9 @@ class MarketInsightsService:
             return self._llm
 
         self._agent_settings.validate_runtime()
-        self._llm = create_chat_groq(
+        self._llm = create_chat_model(
             self._agent_settings,
-            model=self._agent_settings.groq_model,
+            model=self._agent_settings.google_model,
             temperature=0.1,
             feature="market_insights",
             max_retries=2,

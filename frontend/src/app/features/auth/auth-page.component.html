@@ -74,13 +74,13 @@
 
         <label class="form-field">
           <span>Contrasena</span>
-          <input
-            type="password"
-            class="input-text"
-            placeholder="Al menos 8 caracteres"
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-          />
+            <input
+              type="password"
+              class="input-text"
+              placeholder="Minimo 12 caracteres, con mayuscula, minuscula, numero y simbolo"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+            />
         </label>
 
         @if (mode() === 'register') {
@@ -156,7 +156,7 @@
 
         <p class="form-footnote">
           {{ mode() === 'register'
-            ? 'Al registrarte dejamos creado tu usuario, tu username y tu plan inicial en la base compartida del producto.'
+            ? 'Al registrarte dejamos creado tu usuario, tu username y tu plan inicial en la base compartida del producto. Usa una contrasena robusta con mayuscula, minuscula, numero y simbolo.'
             : 'Usa el mismo acceso para la landing y para el panel principal.' }}
         </p>
       </form>

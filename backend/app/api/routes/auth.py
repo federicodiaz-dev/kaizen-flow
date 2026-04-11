@@ -41,6 +41,20 @@ def _extract_frontend_origin(request: Request, settings) -> str | None:
     return None
 
 
+def _extract_client_ip(request: Request) -> str | None:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        first_hop = forwarded_for.split(",")[0].strip()
+        if first_hop:
+            return first_hop
+
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+
+    return request.client.host if request.client else None
+
+
 def _set_session_cookie(
     response: Response,
     *,
@@ -91,7 +105,7 @@ def register(
         password=payload.password,
         selected_plan_code=payload.selected_plan_code,
         user_agent=request.headers.get("user-agent"),
-        ip_address=request.client.host if request.client else None,
+        ip_address=_extract_client_ip(request),
     )
     _set_session_cookie(
         response,
@@ -116,7 +130,7 @@ def login(
         identifier=(payload.login or payload.email or "").strip(),
         password=payload.password,
         user_agent=request.headers.get("user-agent"),
-        ip_address=request.client.host if request.client else None,
+        ip_address=_extract_client_ip(request),
     )
     _set_session_cookie(
         response,

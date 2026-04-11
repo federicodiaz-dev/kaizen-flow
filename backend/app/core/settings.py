@@ -65,6 +65,7 @@ class Settings:
     app_id: str
     client_secret: str
     redirect_uri: str | None
+    token_encryption_secret: str | None
     frontend_origin: str
     frontend_origins: tuple[str, ...]
     frontend_callback_origin: str
@@ -191,6 +192,11 @@ def get_settings() -> Settings:
         app_id=str(_first(merged_values, "ML_APP_ID") or ""),
         client_secret=str(_first(merged_values, "ML_CLIENT_SECRET") or ""),
         redirect_uri=str(_first(merged_values, "ML_REDIRECT_URI")) if _first(merged_values, "ML_REDIRECT_URI") else None,
+        token_encryption_secret=(
+            str(_first(merged_values, "APP_TOKEN_ENCRYPTION_KEY")).strip()
+            if _first(merged_values, "APP_TOKEN_ENCRYPTION_KEY")
+            else None
+        ),
         frontend_origin=frontend_origin,
         frontend_origins=frontend_origins,
         frontend_callback_origin=frontend_callback_origin,

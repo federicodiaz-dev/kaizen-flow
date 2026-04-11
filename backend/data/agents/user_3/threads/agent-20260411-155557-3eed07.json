@@ -1,0 +1,31 @@
+{
+  "thread_id": "agent-20260411-155557-3eed07",
+  "title": "Saludo inicial",
+  "created_at": "2026-04-11T19:55:57Z",
+  "updated_at": "2026-04-11T19:56:12Z",
+  "messages": [
+    {
+      "role": "user",
+      "content": "hola",
+      "created_at": "2026-04-11T19:56:12Z",
+      "metadata": {
+        "account_key": "dife8740334",
+        "site_id": "MLA"
+      }
+    },
+    {
+      "role": "assistant",
+      "content": "¡Hola! Soy tu asistente de Mercado Libre. ¿En qué puedo ayudarte hoy? Puedo revisar tus publicaciones, reclamos, preguntas, o analizar el mercado.",
+      "created_at": "2026-04-11T19:56:12Z",
+      "metadata": {
+        "route": "clarification",
+        "selected_agent": "clarification",
+        "intent_confidence": 0.8,
+        "normalized_request": "Saludo inicial",
+        "user_goal": "saludo inicial",
+        "account_key": "dife8740334",
+        "site_id": "MLA"
+      }
+    }
+  ]
+}

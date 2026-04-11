@@ -40,6 +40,11 @@ class AuthenticationError(AppError):
         super().__init__(message=message, status_code=401, code="authentication_error", details=details)
 
 
+class TooManyRequestsError(AppError):
+    def __init__(self, message: str = "Too many requests.", details: Any | None = None) -> None:
+        super().__init__(message=message, status_code=429, code="too_many_requests", details=details)
+
+
 class AuthorizationError(AppError):
     def __init__(self, message: str = "You do not have permission to perform this action.", details: Any | None = None) -> None:
         super().__init__(message=message, status_code=403, code="authorization_error", details=details)

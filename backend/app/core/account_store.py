@@ -5,8 +5,8 @@ import sqlite3
 from threading import Lock
 
 from .database import Database
-from .exceptions import AccountInactiveError, NotFoundError
-from .security import utc_now_iso
+from .exceptions import AccountInactiveError, ConfigurationError, NotFoundError
+from .security import TokenCipher, utc_now_iso
 from .settings import AccountCredentials
 
 
@@ -16,11 +16,18 @@ def _slugify_account_key(text: str) -> str:
 
 
 class AccountStore:
-    def __init__(self, database: Database, user_id: int, default_account: str | None = None) -> None:
+    def __init__(
+        self,
+        database: Database,
+        user_id: int,
+        default_account: str | None = None,
+        token_encryption_secret: str | None = None,
+    ) -> None:
         self._database = database
         self._user_id = user_id
         self._default_account = default_account
         self._lock = Lock()
+        self._token_cipher = TokenCipher(token_encryption_secret)
 
     @property
     def user_id(self) -> int:
@@ -149,8 +156,8 @@ class AccountStore:
                 WHERE user_id = ? AND account_key = ?
                 """,
                 (
-                    access_token,
-                    refresh_token or row["refresh_token"],
+                    self._encrypt_token(access_token),
+                    self._encrypt_token(refresh_token) or row["refresh_token"],
                     scope or row["scope"],
                     user_id or row["ml_user_id"],
                     utc_now_iso(),
@@ -203,8 +210,8 @@ class AccountStore:
                             label,
                             nickname,
                             site_id,
-                            access_token,
-                            refresh_token,
+                            self._encrypt_token(access_token),
+                            self._encrypt_token(refresh_token),
                             scope,
                             source,
                             ml_user_id,
@@ -224,8 +231,8 @@ class AccountStore:
                             label,
                             nickname,
                             site_id,
-                            access_token,
-                            refresh_token,
+                            self._encrypt_token(access_token),
+                            self._encrypt_token(refresh_token),
                             scope,
                             source,
                             ml_user_id,
@@ -250,8 +257,8 @@ class AccountStore:
                         ml_user_id,
                         nickname,
                         site_id,
-                        access_token,
-                        refresh_token,
+                        self._encrypt_token(access_token),
+                        self._encrypt_token(refresh_token),
                         scope,
                         source,
                         1 if is_active_for_new else 0,
@@ -296,13 +303,26 @@ class AccountStore:
         return AccountCredentials(
             key=str(row["account_key"]),
             label=str(row["label"]),
-            access_token=str(row["access_token"]),
-            refresh_token=str(row["refresh_token"]) if row["refresh_token"] else None,
+            access_token=self._decrypt_token(str(row["access_token"])),
+            refresh_token=self._decrypt_token(str(row["refresh_token"])) if row["refresh_token"] else None,
             scope=str(row["scope"]) if row["scope"] else None,
             user_id=int(row["ml_user_id"]) if row["ml_user_id"] is not None else None,
             source=str(row["source"] or "oauth"),
             is_active=bool(row["is_active"]) if "is_active" in row.keys() else True,
         )
+
+    def _encrypt_token(self, value: str | None) -> str | None:
+        try:
+            return self._token_cipher.encrypt(value)
+        except ValueError as exc:
+            raise ConfigurationError(str(exc)) from exc
+
+    def _decrypt_token(self, value: str) -> str:
+        try:
+            decrypted = self._token_cipher.decrypt(value)
+        except ValueError as exc:
+            raise ConfigurationError(str(exc)) from exc
+        return str(decrypted or "")
 
     def _ensure_account_is_active(self, account: AccountCredentials) -> None:
         if account.is_active:

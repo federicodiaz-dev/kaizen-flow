@@ -24,7 +24,10 @@ logger = logging.getLogger("kaizen-flow")
 async def lifespan(app: FastAPI):
     settings = get_settings()
     app.state.settings = settings
-    app.state.database = Database(settings.database_path)
+    app.state.database = Database(
+        settings.database_path,
+        token_encryption_secret=settings.token_encryption_secret,
+    )
     app.state.database.initialize()
     app.state.http_client = httpx.AsyncClient(
         timeout=httpx.Timeout(30.0),

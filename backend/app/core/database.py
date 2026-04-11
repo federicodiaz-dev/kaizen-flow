@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Iterator
 
 from app.core.plan_catalog import DEFAULT_PLAN_CATALOG, DEFAULT_PLAN_CODE
-from app.core.security import normalize_username, utc_now_iso
+from app.core.security import TokenCipher, add_hours, normalize_username, utc_now_iso
+
+
+AUTH_THROTTLE_STALE_DAYS = 30
 
 
 SCHEMA = """
@@ -78,6 +81,24 @@ CREATE TABLE IF NOT EXISTS oauth_states (
 CREATE INDEX IF NOT EXISTS idx_oauth_states_user_id ON oauth_states(user_id);
 CREATE INDEX IF NOT EXISTS idx_oauth_states_expires_at ON oauth_states(expires_at);
 
+CREATE TABLE IF NOT EXISTS auth_throttle_buckets (
+    scope TEXT NOT NULL,
+    bucket_key TEXT NOT NULL,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    last_attempt_at TEXT NOT NULL,
+    last_failure_at TEXT,
+    next_allowed_at TEXT,
+    blocked_until TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (scope, bucket_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_throttle_buckets_scope_next_allowed
+ON auth_throttle_buckets(scope, next_allowed_at);
+CREATE INDEX IF NOT EXISTS idx_auth_throttle_buckets_scope_blocked_until
+ON auth_throttle_buckets(scope, blocked_until);
+
 CREATE TABLE IF NOT EXISTS plans (
     code TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -134,8 +155,9 @@ CREATE INDEX IF NOT EXISTS idx_user_plan_events_user_id ON user_plan_events(user
 
 
 class Database:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, token_encryption_secret: str | None = None) -> None:
         self._path = Path(path)
+        self._token_cipher = TokenCipher(token_encryption_secret)
 
     @property
     def path(self) -> Path:
@@ -146,6 +168,7 @@ class Database:
         with self.connect() as connection:
             connection.executescript(SCHEMA)
             self._apply_migrations(connection)
+            self._encrypt_plaintext_ml_tokens(connection)
 
     def _apply_migrations(self, connection: sqlite3.Connection) -> None:
         if not self._column_exists(connection, "users", "is_first_visit"):
@@ -181,6 +204,50 @@ class Database:
         )
         self._seed_default_plans(connection)
         self._ensure_current_plan_for_existing_users(connection)
+        self._cleanup_stale_auth_throttle_buckets(connection)
+
+    def _encrypt_plaintext_ml_tokens(self, connection: sqlite3.Connection) -> None:
+        if not self._token_cipher.enabled:
+            return
+
+        rows = connection.execute(
+            """
+            SELECT id, access_token, refresh_token
+            FROM ml_accounts
+            WHERE access_token IS NOT NULL
+            """
+        ).fetchall()
+
+        for row in rows:
+            access_token = str(row["access_token"] or "")
+            refresh_token = str(row["refresh_token"]) if row["refresh_token"] else None
+            encrypted_access_token = self._token_cipher.encrypt(access_token)
+            encrypted_refresh_token = self._token_cipher.encrypt(refresh_token)
+            if encrypted_access_token == access_token and encrypted_refresh_token == refresh_token:
+                continue
+            connection.execute(
+                """
+                UPDATE ml_accounts
+                SET access_token = ?, refresh_token = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    encrypted_access_token,
+                    encrypted_refresh_token,
+                    utc_now_iso(),
+                    int(row["id"]),
+                ),
+            )
+
+    def _cleanup_stale_auth_throttle_buckets(self, connection: sqlite3.Connection) -> None:
+        cutoff_iso = add_hours(-(AUTH_THROTTLE_STALE_DAYS * 24))
+        connection.execute(
+            """
+            DELETE FROM auth_throttle_buckets
+            WHERE updated_at < ?
+            """,
+            (cutoff_iso,),
+        )
 
     def _column_exists(
         self,

@@ -42,7 +42,10 @@ def get_database(request: Request) -> Database:
     database = getattr(request.app.state, "database", None)
     if database is None:
         settings = get_settings(request)
-        database = Database(settings.database_path)
+        database = Database(
+            settings.database_path,
+            token_encryption_secret=settings.token_encryption_secret,
+        )
         database.initialize()
         request.app.state.database = database
     return database
@@ -91,11 +94,13 @@ def get_current_user(
 def get_account_store(
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     database: Annotated[Database, Depends(get_database)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> AccountStore:
     return AccountStore(
         database=database,
         user_id=current_user.id,
         default_account=current_user.default_account,
+        token_encryption_secret=settings.token_encryption_secret,
     )
 
 

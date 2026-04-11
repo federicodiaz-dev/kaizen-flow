@@ -368,13 +368,13 @@ def build_tool_reasoner_node(bound_model, llm, *, specialist: str):
             failed_generation = _extract_failed_generation(exc)
             if failed_generation:
                 logger.warning(
-                    "Groq tool calling failed for %s specialist. Failed generation: %s",
+                    "Gemini tool calling failed for %s specialist. Failed generation: %s",
                     specialist,
                     failed_generation,
                 )
             else:
                 logger.warning(
-                    "Groq tool calling failed for %s specialist.",
+                    "Gemini tool calling failed for %s specialist.",
                     specialist,
                     exc_info=True,
                 )

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -15,6 +17,7 @@ from app.core.exceptions import (
     BadRequestError,
     ConfigurationError,
     MercadoLibreAPIError,
+    TooManyRequestsError,
 )
 from app.core.plan_catalog import DEFAULT_PLAN_CODE
 from app.core.security import (
@@ -26,7 +29,9 @@ from app.core.security import (
     is_valid_email,
     is_valid_username,
     normalize_username,
+    utc_now,
     utc_now_iso,
+    validate_password_strength,
     verify_password,
 )
 from app.core.settings import Settings
@@ -59,6 +64,14 @@ LEFT JOIN user_plan_subscriptions AS current_subscription
 LEFT JOIN plans
   ON plans.code = current_subscription.plan_code
 """
+
+logger = logging.getLogger("kaizen-flow.auth")
+GENERIC_LOGIN_ERROR = "No se pudo iniciar sesion con esas credenciales."
+GENERIC_REGISTER_ERROR = "No se pudo crear la cuenta con esos datos."
+AUTH_THROTTLE_LOCK_THRESHOLD = 5
+AUTH_THROTTLE_MAX_BACKOFF_SECONDS = 60
+AUTH_THROTTLE_MAX_LOCK_SECONDS = 900
+AUTH_THROTTLE_STALE_DAYS = 30
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,8 +119,15 @@ class AuthService:
         ip_address: str | None = None,
     ) -> tuple[AuthenticatedUser, str]:
         clean_email = email.strip().lower()
+        clean_username = normalize_username(username or "") if username else None
         resolved_plan_code = (selected_plan_code or DEFAULT_PLAN_CODE).strip().lower()
         self._validate_credentials(clean_email, password)
+        throttle_bucket_keys = self._build_auth_throttle_bucket_keys(
+            ip_address=ip_address,
+            email=clean_email,
+            username=clean_username,
+        )
+        self._ensure_auth_attempt_allowed(scope="register", bucket_keys=throttle_bucket_keys)
 
         password_hash, password_salt = hash_password(password)
         now = utc_now_iso()
@@ -150,11 +170,24 @@ class AuthService:
                     selected_from="auth.register",
                     notes="Plan selected during registration.",
                 )
+                self._clear_auth_attempts(scope="register", bucket_keys=throttle_bucket_keys)
         except sqlite3.IntegrityError as exc:
-            message = str(exc).lower()
-            if "username_normalized" in message:
-                raise BadRequestError("Ese usuario ya existe. Elegi otro username.") from exc
-            raise BadRequestError("Ya existe una cuenta registrada con ese email.") from exc
+            self._record_auth_failure(
+                scope="register",
+                bucket_keys=throttle_bucket_keys,
+                ip_address=ip_address,
+                identifier=clean_email,
+            )
+            logger.warning("Registration rejected due to duplicate credentials. ip=%s email=%s", ip_address, clean_email)
+            raise BadRequestError(GENERIC_REGISTER_ERROR) from exc
+        except BadRequestError:
+            self._record_auth_failure(
+                scope="register",
+                bucket_keys=throttle_bucket_keys,
+                ip_address=ip_address,
+                identifier=clean_email,
+            )
+            raise
 
         user = self.get_user_by_id(user_id)
         session_token = self._create_session(user_id, user_agent=user_agent, ip_address=ip_address)
@@ -171,6 +204,11 @@ class AuthService:
         clean_identifier = identifier.strip().lower()
         if not clean_identifier:
             raise AuthenticationError("Ingresa tu email o username.")
+        throttle_bucket_keys = self._build_auth_throttle_bucket_keys(
+            ip_address=ip_address,
+            identifier=clean_identifier,
+        )
+        self._ensure_auth_attempt_allowed(scope="login", bucket_keys=throttle_bucket_keys)
 
         with self._database.connect() as connection:
             row = connection.execute(
@@ -191,18 +229,32 @@ class AuthService:
                 (clean_identifier, clean_identifier),
             ).fetchone()
 
-        if (
-            row is None
-            or password_row is None
-            or not verify_password(
+        valid_password = False
+        if password_row is not None:
+            valid_password = verify_password(
                 password,
                 salt=str(password_row["password_salt"]),
                 expected_hash=str(password_row["password_hash"]),
             )
+        else:
+            # Keep the code path expensive even when the identifier does not exist.
+            hash_password(password, salt="kaizen_auth_dummy_salt")
+
+        if (
+            row is None
+            or password_row is None
+            or not valid_password
         ):
-            raise AuthenticationError("Email, username o contrasena incorrectos.")
+            self._record_auth_failure(
+                scope="login",
+                bucket_keys=throttle_bucket_keys,
+                ip_address=ip_address,
+                identifier=clean_identifier,
+            )
+            raise AuthenticationError(GENERIC_LOGIN_ERROR)
 
         user = self._row_to_user(row)
+        self._clear_auth_attempts(scope="login", bucket_keys=throttle_bucket_keys)
         session_token = self._create_session(user.id, user_agent=user_agent, ip_address=ip_address)
         return user, session_token
 
@@ -257,7 +309,11 @@ class AuthService:
             connection.execute("DELETE FROM user_sessions WHERE token_hash = ?", (hash_token(session_token),))
 
     def set_default_account(self, user_id: int, account_key: str) -> None:
-        account_store = AccountStore(self._database, user_id)
+        account_store = AccountStore(
+            self._database,
+            user_id,
+            token_encryption_secret=self._settings.token_encryption_secret,
+        )
         account_store.set_default_account(account_key)
 
     def complete_onboarding(self, user_id: int) -> AuthenticatedUser:
@@ -429,7 +485,11 @@ class AuthService:
         site_id = str(me_data.get("site_id") or me_data.get("country_id") or "").strip() or None
         label = str(oauth_row["requested_label"] or nickname or f"Cuenta {ml_user_id}")
 
-        account_store = AccountStore(self._database, int(oauth_row["user_id"]))
+        account_store = AccountStore(
+            self._database,
+            int(oauth_row["user_id"]),
+            token_encryption_secret=self._settings.token_encryption_secret,
+        )
         linked_account = account_store.upsert_account(
             ml_user_id=ml_user_id,
             label=label,
@@ -509,7 +569,7 @@ class AuthService:
                 (normalized,),
             ).fetchone()
             if existing is not None:
-                raise BadRequestError("Ese usuario ya existe. Elegi otro username.")
+                raise BadRequestError(GENERIC_REGISTER_ERROR)
             return normalized
 
         email_local_part = email.partition("@")[0]
@@ -698,8 +758,171 @@ class AuthService:
     def _validate_credentials(self, email: str, password: str) -> None:
         if not is_valid_email(email):
             raise BadRequestError("Ingresa un email valido.")
-        if len(password) < 8:
-            raise BadRequestError("La contrasena debe tener al menos 8 caracteres.")
+        password_strength_error = validate_password_strength(password)
+        if password_strength_error:
+            raise BadRequestError(password_strength_error)
+
+    def _build_auth_throttle_bucket_keys(
+        self,
+        *,
+        ip_address: str | None,
+        identifier: str | None = None,
+        email: str | None = None,
+        username: str | None = None,
+    ) -> tuple[str, ...]:
+        bucket_keys: list[str] = []
+        if ip_address:
+            bucket_keys.append(f"ip:{ip_address.strip().lower()}")
+        if identifier:
+            bucket_keys.append(f"identifier:{identifier.strip().lower()}")
+        if email:
+            bucket_keys.append(f"email:{email.strip().lower()}")
+        if username:
+            bucket_keys.append(f"username:{username.strip().lower()}")
+        return tuple(dict.fromkeys(bucket_keys))
+
+    def _ensure_auth_attempt_allowed(self, *, scope: str, bucket_keys: tuple[str, ...]) -> None:
+        if not bucket_keys:
+            return
+
+        now = utc_now()
+        rows = self._load_auth_buckets(scope=scope, bucket_keys=bucket_keys)
+        retry_after_seconds = 0
+        for row in rows:
+            for field in ("blocked_until", "next_allowed_at"):
+                retry_at = self._parse_optional_iso(row[field])
+                if retry_at and retry_at > now:
+                    retry_after_seconds = max(
+                        retry_after_seconds,
+                        max(1, int((retry_at - now).total_seconds())),
+                    )
+
+        if retry_after_seconds <= 0:
+            return
+
+        logger.warning(
+            "Authentication throttled. scope=%s buckets=%s retry_after_seconds=%s",
+            scope,
+            list(bucket_keys),
+            retry_after_seconds,
+        )
+        raise TooManyRequestsError(
+            "Demasiados intentos. Espera un momento y vuelve a intentarlo.",
+            details={"retry_after_seconds": retry_after_seconds, "scope": scope},
+        )
+
+    def _record_auth_failure(
+        self,
+        *,
+        scope: str,
+        bucket_keys: tuple[str, ...],
+        ip_address: str | None,
+        identifier: str | None,
+    ) -> None:
+        if not bucket_keys:
+            return
+
+        now = utc_now()
+        now_iso = utc_now_iso()
+        with self._database.connect() as connection:
+            for bucket_key in bucket_keys:
+                row = connection.execute(
+                    """
+                    SELECT failure_count
+                    FROM auth_throttle_buckets
+                    WHERE scope = ? AND bucket_key = ?
+                    LIMIT 1
+                    """,
+                    (scope, bucket_key),
+                ).fetchone()
+                failure_count = int(row["failure_count"]) + 1 if row is not None else 1
+                backoff_seconds = min(
+                    2 ** min(max(failure_count - 1, 0), 6),
+                    AUTH_THROTTLE_MAX_BACKOFF_SECONDS,
+                )
+                lock_seconds = (
+                    min(
+                        60 * (2 ** min(failure_count - AUTH_THROTTLE_LOCK_THRESHOLD, 4)),
+                        AUTH_THROTTLE_MAX_LOCK_SECONDS,
+                    )
+                    if failure_count >= AUTH_THROTTLE_LOCK_THRESHOLD
+                    else 0
+                )
+                next_allowed_at = self._iso_after_seconds(max(backoff_seconds, lock_seconds), now=now)
+                blocked_until = self._iso_after_seconds(lock_seconds, now=now) if lock_seconds > 0 else None
+                connection.execute(
+                    """
+                    INSERT INTO auth_throttle_buckets (
+                        scope,
+                        bucket_key,
+                        failure_count,
+                        last_attempt_at,
+                        last_failure_at,
+                        next_allowed_at,
+                        blocked_until,
+                        created_at,
+                        updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(scope, bucket_key) DO UPDATE SET
+                        failure_count = excluded.failure_count,
+                        last_attempt_at = excluded.last_attempt_at,
+                        last_failure_at = excluded.last_failure_at,
+                        next_allowed_at = excluded.next_allowed_at,
+                        blocked_until = excluded.blocked_until,
+                        updated_at = excluded.updated_at
+                    """,
+                    (
+                        scope,
+                        bucket_key,
+                        failure_count,
+                        now_iso,
+                        now_iso,
+                        next_allowed_at,
+                        blocked_until,
+                        now_iso,
+                        now_iso,
+                    ),
+                )
+
+        logger.warning(
+            "Authentication failure recorded. scope=%s ip=%s identifier=%s buckets=%s",
+            scope,
+            ip_address,
+            identifier,
+            list(bucket_keys),
+        )
+
+    def _clear_auth_attempts(self, *, scope: str, bucket_keys: tuple[str, ...]) -> None:
+        if not bucket_keys:
+            return
+        placeholders = ", ".join("?" for _ in bucket_keys)
+        with self._database.connect() as connection:
+            connection.execute(
+                f"DELETE FROM auth_throttle_buckets WHERE scope = ? AND bucket_key IN ({placeholders})",
+                (scope, *bucket_keys),
+            )
+
+    def _load_auth_buckets(self, *, scope: str, bucket_keys: tuple[str, ...]) -> list[sqlite3.Row]:
+        placeholders = ", ".join("?" for _ in bucket_keys)
+        with self._database.connect() as connection:
+            return connection.execute(
+                f"""
+                SELECT bucket_key, failure_count, next_allowed_at, blocked_until
+                FROM auth_throttle_buckets
+                WHERE scope = ? AND bucket_key IN ({placeholders})
+                """,
+                (scope, *bucket_keys),
+            ).fetchall()
+
+    def _parse_optional_iso(self, value: str | None) -> datetime | None:
+        if not value:
+            return None
+        normalized = str(value).replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized).astimezone(timezone.utc)
+
+    def _iso_after_seconds(self, seconds: int, *, now: datetime | None = None) -> str:
+        resolved_now = now or utc_now()
+        return (resolved_now + timedelta(seconds=seconds)).isoformat(timespec="seconds").replace("+00:00", "Z")
 
     def _row_to_user(self, row: sqlite3.Row) -> AuthenticatedUser:
         return AuthenticatedUser(

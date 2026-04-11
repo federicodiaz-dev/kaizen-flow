@@ -31,7 +31,7 @@ def llm_run_config(
     return {"metadata": metadata}
 
 
-def create_chat_groq(
+def create_chat_model(
     settings: AgentSettings,
     *,
     model: str,
@@ -40,7 +40,7 @@ def create_chat_groq(
     max_retries: int = 2,
 ):
     try:
-        from langchain_groq import ChatGroq
+        from langchain_google_genai import ChatGoogleGenerativeAI
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
             "Missing AI dependencies. Install the updated backend requirements to enable the assistant.",
@@ -57,8 +57,8 @@ def create_chat_groq(
             )
         ]
 
-    return ChatGroq(
-        api_key=settings.groq_api_key,
+    return ChatGoogleGenerativeAI(
+        google_api_key=settings.google_api_key,
         model=model,
         temperature=temperature,
         max_retries=max_retries,

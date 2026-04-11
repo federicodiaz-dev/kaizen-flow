@@ -93,6 +93,25 @@
   const getPlanByCode = (planCode) =>
     state.plans.find((plan) => plan.code === planCode) || state.plans[0] || fallbackPlans[0];
 
+  const validatePasswordStrength = (password) => {
+    if (password.length < 12) {
+      return 'La contrasena debe tener al menos 12 caracteres.';
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'La contrasena debe incluir al menos una letra minuscula.';
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'La contrasena debe incluir al menos una letra mayuscula.';
+    }
+    if (!/\d/.test(password)) {
+      return 'La contrasena debe incluir al menos un numero.';
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      return 'La contrasena debe incluir al menos un simbolo.';
+    }
+    return null;
+  };
+
   const setFeedback = (message, tone) => {
     if (!elements.feedback) {
       return;
@@ -354,6 +373,11 @@
     clearFeedback();
     if (!email || !username || !password) {
       setFeedback('Completa email, username y contrasena para crear tu cuenta.', 'error');
+      return;
+    }
+    const passwordStrengthError = validatePasswordStrength(password);
+    if (passwordStrengthError) {
+      setFeedback(passwordStrengthError, 'error');
       return;
     }
     if (password !== confirmPassword) {

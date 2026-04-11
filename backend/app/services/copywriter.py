@@ -5,7 +5,7 @@ import re
 
 from app.agents.config import AgentSettings, get_agent_settings
 from app.agents.prompts import DESCRIPTION_ENHANCER_PROMPT, LISTING_COPYWRITER_PROMPT
-from app.core.ai_usage_reporting import create_chat_groq, llm_run_config
+from app.core.ai_usage_reporting import create_chat_model, llm_run_config
 from app.schemas.copywriter import (
     CopywriterGenerateRequest,
     CopywriterGenerateResponse,
@@ -28,9 +28,9 @@ class CopywriterService:
             return self._llm
 
         self._settings.validate_runtime()
-        self._llm = create_chat_groq(
+        self._llm = create_chat_model(
             self._settings,
-            model=self._settings.groq_model,
+            model=self._settings.google_model,
             temperature=0.7,
             feature="copywriter",
             max_retries=2,
